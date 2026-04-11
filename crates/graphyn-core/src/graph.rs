@@ -14,6 +14,7 @@ pub struct RelationshipMeta {
     pub line: u32,
 }
 
+#[derive(Debug)]
 pub struct GraphynGraph {
     pub graph: DiGraph<SymbolId, RelationshipMeta>,
     pub node_index: DashMap<SymbolId, NodeIndex>,

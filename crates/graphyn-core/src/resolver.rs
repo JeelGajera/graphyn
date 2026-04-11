@@ -1,9 +1,10 @@
 use dashmap::DashMap;
+use serde::{Deserialize, Serialize};
 
 use crate::graph::GraphynGraph;
 use crate::ir::{Relationship, RelationshipKind, SymbolId};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub enum AliasScope {
     ImportAlias,
     ReExport,
@@ -11,7 +12,7 @@ pub enum AliasScope {
     DefaultImport,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
 pub struct AliasEntry {
     pub alias_name: String,
     pub defined_in_file: String,
