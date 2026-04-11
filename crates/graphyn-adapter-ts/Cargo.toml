@@ -1,0 +1,11 @@
+[package]
+name = "graphyn-adapter-ts"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tree-sitter = "0.22"
+tree-sitter-typescript = "0.21"
+tree-sitter-javascript = "0.21"
+walkdir = "2"
+graphyn-core = { path = "../graphyn-core" }
