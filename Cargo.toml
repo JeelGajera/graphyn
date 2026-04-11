@@ -1,5 +1,6 @@
 [workspace]
 members = [
   "crates/graphyn-core",
+  "crates/graphyn-adapter-ts",
 ]
 resolver = "2"
