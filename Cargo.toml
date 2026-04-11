@@ -3,6 +3,7 @@ members = [
   "crates/graphyn-core",
   "crates/graphyn-adapter-ts",
   "crates/graphyn-store",
+  "crates/graphyn-mcp",
   "crates/graphyn-cli",
 ]
 resolver = "2"
