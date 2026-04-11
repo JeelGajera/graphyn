@@ -1,0 +1,8 @@
+[package]
+name = "graphyn-store"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rocksdb = { version = "0.21", default-features = false }
+graphyn-core = { path = "../graphyn-core" }
