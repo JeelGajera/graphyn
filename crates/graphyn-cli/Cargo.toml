@@ -1,0 +1,16 @@
+[package]
+name = "graphyn-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "graphyn"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+notify = "6"
+tokio = { version = "1", features = ["full"] }
+graphyn-core = { path = "../graphyn-core" }
+graphyn-adapter-ts = { path = "../graphyn-adapter-ts" }
+graphyn-store = { path = "../graphyn-store" }
