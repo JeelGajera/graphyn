@@ -1,35 +1,41 @@
 use crate::output;
 
 pub fn run(port: u16, stdio: bool) -> Result<(), Box<dyn std::error::Error>> {
-    output::banner("serve");
-
     if stdio {
-        output::info("Transport: stdio");
+        // stdio transport — the primary MCP interface
+        let repo_root = std::env::var("GRAPHYN_ROOT")
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|_| std::env::current_dir().unwrap_or_else(|_| ".".into()));
+
+        let repo_root = std::fs::canonicalize(&repo_root)
+            .map_err(|e| format!("cannot access '{}': {}", repo_root.display(), e))?;
+
+        // Build the tokio runtime and start the MCP server.
+        // We write status to stderr so it doesn't interfere with the
+        // JSON-RPC protocol on stdout.
+        eprintln!(
+            "[graphyn] Starting MCP server (stdio) for {}",
+            repo_root.display()
+        );
+
+        let rt = tokio::runtime::Runtime::new()
+            .map_err(|e| format!("failed to start async runtime: {e}"))?;
+
+        rt.block_on(async {
+            graphyn_mcp::server::serve_stdio(repo_root).await
+        })?;
+
+        Ok(())
     } else {
+        // TCP transport — not yet supported
+        output::banner("serve");
         output::info(&format!("Transport: TCP on port {port}"));
+        output::blank();
+        output::warning("TCP transport is not yet implemented.");
+        output::dim_line("Use --stdio for agent integration (Cursor, Claude Code).");
+        output::blank();
+        output::dim_line("  graphyn serve --stdio");
+        output::blank();
+        Ok(())
     }
-
-    output::blank();
-    output::warning("MCP server is not yet implemented.");
-    output::dim_line("This will be available in the next release (Step 5).");
-    output::blank();
-    output::dim_line("Once ready, agents will connect via:");
-    output::blank();
-
-    if stdio {
-        output::dim_line("  # Cursor — .cursor/mcp.json");
-        output::dim_line("  {");
-        output::dim_line("    \"mcpServers\": {");
-        output::dim_line("      \"graphyn\": {");
-        output::dim_line("        \"command\": \"graphyn\",");
-        output::dim_line("        \"args\": [\"serve\", \"--stdio\"]");
-        output::dim_line("      }");
-        output::dim_line("    }");
-        output::dim_line("  }");
-    } else {
-        output::dim_line(&format!("  graphyn serve --port {port}"));
-    }
-    output::blank();
-
-    Ok(())
 }
