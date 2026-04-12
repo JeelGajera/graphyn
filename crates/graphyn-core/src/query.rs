@@ -87,6 +87,8 @@ pub fn symbol_usages(
                 }
             }
         }
+    } else {
+        results.retain(|edge| edge.alias.is_none());
     }
 
     dedupe_edges(results)

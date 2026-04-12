@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use graphyn_core::ir::{FileIR, Language, Relationship, RelationshipKind, Symbol, SymbolKind};
+use tree_sitter::Node;
 
 use crate::parser::ParsedFile;
 
@@ -8,7 +9,7 @@ const UNRESOLVED_IMPORT_PREFIX: &str = "__UNRESOLVED_IMPORT__";
 const UNRESOLVED_LOCAL_TYPE_PREFIX: &str = "__UNRESOLVED_LOCAL_TYPE__";
 
 pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
-    let mut symbols = extract_symbols(&parsed.file, parsed.language.clone(), &parsed.source);
+    let mut symbols = extract_symbols(parsed);
     let module_symbol = module_symbol(&parsed.file, parsed.language.clone());
     if !symbols.iter().any(|s| s.id == module_symbol.id) {
         symbols.push(module_symbol.clone());
@@ -16,39 +17,12 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
 
     let from_symbol_id = first_primary_symbol_id(&symbols).unwrap_or(module_symbol.id.clone());
 
-    let import_entries = parse_import_and_reexport_lines(&parsed.source);
-    let var_to_type = parse_typed_variables(&parsed.source);
-    let type_to_props = parse_property_accesses(&parsed.source, &var_to_type);
+    let type_to_props = collect_property_accesses(parsed);
+    let mut relationships =
+        collect_import_and_reexport_relationships(parsed, &from_symbol_id, &type_to_props);
 
-    let mut relationships = Vec::new();
-
-    for import in import_entries {
-        let mut properties_accessed = Vec::new();
-        if import.kind == RelationshipKind::Imports {
-            properties_accessed = type_to_props
-                .get(&import.local_name)
-                .cloned()
-                .unwrap_or_default();
-        }
-
-        relationships.push(Relationship {
-            from: from_symbol_id.clone(),
-            to: unresolved_import_symbol_id(&import.module_specifier, &import.imported_name),
-            kind: import.kind,
-            alias: if import.local_name != import.imported_name {
-                Some(import.local_name)
-            } else {
-                None
-            },
-            properties_accessed,
-            context: import.context,
-            file: parsed.file.clone(),
-            line: import.line,
-        });
-    }
-
-    for (type_name, properties) in type_to_props {
-        if properties.is_empty() {
+    for (type_name, (props, first_line)) in type_to_props {
+        if props.is_empty() {
             continue;
         }
         relationships.push(Relationship {
@@ -56,12 +30,20 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
             to: unresolved_local_type_symbol_id(&type_name),
             kind: RelationshipKind::AccessesProperty,
             alias: Some(type_name),
-            properties_accessed: properties,
+            properties_accessed: props.into_iter().collect(),
             context: "property access".to_string(),
             file: parsed.file.clone(),
-            line: 1,
+            line: first_line,
         });
     }
+
+    relationships.sort_by(|a, b| {
+        a.file
+            .cmp(&b.file)
+            .then(a.line.cmp(&b.line))
+            .then(a.from.cmp(&b.from))
+            .then(a.to.cmp(&b.to))
+    });
 
     FileIR {
         file: parsed.file.clone(),
@@ -110,259 +92,338 @@ struct ImportEntry {
     line: u32,
 }
 
-fn parse_import_and_reexport_lines(source: &str) -> Vec<ImportEntry> {
+fn collect_import_and_reexport_relationships(
+    parsed: &ParsedFile,
+    from_symbol_id: &str,
+    type_to_props: &BTreeMap<String, (BTreeSet<String>, u32)>,
+) -> Vec<Relationship> {
     let mut out = Vec::new();
 
-    for (idx, raw_line) in source.lines().enumerate() {
-        let line = raw_line.trim();
-        if line.starts_with("//") || line.starts_with("/*") || line.starts_with('*') {
-            continue;
+    walk_tree(parsed.tree.root_node(), &mut |node| {
+        let kind = node.kind();
+        if kind != "import_statement" && kind != "export_statement" {
+            return;
         }
 
-        if line.starts_with("import ") && line.contains(" from ") {
-            if let Some(module_specifier) = parse_module_specifier(line) {
-                let from_idx = line.find(" from ").unwrap();
-                let left_of_from = &line[..from_idx];
+        let Some(module_specifier) = extract_module_specifier(node, &parsed.source) else {
+            return;
+        };
 
-                if let Some(named_block) = between(left_of_from, '{', '}') {
-                    for item in named_block
-                        .split(',')
-                        .map(str::trim)
-                        .filter(|s| !s.is_empty())
-                    {
-                        let (imported_name, local_name) = parse_aliased_item(item);
-                        out.push(ImportEntry {
-                            imported_name,
-                            local_name,
-                            module_specifier: module_specifier.clone(),
-                            kind: RelationshipKind::Imports,
-                            context: line.to_string(),
-                            line: (idx + 1) as u32,
-                        });
-                    }
-                }
-
-                let rest = left_of_from.trim_start_matches("import").trim();
-                let outside_brace = if let Some(brace_idx) = rest.find('{') {
-                    rest[..brace_idx].trim().trim_end_matches(',').trim()
-                } else {
-                    rest
-                };
-
-                if !outside_brace.is_empty() {
-                    if outside_brace.starts_with('*') {
-                        if let Some((_, local_name)) = outside_brace.split_once(" as ") {
-                            let local_name = sanitize_identifier(local_name.trim());
-                            if !local_name.is_empty() {
-                                out.push(ImportEntry {
-                                    imported_name: "*".to_string(),
-                                    local_name: local_name.to_string(),
-                                    module_specifier: module_specifier.clone(),
-                                    kind: RelationshipKind::Imports,
-                                    context: line.to_string(),
-                                    line: (idx + 1) as u32,
-                                });
-                            }
-                        }
-                    } else {
-                        let local_name = outside_brace
-                            .split(',')
-                            .next()
-                            .unwrap_or(outside_brace)
-                            .trim()
-                            .to_string();
-                        let local_name = sanitize_identifier(&local_name);
-                        if !local_name.is_empty() {
-                            out.push(ImportEntry {
-                                imported_name: "default".to_string(),
-                                local_name: local_name.to_string(),
-                                module_specifier: module_specifier.clone(),
-                                kind: RelationshipKind::Imports,
-                                context: line.to_string(),
-                                line: (idx + 1) as u32,
-                            });
-                        }
-                    }
-                }
-            }
+        let statement_text =
+            compact_whitespace(node_text(node, &parsed.source).unwrap_or_default());
+        if statement_text.is_empty() {
+            return;
         }
 
-        if line.starts_with("export ") && line.contains(" from ") {
-            if let Some(module_specifier) = parse_module_specifier(line) {
-                let from_idx = line.find(" from ").unwrap();
-                let left_of_from = &line[..from_idx];
+        let line = node.start_position().row as u32 + 1;
+        let entries = if kind == "import_statement" {
+            parse_import_entries(&statement_text, &module_specifier, line)
+        } else {
+            parse_reexport_entries(&statement_text, &module_specifier, line)
+        };
 
-                if let Some(named_block) = between(left_of_from, '{', '}') {
-                    for item in named_block
-                        .split(',')
-                        .map(str::trim)
-                        .filter(|s| !s.is_empty())
-                    {
-                        let (imported_name, local_name) = parse_aliased_item(item);
-                        out.push(ImportEntry {
-                            imported_name,
-                            local_name,
-                            module_specifier: module_specifier.clone(),
-                            kind: RelationshipKind::ReExports,
-                            context: line.to_string(),
-                            line: (idx + 1) as u32,
-                        });
-                    }
-                } else {
-                    let rest = left_of_from.trim_start_matches("export").trim();
-                    if rest.starts_with('*') {
-                        out.push(ImportEntry {
-                            imported_name: "*".to_string(),
-                            local_name: "*".to_string(),
-                            module_specifier,
-                            kind: RelationshipKind::ReExports,
-                            context: line.to_string(),
-                            line: (idx + 1) as u32,
-                        });
-                    }
-                }
-            }
-        }
-    }
-
-    out
-}
-
-fn parse_typed_variables(source: &str) -> HashMap<String, String> {
-    let mut out = HashMap::new();
-
-    for line in source.lines() {
-        let mut rest = line;
-        while let Some(open_idx) = rest.find('(') {
-            let after_open = &rest[open_idx + 1..];
-            let Some(close_idx) = after_open.find(')') else {
-                break;
+        for entry in entries {
+            let properties_accessed = if entry.kind == RelationshipKind::Imports {
+                type_to_props
+                    .get(&entry.local_name)
+                    .map(|(props, _)| props.iter().cloned().collect())
+                    .unwrap_or_default()
+            } else {
+                Vec::new()
             };
-            let args = &after_open[..close_idx];
-            for arg in args.split(',') {
-                if let Some((name, typ)) = arg.split_once(':') {
-                    let name = sanitize_identifier(name);
-                    let typ = sanitize_type_identifier(typ);
-                    if !name.is_empty() && !typ.is_empty() {
-                        out.insert(name.to_string(), typ.to_string());
-                    }
-                }
+
+            out.push(Relationship {
+                from: from_symbol_id.to_string(),
+                to: unresolved_import_symbol_id(&entry.module_specifier, &entry.imported_name),
+                kind: entry.kind,
+                alias: if entry.local_name != entry.imported_name {
+                    Some(entry.local_name)
+                } else {
+                    None
+                },
+                properties_accessed,
+                context: entry.context,
+                file: parsed.file.clone(),
+                line: entry.line,
+            });
+        }
+    });
+
+    out
+}
+
+fn parse_import_entries(statement: &str, module_specifier: &str, line: u32) -> Vec<ImportEntry> {
+    let mut out = Vec::new();
+    if !statement.starts_with("import ") || !statement.contains(" from ") {
+        return out;
+    }
+
+    let Some((left, _)) = statement.split_once(" from ") else {
+        return out;
+    };
+    let left = left.trim_start_matches("import").trim();
+
+    if let Some(named) = between(left, '{', '}') {
+        for item in named.split(',').map(str::trim).filter(|s| !s.is_empty()) {
+            let (imported_name, local_name) = parse_aliased_item(item);
+            out.push(ImportEntry {
+                imported_name,
+                local_name,
+                module_specifier: module_specifier.to_string(),
+                kind: RelationshipKind::Imports,
+                context: statement.to_string(),
+                line,
+            });
+        }
+    }
+
+    let outside_brace = if let Some(brace_idx) = left.find('{') {
+        left[..brace_idx].trim().trim_end_matches(',').trim()
+    } else {
+        left
+    };
+
+    if outside_brace.is_empty() {
+        return out;
+    }
+
+    if outside_brace.starts_with('*') {
+        if let Some((_, local)) = outside_brace.split_once(" as ") {
+            let local_name = sanitize_identifier(local);
+            if !local_name.is_empty() {
+                out.push(ImportEntry {
+                    imported_name: "*".to_string(),
+                    local_name: local_name.to_string(),
+                    module_specifier: module_specifier.to_string(),
+                    kind: RelationshipKind::Imports,
+                    context: statement.to_string(),
+                    line,
+                });
             }
-            rest = &after_open[close_idx + 1..];
+        }
+    } else {
+        let default_name = outside_brace
+            .split(',')
+            .next()
+            .map(sanitize_identifier)
+            .unwrap_or("");
+        if !default_name.is_empty() {
+            out.push(ImportEntry {
+                imported_name: "default".to_string(),
+                local_name: default_name.to_string(),
+                module_specifier: module_specifier.to_string(),
+                kind: RelationshipKind::Imports,
+                context: statement.to_string(),
+                line,
+            });
         }
     }
 
     out
 }
 
-fn parse_property_accesses(
-    source: &str,
-    var_to_type: &HashMap<String, String>,
-) -> BTreeMap<String, Vec<String>> {
-    let mut type_to_properties: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
-
-    for line in source.lines() {
-        for (var, type_name) in var_to_type {
-            let needle = format!("{var}.");
-            let mut rest = line;
-            while let Some(idx) = rest.find(&needle) {
-                let after = &rest[idx + needle.len()..];
-                let property = read_identifier(after);
-                if !property.is_empty() {
-                    type_to_properties
-                        .entry(type_name.clone())
-                        .or_default()
-                        .insert(property.to_string());
-                }
-                rest = after;
-            }
-        }
+fn parse_reexport_entries(statement: &str, module_specifier: &str, line: u32) -> Vec<ImportEntry> {
+    let mut out = Vec::new();
+    if !statement.starts_with("export ") || !statement.contains(" from ") {
+        return out;
     }
 
-    type_to_properties
-        .into_iter()
-        .map(|(k, v)| (k, v.into_iter().collect()))
-        .collect()
+    let Some((left, _)) = statement.split_once(" from ") else {
+        return out;
+    };
+    let left = left.trim_start_matches("export").trim();
+
+    if let Some(named) = between(left, '{', '}') {
+        for item in named.split(',').map(str::trim).filter(|s| !s.is_empty()) {
+            let (imported_name, local_name) = parse_aliased_item(item);
+            out.push(ImportEntry {
+                imported_name,
+                local_name,
+                module_specifier: module_specifier.to_string(),
+                kind: RelationshipKind::ReExports,
+                context: statement.to_string(),
+                line,
+            });
+        }
+    } else if left.starts_with('*') {
+        out.push(ImportEntry {
+            imported_name: "*".to_string(),
+            local_name: "*".to_string(),
+            module_specifier: module_specifier.to_string(),
+            kind: RelationshipKind::ReExports,
+            context: statement.to_string(),
+            line,
+        });
+    }
+
+    out
 }
 
-fn extract_symbols(file: &str, language: Language, source: &str) -> Vec<Symbol> {
+fn collect_property_accesses(parsed: &ParsedFile) -> BTreeMap<String, (BTreeSet<String>, u32)> {
+    let mut typed_vars = HashMap::<String, String>::new();
+    let mut type_to_props = BTreeMap::<String, (BTreeSet<String>, u32)>::new();
+
+    walk_tree(parsed.tree.root_node(), &mut |node| {
+        collect_typed_var(node, &parsed.source, &mut typed_vars);
+    });
+
+    walk_tree(parsed.tree.root_node(), &mut |node| {
+        if node.kind() != "member_expression" {
+            return;
+        }
+
+        let Some(object_node) = node.child_by_field_name("object") else {
+            return;
+        };
+        let Some(property_node) = node.child_by_field_name("property") else {
+            return;
+        };
+
+        let Some(object_text) = node_text(object_node, &parsed.source) else {
+            return;
+        };
+        let object_name = sanitize_identifier(object_text);
+        if object_name.is_empty() {
+            return;
+        }
+
+        let Some(type_name) = typed_vars.get(object_name) else {
+            return;
+        };
+
+        let Some(property_text) = node_text(property_node, &parsed.source) else {
+            return;
+        };
+        let property_name = sanitize_identifier(property_text);
+        if property_name.is_empty() {
+            return;
+        }
+
+        let line = node.start_position().row as u32 + 1;
+        let (props, first_line) = type_to_props
+            .entry(type_name.clone())
+            .or_insert_with(|| (BTreeSet::new(), line));
+        props.insert(property_name.to_string());
+        if line < *first_line {
+            *first_line = line;
+        }
+    });
+
+    type_to_props
+}
+
+fn collect_typed_var(node: Node<'_>, source: &str, typed_vars: &mut HashMap<String, String>) {
+    if !node.kind().contains("parameter") && node.kind() != "variable_declarator" {
+        return;
+    }
+
+    let name_node = node.child_by_field_name("name");
+    let type_node = node
+        .child_by_field_name("type")
+        .or_else(|| node.child_by_field_name("type_annotation"));
+
+    let (Some(name_node), Some(type_node)) = (name_node, type_node) else {
+        if let Some((var_name, type_name)) = parse_name_and_type_from_node_text(node, source) {
+            typed_vars.insert(var_name, type_name);
+        }
+        return;
+    };
+
+    let Some(name_text) = node_text(name_node, source) else {
+        return;
+    };
+    let Some(type_text) = node_text(type_node, source) else {
+        return;
+    };
+
+    let var_name = sanitize_identifier(name_text);
+    let type_name = primary_type_name(type_text);
+
+    if !var_name.is_empty() && !type_name.is_empty() {
+        typed_vars.insert(var_name.to_string(), type_name.to_string());
+    }
+}
+
+fn parse_name_and_type_from_node_text(node: Node<'_>, source: &str) -> Option<(String, String)> {
+    let text = node_text(node, source)?;
+    let compact = compact_whitespace(text);
+    let (left, right) = compact.split_once(':')?;
+
+    let name = sanitize_identifier(left);
+    if name.is_empty() {
+        return None;
+    }
+
+    let right = right.split('=').next().map(str::trim).unwrap_or_default();
+    let typ = primary_type_name(right);
+    if typ.is_empty() {
+        return None;
+    }
+
+    Some((name.to_string(), typ.to_string()))
+}
+
+fn extract_symbols(parsed: &ParsedFile) -> Vec<Symbol> {
     let mut out = Vec::new();
 
-    for (idx, raw_line) in source.lines().enumerate() {
-        let line_no = (idx + 1) as u32;
-        let line = raw_line.trim();
+    walk_tree(parsed.tree.root_node(), &mut |node| {
+        let kind = match node.kind() {
+            "class_declaration" => Some(SymbolKind::Class),
+            "interface_declaration" => Some(SymbolKind::Interface),
+            "type_alias_declaration" => Some(SymbolKind::TypeAlias),
+            "function_declaration" => Some(SymbolKind::Function),
+            "method_definition" => Some(SymbolKind::Method),
+            "public_field_definition" | "property_signature" => Some(SymbolKind::Property),
+            "variable_declarator" => Some(SymbolKind::Variable),
+            "enum_declaration" => Some(SymbolKind::Enum),
+            _ => None,
+        };
 
-        if let Some(name) = read_keyword_name(line, "class") {
-            out.push(new_symbol(
-                file,
-                &name,
-                SymbolKind::Class,
-                language.clone(),
-                line_no,
-                line,
-            ));
-        }
-        if let Some(name) = read_keyword_name(line, "interface") {
-            out.push(new_symbol(
-                file,
-                &name,
-                SymbolKind::Interface,
-                language.clone(),
-                line_no,
-                line,
-            ));
-        }
-        if let Some(name) = read_keyword_name(line, "type") {
-            out.push(new_symbol(
-                file,
-                &name,
-                SymbolKind::TypeAlias,
-                language.clone(),
-                line_no,
-                line,
-            ));
-        }
-        if let Some(name) = read_keyword_name(line, "function") {
-            out.push(new_symbol(
-                file,
-                &name,
-                SymbolKind::Function,
-                language.clone(),
-                line_no,
-                line,
-            ));
-        }
-        if let Some(name) = read_keyword_name(line, "enum") {
-            out.push(new_symbol(
-                file,
-                &name,
-                SymbolKind::Enum,
-                language.clone(),
-                line_no,
-                line,
-            ));
-        }
+        let Some(kind) = kind else {
+            return;
+        };
 
-        if is_property_declaration(line) {
-            if let Some((name, _)) = line.split_once(':') {
-                let prop_name = sanitize_identifier(name);
-                if !prop_name.is_empty() {
-                    out.push(new_symbol(
-                        file,
-                        prop_name,
-                        SymbolKind::Property,
-                        language.clone(),
-                        line_no,
-                        line,
-                    ));
-                }
-            }
-        }
-    }
+        let Some(name) = extract_name(node, &parsed.source) else {
+            return;
+        };
+
+        let line = node.start_position().row as u32 + 1;
+        let signature = node_text(node, &parsed.source).unwrap_or_default();
+        out.push(new_symbol(
+            &parsed.file,
+            &name,
+            kind,
+            parsed.language.clone(),
+            line,
+            &compact_whitespace(signature),
+        ));
+    });
 
     out.sort_by(|a, b| a.id.cmp(&b.id));
     out.dedup_by(|a, b| a.id == b.id);
     out
+}
+
+fn extract_name(node: Node<'_>, source: &str) -> Option<String> {
+    if let Some(name_node) = node.child_by_field_name("name") {
+        let text = node_text(name_node, source)?;
+        let cleaned = sanitize_identifier(text);
+        if !cleaned.is_empty() {
+            return Some(cleaned.to_string());
+        }
+    }
+
+    if node.kind() == "variable_declarator" {
+        if let Some(pattern) = node.child_by_field_name("name") {
+            let text = node_text(pattern, source)?;
+            let cleaned = sanitize_identifier(text);
+            if !cleaned.is_empty() {
+                return Some(cleaned.to_string());
+            }
+        }
+    }
+
+    None
 }
 
 fn module_symbol(file: &str, language: Language) -> Symbol {
@@ -401,7 +462,11 @@ fn new_symbol(
         file: file.to_string(),
         line_start: line,
         line_end: line,
-        signature: Some(signature.to_string()),
+        signature: if signature.is_empty() {
+            None
+        } else {
+            Some(signature.to_string())
+        },
     }
 }
 
@@ -424,12 +489,33 @@ fn symbol_kind_suffix(kind: &SymbolKind) -> &'static str {
     }
 }
 
-fn parse_module_specifier(line: &str) -> Option<String> {
-    let quote_start = line.find('\'').or_else(|| line.find('"'))?;
-    let quote_char = line.chars().nth(quote_start)?;
-    let rest = &line[quote_start + 1..];
-    let end = rest.find(quote_char)?;
-    Some(rest[..end].to_string())
+fn walk_tree(node: Node<'_>, f: &mut dyn FnMut(Node<'_>)) {
+    f(node);
+    let mut cursor = node.walk();
+    for child in node.children(&mut cursor) {
+        walk_tree(child, f);
+    }
+}
+
+fn node_text<'a>(node: Node<'_>, source: &'a str) -> Option<&'a str> {
+    node.utf8_text(source.as_bytes()).ok()
+}
+
+fn extract_module_specifier(node: Node<'_>, source: &str) -> Option<String> {
+    let source_node = node.child_by_field_name("source")?;
+    let raw = node_text(source_node, source)?;
+    let trimmed = raw.trim();
+    if trimmed.len() < 2 {
+        return None;
+    }
+
+    if (trimmed.starts_with('"') && trimmed.ends_with('"'))
+        || (trimmed.starts_with('\'') && trimmed.ends_with('\''))
+    {
+        return Some(trimmed[1..trimmed.len() - 1].to_string());
+    }
+
+    None
 }
 
 fn parse_aliased_item(item: &str) -> (String, String) {
@@ -459,40 +545,15 @@ fn sanitize_identifier(input: &str) -> &str {
         .trim_matches(|c: char| !c.is_ascii_alphanumeric() && c != '_' && c != '$')
 }
 
-fn sanitize_type_identifier(input: &str) -> &str {
-    let raw = sanitize_identifier(input);
-    raw.split(['<', '>', '|', '[', ']'])
+fn primary_type_name(input: &str) -> &str {
+    let raw = input.trim().trim_start_matches(':').trim();
+    let raw = sanitize_identifier(raw);
+    raw.split(['<', '>', '|', '[', ']', '?', '!', ' ', ':'])
         .next()
         .unwrap_or(raw)
         .trim()
 }
 
-fn read_keyword_name(line: &str, keyword: &str) -> Option<String> {
-    let needle = format!("{keyword} ");
-    let idx = line.find(&needle)?;
-    let tail = &line[idx + needle.len()..];
-    let ident = read_identifier(tail);
-    if ident.is_empty() {
-        None
-    } else {
-        Some(ident.to_string())
-    }
-}
-
-fn read_identifier(input: &str) -> &str {
-    let end = input
-        .char_indices()
-        .find(|(_, c)| !c.is_ascii_alphanumeric() && *c != '_' && *c != '$')
-        .map(|(idx, _)| idx)
-        .unwrap_or(input.len());
-    &input[..end]
-}
-
-fn is_property_declaration(line: &str) -> bool {
-    line.ends_with(';')
-        && line.contains(':')
-        && !line.contains("import ")
-        && !line.contains("export ")
-        && !line.contains('(')
-        && !line.contains("=>")
+fn compact_whitespace(input: &str) -> String {
+    input.split_whitespace().collect::<Vec<_>>().join(" ")
 }

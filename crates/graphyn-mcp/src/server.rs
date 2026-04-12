@@ -83,7 +83,10 @@ impl GraphynMcpServer {
 impl ServerHandler for GraphynMcpServer {
     fn get_info(&self) -> ServerInfo {
         ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
-            .with_server_info(rmcp::model::Implementation::new("graphyn", env!("CARGO_PKG_VERSION")))
+            .with_server_info(rmcp::model::Implementation::new(
+                "graphyn",
+                env!("CARGO_PKG_VERSION"),
+            ))
             .with_instructions(
                 "Graphyn is a code intelligence engine. Use get_blast_radius to find \
                  what will break if you change a symbol, get_dependencies to see what \

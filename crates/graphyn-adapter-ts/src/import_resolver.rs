@@ -52,9 +52,16 @@ pub fn resolve_repo_ir(root: &Path, repo_ir: &mut RepoIR) {
                     rel.to = canonical.clone();
                     continue;
                 }
-                if let Some(found) = find_symbol_by_name_anywhere(&file_to_symbols, &type_name) {
+                if let Some(found) =
+                    find_symbol_by_name_in_file(&file_to_symbols, &file_ir.file, &type_name)
+                {
                     rel.to = found;
+                    continue;
                 }
+                file_ir.parse_errors.push(format!(
+                    "unable to resolve property-access type '{type_name}' in {}",
+                    file_ir.file
+                ));
             }
         }
 
@@ -132,13 +139,14 @@ fn pick_default_export_candidate(symbols: &[Symbol]) -> Option<&Symbol> {
         .find(|s| s.name != "module" && !matches!(s.kind, graphyn_core::ir::SymbolKind::Property))
 }
 
-fn find_symbol_by_name_anywhere(
+fn find_symbol_by_name_in_file(
     file_to_symbols: &HashMap<String, Vec<Symbol>>,
+    file: &str,
     name: &str,
 ) -> Option<String> {
-    let mut candidates: Vec<&Symbol> = file_to_symbols
-        .values()
-        .flat_map(|symbols| symbols.iter())
+    let symbols = file_to_symbols.get(file)?;
+    let mut candidates: Vec<&Symbol> = symbols
+        .iter()
         .filter(|symbol| symbol.name == name)
         .collect();
     candidates.sort_by(|a, b| a.file.cmp(&b.file).then(a.id.cmp(&b.id)));

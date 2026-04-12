@@ -7,6 +7,7 @@ use graphyn_core::resolver::{AliasEntry, AliasScope};
 use rocksdb::{Options, DB};
 
 const KEY_GRAPH_SNAPSHOT: &[u8] = b"graph_snapshot_v1";
+const SNAPSHOT_VERSION: u8 = 1;
 
 #[derive(Debug)]
 pub enum StoreError {
@@ -57,7 +58,7 @@ impl RocksGraphStore {
     }
 
     pub fn save_snapshot(&self, snapshot: &GraphSnapshot) -> Result<(), StoreError> {
-        let bytes = snapshot.to_bytes();
+        let bytes = snapshot.to_bytes()?;
         self.db
             .put(KEY_GRAPH_SNAPSHOT, bytes)
             .map_err(|err| StoreError::RocksDb(err.to_string()))
@@ -163,158 +164,126 @@ impl GraphSnapshot {
         Ok(graph)
     }
 
-    fn to_bytes(&self) -> Vec<u8> {
-        let mut out = String::new();
+    fn to_bytes(&self) -> Result<Vec<u8>, StoreError> {
+        let mut out = Vec::new();
 
-        out.push_str("[SYMBOLS]\n");
+        write_u8(&mut out, SNAPSHOT_VERSION);
+
+        write_u32(&mut out, self.symbols.len() as u32);
         for symbol in &self.symbols {
-            out.push_str(&format!(
-                "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n",
-                esc(&symbol.id),
-                esc(&symbol.name),
-                symbol_kind_to_str(&symbol.kind),
-                language_to_str(&symbol.language),
-                esc(&symbol.file),
-                symbol.line_start,
-                symbol.line_end,
-                esc(symbol.signature.as_deref().unwrap_or(""))
-            ));
+            write_string(&mut out, &symbol.id)?;
+            write_string(&mut out, &symbol.name)?;
+            write_u8(&mut out, symbol_kind_to_u8(&symbol.kind));
+            write_u8(&mut out, language_to_u8(&symbol.language));
+            write_string(&mut out, &symbol.file)?;
+            write_u32(&mut out, symbol.line_start);
+            write_u32(&mut out, symbol.line_end);
+            write_optional_string(&mut out, symbol.signature.as_deref())?;
         }
 
-        out.push_str("[RELATIONSHIPS]\n");
+        write_u32(&mut out, self.relationships.len() as u32);
         for relationship in &self.relationships {
-            out.push_str(&format!(
-                "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n",
-                esc(&relationship.from),
-                esc(&relationship.to),
-                relationship_kind_to_str(&relationship.kind),
-                esc(relationship.alias.as_deref().unwrap_or("")),
-                esc(&relationship.properties_accessed.join(",")),
-                esc(&relationship.context),
-                esc(&relationship.file),
-                relationship.line,
-            ));
+            write_string(&mut out, &relationship.from)?;
+            write_string(&mut out, &relationship.to)?;
+            write_u8(&mut out, relationship_kind_to_u8(&relationship.kind));
+            write_optional_string(&mut out, relationship.alias.as_deref())?;
+            write_u32(&mut out, relationship.properties_accessed.len() as u32);
+            for prop in &relationship.properties_accessed {
+                write_string(&mut out, prop)?;
+            }
+            write_string(&mut out, &relationship.context)?;
+            write_string(&mut out, &relationship.file)?;
+            write_u32(&mut out, relationship.line);
         }
 
-        out.push_str("[ALIASES]\n");
+        write_u32(&mut out, self.alias_chains.len() as u32);
         for (canonical, entries) in &self.alias_chains {
+            write_string(&mut out, canonical)?;
+            write_u32(&mut out, entries.len() as u32);
             for entry in entries {
-                out.push_str(&format!(
-                    "{}\t{}\t{}\t{}\n",
-                    esc(canonical),
-                    esc(&entry.alias_name),
-                    esc(&entry.defined_in_file),
-                    alias_scope_to_str(&entry.scope)
-                ));
+                write_string(&mut out, &entry.alias_name)?;
+                write_string(&mut out, &entry.defined_in_file)?;
+                write_u8(&mut out, alias_scope_to_u8(&entry.scope));
             }
         }
 
-        out.into_bytes()
+        Ok(out)
     }
 
     fn from_bytes(bytes: &[u8]) -> Result<Self, StoreError> {
-        let content = String::from_utf8(bytes.to_vec())
-            .map_err(|err| StoreError::Serialization(format!("invalid utf8 snapshot: {err}")))?;
+        let mut cursor = ByteCursor::new(bytes);
 
-        let mut section = "";
-        let mut symbols = Vec::new();
-        let mut relationships = Vec::new();
-        let mut aliases_map: std::collections::BTreeMap<String, Vec<AliasEntry>> =
-            std::collections::BTreeMap::new();
-
-        for line in content.lines() {
-            if line.is_empty() {
-                continue;
-            }
-            if line.starts_with('[') && line.ends_with(']') {
-                section = line;
-                continue;
-            }
-
-            let cols: Vec<&str> = line.split('\t').collect();
-            match section {
-                "[SYMBOLS]" => {
-                    if cols.len() != 8 {
-                        return Err(StoreError::Serialization(
-                            "invalid symbol row format".to_string(),
-                        ));
-                    }
-
-                    symbols.push(Symbol {
-                        id: unesc(cols[0]),
-                        name: unesc(cols[1]),
-                        kind: str_to_symbol_kind(cols[2])?,
-                        language: str_to_language(cols[3])?,
-                        file: unesc(cols[4]),
-                        line_start: cols[5]
-                            .parse::<u32>()
-                            .map_err(|err| StoreError::Serialization(err.to_string()))?,
-                        line_end: cols[6]
-                            .parse::<u32>()
-                            .map_err(|err| StoreError::Serialization(err.to_string()))?,
-                        signature: {
-                            let sig = unesc(cols[7]);
-                            if sig.is_empty() {
-                                None
-                            } else {
-                                Some(sig)
-                            }
-                        },
-                    });
-                }
-                "[RELATIONSHIPS]" => {
-                    if cols.len() != 8 {
-                        return Err(StoreError::Serialization(
-                            "invalid relationship row format".to_string(),
-                        ));
-                    }
-
-                    let properties_csv = unesc(cols[4]);
-                    let properties_accessed = if properties_csv.is_empty() {
-                        Vec::new()
-                    } else {
-                        properties_csv.split(',').map(|s| s.to_string()).collect()
-                    };
-
-                    relationships.push(Relationship {
-                        from: unesc(cols[0]),
-                        to: unesc(cols[1]),
-                        kind: str_to_relationship_kind(cols[2])?,
-                        alias: {
-                            let alias = unesc(cols[3]);
-                            if alias.is_empty() {
-                                None
-                            } else {
-                                Some(alias)
-                            }
-                        },
-                        properties_accessed,
-                        context: unesc(cols[5]),
-                        file: unesc(cols[6]),
-                        line: cols[7]
-                            .parse::<u32>()
-                            .map_err(|err| StoreError::Serialization(err.to_string()))?,
-                    });
-                }
-                "[ALIASES]" => {
-                    if cols.len() != 4 {
-                        return Err(StoreError::Serialization(
-                            "invalid alias row format".to_string(),
-                        ));
-                    }
-
-                    let canonical = unesc(cols[0]);
-                    aliases_map.entry(canonical).or_default().push(AliasEntry {
-                        alias_name: unesc(cols[1]),
-                        defined_in_file: unesc(cols[2]),
-                        scope: str_to_alias_scope(cols[3])?,
-                    });
-                }
-                _ => {}
-            }
+        let version = cursor.read_u8()?;
+        if version != SNAPSHOT_VERSION {
+            return Err(StoreError::Serialization(format!(
+                "unsupported snapshot version: {version}"
+            )));
         }
 
-        let alias_chains = aliases_map.into_iter().collect();
+        let symbol_count = cursor.read_u32()? as usize;
+        let mut symbols = Vec::with_capacity(symbol_count);
+        for _ in 0..symbol_count {
+            symbols.push(Symbol {
+                id: cursor.read_string()?,
+                name: cursor.read_string()?,
+                kind: u8_to_symbol_kind(cursor.read_u8()?)?,
+                language: u8_to_language(cursor.read_u8()?)?,
+                file: cursor.read_string()?,
+                line_start: cursor.read_u32()?,
+                line_end: cursor.read_u32()?,
+                signature: cursor.read_optional_string()?,
+            });
+        }
+
+        let rel_count = cursor.read_u32()? as usize;
+        let mut relationships = Vec::with_capacity(rel_count);
+        for _ in 0..rel_count {
+            let from = cursor.read_string()?;
+            let to = cursor.read_string()?;
+            let kind = u8_to_relationship_kind(cursor.read_u8()?)?;
+            let alias = cursor.read_optional_string()?;
+            let prop_count = cursor.read_u32()? as usize;
+            let mut properties_accessed = Vec::with_capacity(prop_count);
+            for _ in 0..prop_count {
+                properties_accessed.push(cursor.read_string()?);
+            }
+            let context = cursor.read_string()?;
+            let file = cursor.read_string()?;
+            let line = cursor.read_u32()?;
+
+            relationships.push(Relationship {
+                from,
+                to,
+                kind,
+                alias,
+                properties_accessed,
+                context,
+                file,
+                line,
+            });
+        }
+
+        let alias_chain_count = cursor.read_u32()? as usize;
+        let mut alias_chains = Vec::with_capacity(alias_chain_count);
+        for _ in 0..alias_chain_count {
+            let canonical = cursor.read_string()?;
+            let entry_count = cursor.read_u32()? as usize;
+            let mut entries = Vec::with_capacity(entry_count);
+            for _ in 0..entry_count {
+                entries.push(AliasEntry {
+                    alias_name: cursor.read_string()?,
+                    defined_in_file: cursor.read_string()?,
+                    scope: u8_to_alias_scope(cursor.read_u8()?)?,
+                });
+            }
+            alias_chains.push((canonical, entries));
+        }
+
+        if !cursor.is_at_end() {
+            return Err(StoreError::Serialization(
+                "trailing bytes found in snapshot".to_string(),
+            ));
+        }
 
         Ok(Self {
             symbols,
@@ -324,150 +293,200 @@ impl GraphSnapshot {
     }
 }
 
-fn esc(input: &str) -> String {
-    input
-        .replace('\\', "\\\\")
-        .replace('\t', "\\t")
-        .replace('\n', "\\n")
+struct ByteCursor<'a> {
+    bytes: &'a [u8],
+    pos: usize,
 }
 
-fn unesc(input: &str) -> String {
-    let mut out = String::new();
-    let mut chars = input.chars().peekable();
+impl<'a> ByteCursor<'a> {
+    fn new(bytes: &'a [u8]) -> Self {
+        Self { bytes, pos: 0 }
+    }
 
-    while let Some(ch) = chars.next() {
-        if ch == '\\' {
-            match chars.peek().copied() {
-                Some('t') => {
-                    let _ = chars.next();
-                    out.push('\t');
-                }
-                Some('n') => {
-                    let _ = chars.next();
-                    out.push('\n');
-                }
-                Some('\\') => {
-                    let _ = chars.next();
-                    out.push('\\');
-                }
-                Some(other) => {
-                    out.push(other);
-                    let _ = chars.next();
-                }
-                None => out.push(ch),
-            }
+    fn read_u8(&mut self) -> Result<u8, StoreError> {
+        if self.pos >= self.bytes.len() {
+            return Err(StoreError::Serialization(
+                "unexpected EOF reading u8".to_string(),
+            ));
+        }
+        let v = self.bytes[self.pos];
+        self.pos += 1;
+        Ok(v)
+    }
+
+    fn read_u32(&mut self) -> Result<u32, StoreError> {
+        if self.pos + 4 > self.bytes.len() {
+            return Err(StoreError::Serialization(
+                "unexpected EOF reading u32".to_string(),
+            ));
+        }
+        let mut arr = [0u8; 4];
+        arr.copy_from_slice(&self.bytes[self.pos..self.pos + 4]);
+        self.pos += 4;
+        Ok(u32::from_le_bytes(arr))
+    }
+
+    fn read_string(&mut self) -> Result<String, StoreError> {
+        let len = self.read_u32()? as usize;
+        if self.pos + len > self.bytes.len() {
+            return Err(StoreError::Serialization(
+                "unexpected EOF reading string".to_string(),
+            ));
+        }
+        let slice = &self.bytes[self.pos..self.pos + len];
+        self.pos += len;
+        String::from_utf8(slice.to_vec())
+            .map_err(|err| StoreError::Serialization(format!("invalid UTF-8 string: {err}")))
+    }
+
+    fn read_optional_string(&mut self) -> Result<Option<String>, StoreError> {
+        let has = self.read_u8()?;
+        if has == 0 {
+            Ok(None)
         } else {
-            out.push(ch);
+            Ok(Some(self.read_string()?))
         }
     }
 
-    out
-}
-
-fn symbol_kind_to_str(kind: &SymbolKind) -> &'static str {
-    match kind {
-        SymbolKind::Class => "Class",
-        SymbolKind::Interface => "Interface",
-        SymbolKind::TypeAlias => "TypeAlias",
-        SymbolKind::Function => "Function",
-        SymbolKind::Method => "Method",
-        SymbolKind::Property => "Property",
-        SymbolKind::Variable => "Variable",
-        SymbolKind::Module => "Module",
-        SymbolKind::Enum => "Enum",
-        SymbolKind::EnumVariant => "EnumVariant",
+    fn is_at_end(&self) -> bool {
+        self.pos == self.bytes.len()
     }
 }
 
-fn str_to_symbol_kind(input: &str) -> Result<SymbolKind, StoreError> {
+fn write_u8(out: &mut Vec<u8>, value: u8) {
+    out.push(value);
+}
+
+fn write_u32(out: &mut Vec<u8>, value: u32) {
+    out.extend_from_slice(&value.to_le_bytes());
+}
+
+fn write_string(out: &mut Vec<u8>, value: &str) -> Result<(), StoreError> {
+    let bytes = value.as_bytes();
+    let len = u32::try_from(bytes.len())
+        .map_err(|_| StoreError::Serialization("string too large".to_string()))?;
+    write_u32(out, len);
+    out.extend_from_slice(bytes);
+    Ok(())
+}
+
+fn write_optional_string(out: &mut Vec<u8>, value: Option<&str>) -> Result<(), StoreError> {
+    match value {
+        Some(value) => {
+            write_u8(out, 1);
+            write_string(out, value)
+        }
+        None => {
+            write_u8(out, 0);
+            Ok(())
+        }
+    }
+}
+
+fn symbol_kind_to_u8(kind: &SymbolKind) -> u8 {
+    match kind {
+        SymbolKind::Class => 1,
+        SymbolKind::Interface => 2,
+        SymbolKind::TypeAlias => 3,
+        SymbolKind::Function => 4,
+        SymbolKind::Method => 5,
+        SymbolKind::Property => 6,
+        SymbolKind::Variable => 7,
+        SymbolKind::Module => 8,
+        SymbolKind::Enum => 9,
+        SymbolKind::EnumVariant => 10,
+    }
+}
+
+fn u8_to_symbol_kind(input: u8) -> Result<SymbolKind, StoreError> {
     match input {
-        "Class" => Ok(SymbolKind::Class),
-        "Interface" => Ok(SymbolKind::Interface),
-        "TypeAlias" => Ok(SymbolKind::TypeAlias),
-        "Function" => Ok(SymbolKind::Function),
-        "Method" => Ok(SymbolKind::Method),
-        "Property" => Ok(SymbolKind::Property),
-        "Variable" => Ok(SymbolKind::Variable),
-        "Module" => Ok(SymbolKind::Module),
-        "Enum" => Ok(SymbolKind::Enum),
-        "EnumVariant" => Ok(SymbolKind::EnumVariant),
+        1 => Ok(SymbolKind::Class),
+        2 => Ok(SymbolKind::Interface),
+        3 => Ok(SymbolKind::TypeAlias),
+        4 => Ok(SymbolKind::Function),
+        5 => Ok(SymbolKind::Method),
+        6 => Ok(SymbolKind::Property),
+        7 => Ok(SymbolKind::Variable),
+        8 => Ok(SymbolKind::Module),
+        9 => Ok(SymbolKind::Enum),
+        10 => Ok(SymbolKind::EnumVariant),
         other => Err(StoreError::Serialization(format!(
-            "unknown symbol kind: {other}"
+            "unknown symbol kind code: {other}"
         ))),
     }
 }
 
-fn language_to_str(language: &Language) -> &'static str {
+fn language_to_u8(language: &Language) -> u8 {
     match language {
-        Language::TypeScript => "TypeScript",
-        Language::JavaScript => "JavaScript",
-        Language::Python => "Python",
-        Language::Rust => "Rust",
-        Language::Go => "Go",
-        Language::Java => "Java",
+        Language::TypeScript => 1,
+        Language::JavaScript => 2,
+        Language::Python => 3,
+        Language::Rust => 4,
+        Language::Go => 5,
+        Language::Java => 6,
     }
 }
 
-fn str_to_language(input: &str) -> Result<Language, StoreError> {
+fn u8_to_language(input: u8) -> Result<Language, StoreError> {
     match input {
-        "TypeScript" => Ok(Language::TypeScript),
-        "JavaScript" => Ok(Language::JavaScript),
-        "Python" => Ok(Language::Python),
-        "Rust" => Ok(Language::Rust),
-        "Go" => Ok(Language::Go),
-        "Java" => Ok(Language::Java),
+        1 => Ok(Language::TypeScript),
+        2 => Ok(Language::JavaScript),
+        3 => Ok(Language::Python),
+        4 => Ok(Language::Rust),
+        5 => Ok(Language::Go),
+        6 => Ok(Language::Java),
         other => Err(StoreError::Serialization(format!(
-            "unknown language: {other}"
+            "unknown language code: {other}"
         ))),
     }
 }
 
-fn relationship_kind_to_str(kind: &RelationshipKind) -> &'static str {
+fn relationship_kind_to_u8(kind: &RelationshipKind) -> u8 {
     match kind {
-        RelationshipKind::Imports => "Imports",
-        RelationshipKind::Calls => "Calls",
-        RelationshipKind::Extends => "Extends",
-        RelationshipKind::Implements => "Implements",
-        RelationshipKind::UsesType => "UsesType",
-        RelationshipKind::AccessesProperty => "AccessesProperty",
-        RelationshipKind::ReExports => "ReExports",
-        RelationshipKind::Instantiates => "Instantiates",
+        RelationshipKind::Imports => 1,
+        RelationshipKind::Calls => 2,
+        RelationshipKind::Extends => 3,
+        RelationshipKind::Implements => 4,
+        RelationshipKind::UsesType => 5,
+        RelationshipKind::AccessesProperty => 6,
+        RelationshipKind::ReExports => 7,
+        RelationshipKind::Instantiates => 8,
     }
 }
 
-fn str_to_relationship_kind(input: &str) -> Result<RelationshipKind, StoreError> {
+fn u8_to_relationship_kind(input: u8) -> Result<RelationshipKind, StoreError> {
     match input {
-        "Imports" => Ok(RelationshipKind::Imports),
-        "Calls" => Ok(RelationshipKind::Calls),
-        "Extends" => Ok(RelationshipKind::Extends),
-        "Implements" => Ok(RelationshipKind::Implements),
-        "UsesType" => Ok(RelationshipKind::UsesType),
-        "AccessesProperty" => Ok(RelationshipKind::AccessesProperty),
-        "ReExports" => Ok(RelationshipKind::ReExports),
-        "Instantiates" => Ok(RelationshipKind::Instantiates),
+        1 => Ok(RelationshipKind::Imports),
+        2 => Ok(RelationshipKind::Calls),
+        3 => Ok(RelationshipKind::Extends),
+        4 => Ok(RelationshipKind::Implements),
+        5 => Ok(RelationshipKind::UsesType),
+        6 => Ok(RelationshipKind::AccessesProperty),
+        7 => Ok(RelationshipKind::ReExports),
+        8 => Ok(RelationshipKind::Instantiates),
         other => Err(StoreError::Serialization(format!(
-            "unknown relationship kind: {other}"
+            "unknown relationship kind code: {other}"
         ))),
     }
 }
 
-fn alias_scope_to_str(scope: &AliasScope) -> &'static str {
+fn alias_scope_to_u8(scope: &AliasScope) -> u8 {
     match scope {
-        AliasScope::ImportAlias => "ImportAlias",
-        AliasScope::ReExport => "ReExport",
-        AliasScope::BarrelReExport => "BarrelReExport",
-        AliasScope::DefaultImport => "DefaultImport",
+        AliasScope::ImportAlias => 1,
+        AliasScope::ReExport => 2,
+        AliasScope::BarrelReExport => 3,
+        AliasScope::DefaultImport => 4,
     }
 }
 
-fn str_to_alias_scope(input: &str) -> Result<AliasScope, StoreError> {
+fn u8_to_alias_scope(input: u8) -> Result<AliasScope, StoreError> {
     match input {
-        "ImportAlias" => Ok(AliasScope::ImportAlias),
-        "ReExport" => Ok(AliasScope::ReExport),
-        "BarrelReExport" => Ok(AliasScope::BarrelReExport),
-        "DefaultImport" => Ok(AliasScope::DefaultImport),
+        1 => Ok(AliasScope::ImportAlias),
+        2 => Ok(AliasScope::ReExport),
+        3 => Ok(AliasScope::BarrelReExport),
+        4 => Ok(AliasScope::DefaultImport),
         other => Err(StoreError::Serialization(format!(
-            "unknown alias scope: {other}"
+            "unknown alias scope code: {other}"
         ))),
     }
 }
