@@ -23,7 +23,11 @@ pub fn format_blast_radius(
     // header
     let header = symbol_header(graph, symbol, file);
     out.push_str(&header);
-    out.push_str(&format!("\nBlast radius ({} dependent(s), depth={}):\n", edges.len(), depth));
+    out.push_str(&format!(
+        "\nBlast radius ({} dependent(s), depth={}):\n",
+        edges.len(),
+        depth
+    ));
 
     if edges.is_empty() {
         out.push_str("\nNo dependents found — safe to modify.\n");
@@ -79,14 +83,15 @@ fn format_blast_edge(graph: &GraphynGraph, edge: &QueryEdge) -> String {
     }
 
     if !edge.properties_accessed.is_empty() {
-        let props: Vec<String> = edge.properties_accessed.iter().map(|p| format!(".{p}")).collect();
+        let props: Vec<String> = edge
+            .properties_accessed
+            .iter()
+            .map(|p| format!(".{p}"))
+            .collect();
         out.push_str(&format!("    → accesses: {}\n", props.join(", ")));
     }
 
-    if !edge.context.is_empty()
-        && edge.context != "import"
-        && edge.context != "property access"
-    {
+    if !edge.context.is_empty() && edge.context != "import" && edge.context != "property access" {
         let ctx = if edge.context.len() > 80 {
             format!("{}…", &edge.context[..80])
         } else {
@@ -111,7 +116,11 @@ pub fn format_dependencies(
 
     let header = symbol_header(graph, symbol, file);
     out.push_str(&header);
-    out.push_str(&format!("\nDependencies ({} found, depth={}):\n", edges.len(), depth));
+    out.push_str(&format!(
+        "\nDependencies ({} found, depth={}):\n",
+        edges.len(),
+        depth
+    ));
 
     if edges.is_empty() {
         out.push_str("\nNo dependencies found — this symbol is self-contained.\n");
@@ -157,7 +166,10 @@ pub fn format_symbol_usages(
 
     let header = symbol_header(graph, symbol, file);
     out.push_str(&header);
-    out.push_str(&format!("\nUsages ({} found, including aliases):\n", edges.len()));
+    out.push_str(&format!(
+        "\nUsages ({} found, including aliases):\n",
+        edges.len()
+    ));
 
     if edges.is_empty() {
         out.push_str("\nNo usages found.\n");
@@ -170,13 +182,14 @@ pub fn format_symbol_usages(
             out.push_str(&format!("    → imports as {} ← ALIAS\n", alias));
         }
         if !edge.properties_accessed.is_empty() {
-            let props: Vec<String> =
-                edge.properties_accessed.iter().map(|p| format!(".{p}")).collect();
+            let props: Vec<String> = edge
+                .properties_accessed
+                .iter()
+                .map(|p| format!(".{p}"))
+                .collect();
             out.push_str(&format!("    → accesses: {}\n", props.join(", ")));
         }
-        if !edge.context.is_empty()
-            && edge.context != "import"
-            && edge.context != "property access"
+        if !edge.context.is_empty() && edge.context != "import" && edge.context != "property access"
         {
             let ctx = if edge.context.len() > 80 {
                 format!("{}…", &edge.context[..80])

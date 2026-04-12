@@ -12,8 +12,8 @@ use crate::output;
 const DEBOUNCE: Duration = Duration::from_millis(300);
 
 pub fn run(path: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let root = std::fs::canonicalize(path)
-        .map_err(|e| format!("cannot access '{}': {}", path, e))?;
+    let root =
+        std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?;
 
     output::banner("watch");
     output::info(&format!(
@@ -25,16 +25,14 @@ pub fn run(path: &str) -> Result<(), Box<dyn std::error::Error>> {
 
     // ── initial analysis ─────────────────────────────────────
     let start = Instant::now();
-    let repo_ir = analyze_repo(&root)
-        .map_err(|e| format!("initial analysis failed: {e}"))?;
+    let repo_ir = analyze_repo(&root).map_err(|e| format!("initial analysis failed: {e}"))?;
     let (graph, stats) = super::analyze::build_graph(&repo_ir);
 
     let db = super::db_path(&root);
     if let Some(parent) = db.parent() {
         std::fs::create_dir_all(parent)?;
     }
-    let store = RocksGraphStore::open(&db)
-        .map_err(|e| format!("failed to open store: {e}"))?;
+    let store = RocksGraphStore::open(&db).map_err(|e| format!("failed to open store: {e}"))?;
     store
         .save_graph(&graph)
         .map_err(|e| format!("failed to persist graph: {e}"))?;

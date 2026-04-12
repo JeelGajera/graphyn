@@ -21,9 +21,7 @@ pub fn run(port: u16, stdio: bool) -> Result<(), Box<dyn std::error::Error>> {
         let rt = tokio::runtime::Runtime::new()
             .map_err(|e| format!("failed to start async runtime: {e}"))?;
 
-        rt.block_on(async {
-            graphyn_mcp::server::serve_stdio(repo_root).await
-        })?;
+        rt.block_on(async { graphyn_mcp::server::serve_stdio(repo_root).await })?;
 
         Ok(())
     } else {

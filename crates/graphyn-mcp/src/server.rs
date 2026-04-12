@@ -7,11 +7,11 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use rmcp::model::ServerCapabilities;
-use rmcp::model::ServerInfo;
-use rmcp::{tool, tool_router, tool_handler, ServerHandler, ServiceExt};
 use rmcp::handler::server::router::tool::ToolRouter;
 use rmcp::handler::server::wrapper::Parameters;
+use rmcp::model::ServerCapabilities;
+use rmcp::model::ServerInfo;
+use rmcp::{tool, tool_handler, tool_router, ServerHandler, ServiceExt};
 
 use graphyn_core::graph::GraphynGraph;
 use graphyn_store::RocksGraphStore;
@@ -83,12 +83,12 @@ impl GraphynMcpServer {
 impl ServerHandler for GraphynMcpServer {
     fn get_info(&self) -> ServerInfo {
         ServerInfo::new(ServerCapabilities::builder().enable_tools().build())
-            .with_server_info(rmcp::model::Implementation::new("graphyn", "0.1.0-beta"))
+            .with_server_info(rmcp::model::Implementation::new("graphyn", env!("CARGO_PKG_VERSION")))
             .with_instructions(
                 "Graphyn is a code intelligence engine. Use get_blast_radius to find \
                  what will break if you change a symbol, get_dependencies to see what \
                  a symbol depends on, and get_symbol_usages to find every usage \
-                 including aliased imports."
+                 including aliased imports.",
             )
     }
 }
@@ -116,8 +116,7 @@ fn load_graph(repo_root: &Path) -> Result<GraphynGraph, String> {
             db.display(),
         ));
     }
-    let store =
-        RocksGraphStore::open(&db).map_err(|e| format!("failed to open store: {e}"))?;
+    let store = RocksGraphStore::open(&db).map_err(|e| format!("failed to open store: {e}"))?;
     store
         .load_graph()
         .map_err(|e| format!("failed to load graph: {e}"))

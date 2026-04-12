@@ -3,8 +3,8 @@ use graphyn_core::ir::SymbolKind;
 use crate::output;
 
 pub fn run(path: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let root = std::fs::canonicalize(path)
-        .map_err(|e| format!("cannot access '{}': {}", path, e))?;
+    let root =
+        std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?;
     let graph = super::analyze::load_graph(&root)?;
 
     output::banner("status");
@@ -18,14 +18,8 @@ pub fn run(path: &str) -> Result<(), Box<dyn std::error::Error>> {
     output::section("Graph Overview");
     output::stat_highlight("Symbols", &graph.symbols.len().to_string());
     output::stat_highlight("Relationships", &graph.graph.edge_count().to_string());
-    output::stat_highlight(
-        "Files indexed",
-        &graph.file_index.len().to_string(),
-    );
-    output::stat_highlight(
-        "Alias chains",
-        &graph.alias_chains.len().to_string(),
-    );
+    output::stat_highlight("Files indexed", &graph.file_index.len().to_string());
+    output::stat_highlight("Alias chains", &graph.alias_chains.len().to_string());
 
     // ── symbol breakdown ─────────────────────────────────────
     let mut kind_counts: std::collections::BTreeMap<String, usize> =
@@ -60,10 +54,7 @@ pub fn run(path: &str) -> Result<(), Box<dyn std::error::Error>> {
             );
         }
         if file_counts.len() > 10 {
-            output::dim_line(&format!(
-                "  … and {} more file(s)",
-                file_counts.len() - 10
-            ));
+            output::dim_line(&format!("  … and {} more file(s)", file_counts.len() - 10));
         }
     }
 

@@ -10,19 +10,21 @@ use graphyn_store::RocksGraphStore;
 use crate::output;
 
 pub fn run(path: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let root = std::fs::canonicalize(path)
-        .map_err(|e| format!("cannot access '{}': {}", path, e))?;
+    let root =
+        std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?;
 
     output::banner("analyze");
-    output::info(&format!("Analyzing {}", output::file_path(&root.display().to_string())));
+    output::info(&format!(
+        "Analyzing {}",
+        output::file_path(&root.display().to_string())
+    ));
     output::blank();
 
     let start = Instant::now();
 
     // ── 1. Parse with the TypeScript adapter ─────────────────
     output::step("Scanning files", "...");
-    let repo_ir = analyze_repo(&root)
-        .map_err(|e| format!("analysis failed: {e}"))?;
+    let repo_ir = analyze_repo(&root).map_err(|e| format!("analysis failed: {e}"))?;
 
     let file_count = repo_ir.files.len();
     let error_count: usize = repo_ir.files.iter().map(|f| f.parse_errors.len()).sum();
@@ -37,15 +39,17 @@ pub fn run(path: &str) -> Result<(), Box<dyn std::error::Error>> {
         "Built graph",
         &format!("{} symbols, {} edges", stats.symbols, stats.relationships),
     );
-    output::step("Resolved aliases", &format!("{} chain(s)", stats.alias_chains));
+    output::step(
+        "Resolved aliases",
+        &format!("{} chain(s)", stats.alias_chains),
+    );
 
     // ── 3. Persist ───────────────────────────────────────────
     let db = super::db_path(&root);
     if let Some(parent) = db.parent() {
         std::fs::create_dir_all(parent)?;
     }
-    let store = RocksGraphStore::open(&db)
-        .map_err(|e| format!("failed to open store: {e}"))?;
+    let store = RocksGraphStore::open(&db).map_err(|e| format!("failed to open store: {e}"))?;
     store
         .save_graph(&graph)
         .map_err(|e| format!("failed to persist graph: {e}"))?;
@@ -132,8 +136,7 @@ pub fn load_graph(repo_root: &Path) -> Result<GraphynGraph, Box<dyn std::error::
         )
         .into());
     }
-    let store = RocksGraphStore::open(&db)
-        .map_err(|e| format!("failed to open store: {e}"))?;
+    let store = RocksGraphStore::open(&db).map_err(|e| format!("failed to open store: {e}"))?;
     let graph = store
         .load_graph()
         .map_err(|e| format!("failed to load graph: {e}"))?;

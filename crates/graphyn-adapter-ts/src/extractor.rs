@@ -115,44 +115,68 @@ fn parse_import_and_reexport_lines(source: &str) -> Vec<ImportEntry> {
 
     for (idx, raw_line) in source.lines().enumerate() {
         let line = raw_line.trim();
+        if line.starts_with("//") || line.starts_with("/*") || line.starts_with('*') {
+            continue;
+        }
+
         if line.starts_with("import ") && line.contains(" from ") {
             if let Some(module_specifier) = parse_module_specifier(line) {
-                if line.starts_with("import {")
-                    || line.starts_with("import {")
-                    || line.contains(" import {")
-                {
-                    if let Some(named_block) = between(line, '{', '}') {
-                        for item in named_block
-                            .split(',')
-                            .map(str::trim)
-                            .filter(|s| !s.is_empty())
-                        {
-                            let (imported_name, local_name) = parse_aliased_item(item);
-                            out.push(ImportEntry {
-                                imported_name,
-                                local_name,
-                                module_specifier: module_specifier.clone(),
-                                kind: RelationshipKind::Imports,
-                                context: line.to_string(),
-                                line: (idx + 1) as u32,
-                            });
-                        }
+                let from_idx = line.find(" from ").unwrap();
+                let left_of_from = &line[..from_idx];
+
+                if let Some(named_block) = between(left_of_from, '{', '}') {
+                    for item in named_block
+                        .split(',')
+                        .map(str::trim)
+                        .filter(|s| !s.is_empty())
+                    {
+                        let (imported_name, local_name) = parse_aliased_item(item);
+                        out.push(ImportEntry {
+                            imported_name,
+                            local_name,
+                            module_specifier: module_specifier.clone(),
+                            kind: RelationshipKind::Imports,
+                            context: line.to_string(),
+                            line: (idx + 1) as u32,
+                        });
                     }
-                } else if let Some((left, _)) = line.split_once(" from ") {
-                    let default = left.trim_start_matches("import").trim();
-                    if !default.is_empty() {
-                        // Handles: import User from './x'
-                        let local_name = default
+                }
+
+                let rest = left_of_from.trim_start_matches("import").trim();
+                let outside_brace = if let Some(brace_idx) = rest.find('{') {
+                    rest[..brace_idx].trim().trim_end_matches(',').trim()
+                } else {
+                    rest
+                };
+
+                if !outside_brace.is_empty() {
+                    if outside_brace.starts_with('*') {
+                        if let Some((_, local_name)) = outside_brace.split_once(" as ") {
+                            let local_name = sanitize_identifier(local_name.trim());
+                            if !local_name.is_empty() {
+                                out.push(ImportEntry {
+                                    imported_name: "*".to_string(),
+                                    local_name: local_name.to_string(),
+                                    module_specifier: module_specifier.clone(),
+                                    kind: RelationshipKind::Imports,
+                                    context: line.to_string(),
+                                    line: (idx + 1) as u32,
+                                });
+                            }
+                        }
+                    } else {
+                        let local_name = outside_brace
                             .split(',')
                             .next()
-                            .unwrap_or(default)
+                            .unwrap_or(outside_brace)
                             .trim()
                             .to_string();
+                        let local_name = sanitize_identifier(&local_name);
                         if !local_name.is_empty() {
                             out.push(ImportEntry {
                                 imported_name: "default".to_string(),
-                                local_name,
-                                module_specifier,
+                                local_name: local_name.to_string(),
+                                module_specifier: module_specifier.clone(),
                                 kind: RelationshipKind::Imports,
                                 context: line.to_string(),
                                 line: (idx + 1) as u32,
@@ -165,33 +189,37 @@ fn parse_import_and_reexport_lines(source: &str) -> Vec<ImportEntry> {
 
         if line.starts_with("export ") && line.contains(" from ") {
             if let Some(module_specifier) = parse_module_specifier(line) {
-                if line.starts_with("export {") {
-                    if let Some(named_block) = between(line, '{', '}') {
-                        for item in named_block
-                            .split(',')
-                            .map(str::trim)
-                            .filter(|s| !s.is_empty())
-                        {
-                            let (imported_name, local_name) = parse_aliased_item(item);
-                            out.push(ImportEntry {
-                                imported_name,
-                                local_name,
-                                module_specifier: module_specifier.clone(),
-                                kind: RelationshipKind::ReExports,
-                                context: line.to_string(),
-                                line: (idx + 1) as u32,
-                            });
-                        }
+                let from_idx = line.find(" from ").unwrap();
+                let left_of_from = &line[..from_idx];
+
+                if let Some(named_block) = between(left_of_from, '{', '}') {
+                    for item in named_block
+                        .split(',')
+                        .map(str::trim)
+                        .filter(|s| !s.is_empty())
+                    {
+                        let (imported_name, local_name) = parse_aliased_item(item);
+                        out.push(ImportEntry {
+                            imported_name,
+                            local_name,
+                            module_specifier: module_specifier.clone(),
+                            kind: RelationshipKind::ReExports,
+                            context: line.to_string(),
+                            line: (idx + 1) as u32,
+                        });
                     }
-                } else if line.starts_with("export *") {
-                    out.push(ImportEntry {
-                        imported_name: "*".to_string(),
-                        local_name: "*".to_string(),
-                        module_specifier,
-                        kind: RelationshipKind::ReExports,
-                        context: line.to_string(),
-                        line: (idx + 1) as u32,
-                    });
+                } else {
+                    let rest = left_of_from.trim_start_matches("export").trim();
+                    if rest.starts_with('*') {
+                        out.push(ImportEntry {
+                            imported_name: "*".to_string(),
+                            local_name: "*".to_string(),
+                            module_specifier,
+                            kind: RelationshipKind::ReExports,
+                            context: line.to_string(),
+                            line: (idx + 1) as u32,
+                        });
+                    }
                 }
             }
         }

@@ -6,7 +6,7 @@ mod output;
 #[derive(Parser)]
 #[command(
     name = "graphyn",
-    version = "0.1.0-beta",
+    version,
     about = "⚡ Understand the blast radius before you pull the trigger.",
     long_about = "\
 Graphyn is a code intelligence engine that models your codebase as a \
@@ -18,7 +18,7 @@ QUICK START:\n  \
   graphyn query blast-radius UserPayload\n  \
   graphyn query usages UserPayload\n  \
   graphyn status",
-    author = "Graphyn Contributors",
+    author = "Graphyn Contributors"
 )]
 struct Cli {
     #[command(subcommand)]
@@ -134,28 +134,16 @@ fn main() {
                 file,
                 depth,
                 path,
-            } => commands::query::run_blast_radius(
-                &symbol,
-                file.as_deref(),
-                depth,
-                &path,
-            ),
-            QueryCommands::Usages {
-                symbol,
-                file,
-                path,
-            } => commands::query::run_usages(&symbol, file.as_deref(), &path),
+            } => commands::query::run_blast_radius(&symbol, file.as_deref(), depth, &path),
+            QueryCommands::Usages { symbol, file, path } => {
+                commands::query::run_usages(&symbol, file.as_deref(), &path)
+            }
             QueryCommands::Deps {
                 symbol,
                 file,
                 depth,
                 path,
-            } => commands::query::run_deps(
-                &symbol,
-                file.as_deref(),
-                depth,
-                &path,
-            ),
+            } => commands::query::run_deps(&symbol, file.as_deref(), depth, &path),
         },
 
         Commands::Watch { path } => commands::watch::run(&path),

@@ -26,9 +26,7 @@ const BOLD_BLUE: &str = "\x1b[1;34m";
 
 pub fn banner(subtitle: &str) {
     println!();
-    println!(
-        "  {BOLD_CYAN}⚡{RESET} {BOLD_CYAN}graphyn{RESET} {DIM}{subtitle}{RESET}"
-    );
+    println!("  {BOLD_CYAN}⚡{RESET} {BOLD_CYAN}graphyn{RESET} {DIM}{subtitle}{RESET}");
     println!("  {DIM}───────────────────────────────────────{RESET}");
     println!();
 }
@@ -37,9 +35,7 @@ pub fn section(title: &str) {
     let pad_len = 40usize.saturating_sub(title.len() + 5);
     let pad = "─".repeat(pad_len);
     println!();
-    println!(
-        "  {DIM}───{RESET} {BOLD}{title}{RESET} {DIM}{pad}{RESET}"
-    );
+    println!("  {DIM}───{RESET} {BOLD}{title}{RESET} {DIM}{pad}{RESET}");
     println!();
 }
 
@@ -132,9 +128,7 @@ pub fn bold_red(s: &str) -> String {
 // ── progress / timing ────────────────────────────────────────
 
 pub fn step(label: &str, detail: &str) {
-    println!(
-        "  {DIM}›{RESET} {label:<22} {DIM}{detail}{RESET}"
-    );
+    println!("  {DIM}›{RESET} {label:<22} {DIM}{detail}{RESET}");
 }
 
 pub fn done(msg: &str) {
