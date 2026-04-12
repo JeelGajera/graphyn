@@ -14,8 +14,8 @@ pub fn run_blast_radius(
     depth: usize,
     path: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let root = std::fs::canonicalize(path)
-        .map_err(|e| format!("cannot access '{}': {}", path, e))?;
+    let root =
+        std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?;
     let graph = super::analyze::load_graph(&root)?;
 
     output::banner("blast-radius");
@@ -39,10 +39,7 @@ pub fn run_blast_radius(
     output::section(&format!("{total} dependent(s) found"));
 
     if !direct.is_empty() {
-        println!(
-            "  {}",
-            output::bold(&format!("DIRECT ({})", direct.len()))
-        );
+        println!("  {}", output::bold(&format!("DIRECT ({})", direct.len())));
         output::blank();
         for (i, edge) in direct.iter().enumerate() {
             print_edge(i + 1, edge, &graph);
@@ -92,8 +89,8 @@ pub fn run_usages(
     file: Option<&str>,
     path: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let root = std::fs::canonicalize(path)
-        .map_err(|e| format!("cannot access '{}': {}", path, e))?;
+    let root =
+        std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?;
     let graph = super::analyze::load_graph(&root)?;
 
     output::banner("usages");
@@ -125,8 +122,8 @@ pub fn run_deps(
     depth: usize,
     path: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let root = std::fs::canonicalize(path)
-        .map_err(|e| format!("cannot access '{}': {}", path, e))?;
+    let root =
+        std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?;
     let graph = super::analyze::load_graph(&root)?;
 
     output::banner("dependencies");
@@ -143,7 +140,11 @@ pub fn run_deps(
         return Ok(());
     }
 
-    let noun = if edges.len() == 1 { "dependency" } else { "dependencies" };
+    let noun = if edges.len() == 1 {
+        "dependency"
+    } else {
+        "dependencies"
+    };
     output::section(&format!("{} {} found", edges.len(), noun));
     for (i, edge) in edges.iter().enumerate() {
         print_dep_edge(i + 1, edge, &graph);
@@ -193,11 +194,7 @@ fn print_symbol_header(graph: &GraphynGraph, symbol: &str, file: Option<&str>) {
 
 fn print_edge(index: usize, edge: &QueryEdge, graph: &GraphynGraph) {
     let num = output::dim(&format!("{index:>3}."));
-    let location = format!(
-        "{}:{}",
-        output::file_path(&edge.file),
-        edge.line,
-    );
+    let location = format!("{}:{}", output::file_path(&edge.file), edge.line,);
 
     println!("  {num} {location}");
 
@@ -226,11 +223,7 @@ fn print_edge(index: usize, edge: &QueryEdge, graph: &GraphynGraph) {
             .iter()
             .map(|p| output::property_name(p))
             .collect();
-        println!(
-            "       {} accesses {}",
-            output::dim("→"),
-            props.join(", "),
-        );
+        println!("       {} accesses {}", output::dim("→"), props.join(", "),);
     }
 
     // context (truncated)
@@ -275,11 +268,7 @@ fn print_dep_edge(index: usize, edge: &QueryEdge, graph: &GraphynGraph) {
         .map(|s| format_kind(&s.kind).to_string())
         .unwrap_or_default();
 
-    let location = format!(
-        "{}:{}",
-        output::file_path(&edge.file),
-        edge.line,
-    );
+    let location = format!("{}:{}", output::file_path(&edge.file), edge.line,);
 
     println!(
         "  {num} {} {} {}",

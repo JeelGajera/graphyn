@@ -28,7 +28,11 @@ pub fn resolve_repo_ir(root: &Path, repo_ir: &mut RepoIR) {
                 );
                 for rel in expansions {
                     if relationship.kind == RelationshipKind::Imports {
-                        if let Some(local_name) = local_name_from_import_context(&rel.context) {
+                        let local_name = rel
+                            .alias
+                            .clone()
+                            .unwrap_or_else(|| rel.to.split("::").nth(1).unwrap_or("").to_string());
+                        if !local_name.is_empty() {
                             local_alias_to_symbol_id.insert(local_name, rel.to.clone());
                         }
                     }
@@ -139,27 +143,6 @@ fn find_symbol_by_name_anywhere(
         .collect();
     candidates.sort_by(|a, b| a.file.cmp(&b.file).then(a.id.cmp(&b.id)));
     candidates.first().map(|s| s.id.clone())
-}
-
-fn local_name_from_import_context(context: &str) -> Option<String> {
-    if let Some(named) = context.split('{').nth(1).and_then(|s| s.split('}').next()) {
-        // first item is enough for matching typed variable aliases used by tests
-        let first = named.split(',').next()?.trim();
-        if let Some((_, local)) = first.split_once(" as ") {
-            return Some(local.trim().to_string());
-        }
-        return Some(first.trim().to_string());
-    }
-
-    if context.starts_with("import ") {
-        let rest = context.trim_start_matches("import ");
-        let local = rest.split(" from ").next()?.trim();
-        if !local.is_empty() {
-            return Some(local.split(',').next()?.trim().to_string());
-        }
-    }
-
-    None
 }
 
 fn resolve_target_file(root: &Path, from_file: &str, module_specifier: &str) -> Option<String> {

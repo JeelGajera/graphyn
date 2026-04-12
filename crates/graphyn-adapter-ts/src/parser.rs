@@ -25,7 +25,7 @@ pub fn parse_file(root: &Path, path: &Path) -> Result<ParsedFile, String> {
         .strip_prefix(root)
         .unwrap_or(path)
         .to_string_lossy()
-        .to_string();
+        .replace('\\', "/");
 
     let parse_errors = collect_parse_errors(tree.root_node(), &source);
 
