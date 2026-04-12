@@ -21,7 +21,7 @@ pub struct DependenciesParams {
 }
 
 pub fn execute(graph: &GraphynGraph, params: DependenciesParams) -> Result<String, String> {
-    let depth = params.depth.unwrap_or(3).max(1).min(10) as usize;
+    let depth = params.depth.unwrap_or(3).clamp(1, 10) as usize;
 
     let edges = query::dependencies(graph, &params.symbol, params.file.as_deref(), Some(depth))
         .map_err(|e| format!("{e}"))?;

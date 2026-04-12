@@ -24,6 +24,7 @@ pub struct GraphynMcpServer {
     graph: Arc<GraphynGraph>,
     #[allow(dead_code)]
     repo_root: PathBuf,
+    #[allow(dead_code)]
     tool_router: ToolRouter<Self>,
 }
 
