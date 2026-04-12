@@ -7,3 +7,15 @@ members = [
   "crates/graphyn-cli",
 ]
 resolver = "2"
+
+[workspace.package]
+description = "Code intelligence engine — understand the blast radius before you pull the trigger"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+license = "Apache-2.0"
+repository = "https://github.com/JeelGajera/graphyn"
+homepage = "https://github.com/JeelGajera/graphyn"
+authors = ["Jeel Gajera"]
+categories = ["development-tools", "command-line-utilities", "parser-implementations"]
+keywords = ["mcp", "code-intelligence", "blast-radius", "dependency-graph"]

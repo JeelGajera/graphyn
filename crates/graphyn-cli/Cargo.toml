@@ -1,7 +1,15 @@
 [package]
 name = "graphyn-cli"
-version = "0.1.0"
-edition = "2021"
+description = "Developer CLI for Graphyn — analyze, query, watch, and serve code intelligence"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+categories.workspace = true
+keywords.workspace = true
 
 [[bin]]
 name = "graphyn"
@@ -11,7 +19,7 @@ path = "src/main.rs"
 clap = { version = "4", features = ["derive"] }
 notify = "6"
 tokio = { version = "1", features = ["full"] }
-graphyn-core = { path = "../graphyn-core" }
-graphyn-adapter-ts = { path = "../graphyn-adapter-ts" }
-graphyn-store = { path = "../graphyn-store" }
-graphyn-mcp = { path = "../graphyn-mcp" }
+graphyn-core = { path = "../graphyn-core", version = "0.1.0" }
+graphyn-adapter-ts = { path = "../graphyn-adapter-ts", version = "0.1.0" }
+graphyn-store = { path = "../graphyn-store", version = "0.1.0" }
+graphyn-mcp = { path = "../graphyn-mcp", version = "0.1.0" }

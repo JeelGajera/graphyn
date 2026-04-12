@@ -1,11 +1,19 @@
 [package]
 name = "graphyn-adapter-ts"
-version = "0.1.0"
-edition = "2021"
+description = "TypeScript/JavaScript adapter for Graphyn — tree-sitter based code parser"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+categories.workspace = true
+keywords.workspace = true
 
 [dependencies]
 tree-sitter = "0.22"
 tree-sitter-typescript = "0.21"
 tree-sitter-javascript = "0.21"
 walkdir = "2"
-graphyn-core = { path = "../graphyn-core" }
+graphyn-core = { path = "../graphyn-core", version = "0.1.0" }
