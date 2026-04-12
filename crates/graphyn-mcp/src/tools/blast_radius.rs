@@ -22,7 +22,7 @@ pub struct BlastRadiusParams {
 }
 
 pub fn execute(graph: &GraphynGraph, params: BlastRadiusParams) -> Result<String, String> {
-    let depth = params.depth.unwrap_or(3).max(1).min(10) as usize;
+    let depth = params.depth.unwrap_or(3).clamp(1, 10) as usize;
 
     let edges = query::blast_radius(graph, &params.symbol, params.file.as_deref(), Some(depth))
         .map_err(|e| format!("{e}"))?;
