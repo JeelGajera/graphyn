@@ -119,3 +119,36 @@ fn test_load_graph_without_snapshot_returns_not_found() {
 
     let _ = std::fs::remove_dir_all(&path);
 }
+
+#[test]
+fn test_snapshot_round_trip_preserves_literal_backslash_sequences() {
+    let graph = make_graph();
+
+    let model_id = "models/user_payload.ts::UserPayload::class";
+    {
+        let mut model = graph
+            .symbols
+            .get_mut(model_id)
+            .expect("model symbol exists");
+        model.signature = Some("class UserPayload { note: \"\\\\t\\\\n\" }".to_string());
+    }
+
+    let path = temp_db_path("backslash-roundtrip");
+    {
+        let store = RocksGraphStore::open(&path).expect("db open");
+        store.save_graph(&graph).expect("graph saved");
+    }
+
+    let restored = {
+        let store = RocksGraphStore::open(&path).expect("db open");
+        store.load_graph().expect("graph loaded")
+    };
+    let restored_sig = restored
+        .symbols
+        .get(model_id)
+        .and_then(|s| s.signature.clone())
+        .expect("restored signature exists");
+    assert_eq!(restored_sig, "class UserPayload { note: \"\\\\t\\\\n\" }");
+
+    let _ = std::fs::remove_dir_all(&path);
+}

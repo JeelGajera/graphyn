@@ -106,6 +106,45 @@ fn test_symbol_usages_dedupes_by_file_line() {
 }
 
 #[test]
+fn test_symbol_usages_respects_include_aliases_flag() {
+    let mut graph = GraphynGraph::new();
+
+    let target = symbol("t.ts::Target::class", "Target", "t.ts", SymbolKind::Class);
+    let direct = symbol(
+        "d.ts::DirectUser::class",
+        "DirectUser",
+        "d.ts",
+        SymbolKind::Class,
+    );
+    let alias_user = symbol(
+        "a.ts::AliasUser::class",
+        "AliasUser",
+        "a.ts",
+        SymbolKind::Class,
+    );
+
+    graph.add_symbol(target.clone());
+    graph.add_symbol(direct.clone());
+    graph.add_symbol(alias_user.clone());
+
+    let mut direct_rel = rel(&direct.id, &target.id, "d.ts", 10);
+    direct_rel.alias = None;
+    let mut alias_rel = rel(&alias_user.id, &target.id, "a.ts", 20);
+    alias_rel.alias = Some("AliasT".to_string());
+
+    graph.add_relationship(&direct_rel);
+    graph.add_relationship(&alias_rel);
+
+    let with_aliases = symbol_usages(&graph, "Target", None, true).expect("with aliases");
+    assert_eq!(with_aliases.len(), 2);
+
+    let without_aliases = symbol_usages(&graph, "Target", None, false).expect("without aliases");
+    assert_eq!(without_aliases.len(), 1);
+    assert_eq!(without_aliases[0].from, direct.id);
+    assert!(without_aliases[0].alias.is_none());
+}
+
+#[test]
 fn test_incremental_replace_file_preserves_indexes() {
     let mut graph = GraphynGraph::new();
 
