@@ -5,7 +5,7 @@
 //! JSON-RPC over stdin/stdout.
 
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
 use rmcp::handler::server::router::tool::ToolRouter;
 use rmcp::handler::server::wrapper::Parameters;
@@ -16,12 +16,12 @@ use rmcp::{tool, tool_handler, tool_router, ServerHandler, ServiceExt};
 use graphyn_core::graph::GraphynGraph;
 use graphyn_store::RocksGraphStore;
 
-use crate::tools::{blast_radius, dependencies, symbol_usages};
+use crate::tools::{blast_radius, dependencies, refresh_graph, symbol_usages};
 
 /// The Graphyn MCP server. Holds a loaded graph and tool router.
 #[derive(Clone)]
 pub struct GraphynMcpServer {
-    graph: Arc<GraphynGraph>,
+    graph: Arc<RwLock<GraphynGraph>>,
     #[allow(dead_code)]
     repo_root: PathBuf,
     #[allow(dead_code)]
@@ -34,7 +34,7 @@ impl GraphynMcpServer {
     pub fn new(repo_root: PathBuf) -> Result<Self, String> {
         let graph = load_graph(&repo_root)?;
         Ok(Self {
-            graph: Arc::new(graph),
+            graph: Arc::new(RwLock::new(graph)),
             repo_root,
             tool_router: Self::tool_router(),
         })
@@ -50,7 +50,11 @@ impl GraphynMcpServer {
         &self,
         params: Parameters<blast_radius::BlastRadiusParams>,
     ) -> Result<String, String> {
-        blast_radius::execute(&self.graph, params.0)
+        let graph = self
+            .graph
+            .read()
+            .map_err(|_| "graph lock poisoned".to_string())?;
+        blast_radius::execute(&graph, params.0)
     }
 
     /// Returns everything a given symbol depends on — its full dependency tree.
@@ -62,7 +66,11 @@ impl GraphynMcpServer {
         &self,
         params: Parameters<dependencies::DependenciesParams>,
     ) -> Result<String, String> {
-        dependencies::execute(&self.graph, params.0)
+        let graph = self
+            .graph
+            .read()
+            .map_err(|_| "graph lock poisoned".to_string())?;
+        dependencies::execute(&graph, params.0)
     }
 
     /// Finds all usages of a symbol across the codebase, including under
@@ -75,7 +83,39 @@ impl GraphynMcpServer {
         &self,
         params: Parameters<symbol_usages::SymbolUsagesParams>,
     ) -> Result<String, String> {
-        symbol_usages::execute(&self.graph, params.0)
+        let graph = self
+            .graph
+            .read()
+            .map_err(|_| "graph lock poisoned".to_string())?;
+        symbol_usages::execute(&graph, params.0)
+    }
+
+    /// Rebuild and persist the graph index. Agents can call this after code changes.
+    #[tool(
+        name = "refresh_graph_index",
+        description = "Re-analyzes the repository and updates the persisted graph index. Supports include/exclude filters and .gitignore respect."
+    )]
+    async fn refresh_graph_index(
+        &self,
+        params: Parameters<refresh_graph::RefreshGraphParams>,
+    ) -> Result<String, String> {
+        let (new_graph, result) = refresh_graph::execute(&self.repo_root, params.0)?;
+        {
+            let mut graph = self
+                .graph
+                .write()
+                .map_err(|_| "graph lock poisoned".to_string())?;
+            *graph = new_graph;
+        }
+
+        Ok(format!(
+            "Graph index refreshed successfully.\nFiles indexed: {}\nSymbols: {}\nRelationships: {}\nAlias chains: {}\nParse errors: {}",
+            result.files_indexed,
+            result.symbols,
+            result.relationships,
+            result.alias_chains,
+            result.parse_errors
+        ))
     }
 }
 
@@ -90,8 +130,8 @@ impl ServerHandler for GraphynMcpServer {
             .with_instructions(
                 "Graphyn is a code intelligence engine. Use get_blast_radius to find \
                  what will break if you change a symbol, get_dependencies to see what \
-                 a symbol depends on, and get_symbol_usages to find every usage \
-                 including aliased imports.",
+                 a symbol depends on, get_symbol_usages to find every usage \
+                 including aliased imports, and refresh_graph_index after repository changes.",
             )
     }
 }

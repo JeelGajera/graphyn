@@ -1,15 +1,22 @@
 use std::path::Path;
 use std::time::Instant;
 
-use graphyn_adapter_ts::analyze_repo;
+use graphyn_adapter_ts::analyze_files;
+use graphyn_adapter_ts::language::is_supported_source_file;
 use graphyn_core::graph::GraphynGraph;
 use graphyn_core::ir::RepoIR;
 use graphyn_core::resolver::AliasResolver;
+use graphyn_core::scan::{parse_csv_patterns, walk_source_files_with_config, ScanConfig};
 use graphyn_store::RocksGraphStore;
 
 use crate::output;
 
-pub fn run(path: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub fn run(
+    path: &str,
+    include_csv: Option<&str>,
+    exclude_csv: Option<&str>,
+    respect_gitignore: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
     let root =
         std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?;
 
@@ -24,7 +31,16 @@ pub fn run(path: &str) -> Result<(), Box<dyn std::error::Error>> {
 
     // ── 1. Parse with the TypeScript adapter ─────────────────
     output::step("Scanning files", "...");
-    let repo_ir = analyze_repo(&root).map_err(|e| format!("analysis failed: {e}"))?;
+    let scan_config = ScanConfig {
+        include_patterns: parse_csv_patterns(include_csv),
+        exclude_patterns: parse_csv_patterns(exclude_csv),
+        respect_gitignore,
+    };
+
+    let files = walk_source_files_with_config(&root, &scan_config, is_supported_source_file)
+        .map_err(|e| format!("scan failed: {e}"))?;
+
+    let repo_ir = analyze_files(&root, &files).map_err(|e| format!("analysis failed: {e}"))?;
 
     let file_count = repo_ir.files.len();
     let error_count: usize = repo_ir.files.iter().map(|f| f.parse_errors.len()).sum();
@@ -66,6 +82,20 @@ pub fn run(path: &str) -> Result<(), Box<dyn std::error::Error>> {
     output::stat_highlight("Relationships", &stats.relationships.to_string());
     output::stat_highlight("Files indexed", &file_count.to_string());
     output::stat_highlight("Alias chains", &stats.alias_chains.to_string());
+    output::stat(
+        "Respect .gitignore",
+        if scan_config.respect_gitignore {
+            "yes"
+        } else {
+            "no"
+        },
+    );
+    if !scan_config.include_patterns.is_empty() {
+        output::stat("Include", &scan_config.include_patterns.join(", "));
+    }
+    if !scan_config.exclude_patterns.is_empty() {
+        output::stat("Exclude", &scan_config.exclude_patterns.join(", "));
+    }
 
     if !repo_ir.language_stats.is_empty() {
         output::blank();

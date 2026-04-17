@@ -9,6 +9,9 @@ MCP server crate for exposing Graphyn queries to coding agents.
 - `get_blast_radius`
 - `get_dependencies`
 - `get_symbol_usages`
+- `refresh_graph_index`
+
+`refresh_graph_index` lets agents trigger a re-analysis and update the in-memory graph without restarting the MCP server.
 
 ## Main entrypoint
 

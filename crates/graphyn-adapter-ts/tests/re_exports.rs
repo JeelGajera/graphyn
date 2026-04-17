@@ -1,6 +1,29 @@
 use std::path::PathBuf;
 
-use graphyn_adapter_ts::analyze_repo;
+use graphyn_adapter_ts::analyze_files;
+use graphyn_adapter_ts::language::is_supported_source_file;
+use graphyn_core::scan::{walk_source_files_with_config, ScanConfig};
+
+fn analyze_repo(
+    root: &std::path::Path,
+) -> Result<graphyn_core::ir::RepoIR, graphyn_adapter_ts::AdapterTsError> {
+    let files = walk_source_files_with_config(
+        root,
+        &ScanConfig::default_enabled(),
+        is_supported_source_file,
+    )
+    .unwrap();
+    analyze_files(root, &files)
+}
+
+fn analyze_repo_with_config(
+    root: &std::path::Path,
+    config: &ScanConfig,
+) -> Result<graphyn_core::ir::RepoIR, graphyn_adapter_ts::AdapterTsError> {
+    let files = walk_source_files_with_config(root, config, is_supported_source_file).unwrap();
+    analyze_files(root, &files)
+}
+
 use graphyn_core::ir::RelationshipKind;
 
 #[test]

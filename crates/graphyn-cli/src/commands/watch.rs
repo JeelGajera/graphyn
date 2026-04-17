@@ -3,7 +3,12 @@ use std::path::Path;
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 
-use graphyn_adapter_ts::analyze_repo;
+use graphyn_adapter_ts::analyze_files;
+use graphyn_adapter_ts::language::is_supported_source_file;
+use graphyn_core::scan::{
+    load_root_gitignore_rules, parse_csv_patterns, should_include_relative_path,
+    walk_source_files_with_config, GitignoreRule, ScanConfig,
+};
 use graphyn_store::RocksGraphStore;
 use notify::{RecursiveMode, Watcher};
 
@@ -11,7 +16,12 @@ use crate::output;
 
 const DEBOUNCE: Duration = Duration::from_millis(300);
 
-pub fn run(path: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub fn run(
+    path: &str,
+    include_csv: Option<&str>,
+    exclude_csv: Option<&str>,
+    respect_gitignore: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
     let root =
         std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?;
 
@@ -23,9 +33,23 @@ pub fn run(path: &str) -> Result<(), Box<dyn std::error::Error>> {
     output::dim_line("Press Ctrl+C to stop.");
     output::blank();
 
+    let scan_config = ScanConfig {
+        include_patterns: parse_csv_patterns(include_csv),
+        exclude_patterns: parse_csv_patterns(exclude_csv),
+        respect_gitignore,
+    };
+    let gitignore_rules = if scan_config.respect_gitignore {
+        load_root_gitignore_rules(&root)
+    } else {
+        Vec::new()
+    };
+
     // ── initial analysis ─────────────────────────────────────
     let start = Instant::now();
-    let repo_ir = analyze_repo(&root).map_err(|e| format!("initial analysis failed: {e}"))?;
+    let files = walk_source_files_with_config(&root, &scan_config, is_supported_source_file)
+        .map_err(|e| format!("initial scan failed: {e}"))?;
+    let repo_ir =
+        analyze_files(&root, &files).map_err(|e| format!("initial analysis failed: {e}"))?;
     let (graph, stats) = super::analyze::build_graph(&repo_ir);
 
     let db = super::db_path(&root);
@@ -60,11 +84,11 @@ pub fn run(path: &str) -> Result<(), Box<dyn std::error::Error>> {
         match rx.recv_timeout(Duration::from_millis(100)) {
             Ok(Ok(event)) => {
                 for path in &event.paths {
-                    if is_watchable(path, &root) {
+                    if is_watchable(path, &root, &scan_config, &gitignore_rules) {
                         if let Some(rel) = path
                             .strip_prefix(&root)
                             .ok()
-                            .map(|p| p.display().to_string())
+                            .map(|p| p.to_string_lossy().replace('\\', "/"))
                         {
                             pending.insert(rel);
                         }
@@ -79,7 +103,7 @@ pub fn run(path: &str) -> Result<(), Box<dyn std::error::Error>> {
                 // check debounce window
                 if !pending.is_empty() && last_event.elapsed() >= DEBOUNCE {
                     let files: Vec<String> = pending.drain().collect();
-                    handle_change(&root, &store, &files);
+                    handle_change(&root, &store, &files, &scan_config);
                 }
             }
             Err(mpsc::RecvTimeoutError::Disconnected) => {
@@ -92,7 +116,7 @@ pub fn run(path: &str) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn handle_change(root: &Path, store: &RocksGraphStore, files: &[String]) {
+fn handle_change(root: &Path, store: &RocksGraphStore, files: &[String], scan_config: &ScanConfig) {
     let file_list = files
         .iter()
         .map(|f| output::file_path(f))
@@ -103,7 +127,13 @@ fn handle_change(root: &Path, store: &RocksGraphStore, files: &[String]) {
     print!("  {}      Re-analyzing … ", output::dim(""));
 
     let start = Instant::now();
-    match analyze_repo(root) {
+    let scan_res = walk_source_files_with_config(root, scan_config, is_supported_source_file);
+    let repo_ir_res = scan_res.and_then(|files| {
+        analyze_files(root, &files)
+            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, format!("{e}")))
+    });
+
+    match repo_ir_res {
         Ok(repo_ir) => {
             let (graph, stats) = super::analyze::build_graph(&repo_ir);
             match store.save_graph(&graph) {
@@ -128,22 +158,25 @@ fn handle_change(root: &Path, store: &RocksGraphStore, files: &[String]) {
     println!();
 }
 
-fn is_watchable(path: &Path, root: &Path) -> bool {
-    // skip .graphyn/ directory and hidden files
-    if let Ok(relative) = path.strip_prefix(root) {
-        let rel_str = relative.display().to_string();
-        if rel_str.starts_with(".graphyn")
-            || rel_str.contains("/node_modules/")
-            || rel_str.contains("/.git/")
-        {
-            return false;
-        }
-    }
-
+fn is_watchable(
+    path: &Path,
+    root: &Path,
+    scan_config: &ScanConfig,
+    gitignore_rules: &[GitignoreRule],
+) -> bool {
+    // skip unsupported extensions quickly
     let ext = path
         .extension()
         .and_then(|e| e.to_str())
         .unwrap_or_default();
+    if !matches!(ext, "ts" | "tsx" | "js" | "jsx") {
+        return false;
+    }
 
-    matches!(ext, "ts" | "tsx" | "js" | "jsx")
+    if let Ok(relative) = path.strip_prefix(root) {
+        let rel_str = relative.to_string_lossy().replace('\\', "/");
+        return should_include_relative_path(&rel_str, false, scan_config, gitignore_rules);
+    }
+
+    false
 }

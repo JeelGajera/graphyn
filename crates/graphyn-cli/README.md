@@ -6,20 +6,24 @@ Command-line interface for Graphyn.
 
 ## Commands
 
-- `graphyn analyze <path>`
+- `graphyn analyze <path> [--include <csv>] [--exclude <csv>] [--no-gitignore]`
 - `graphyn query blast-radius <symbol> [--file <path>] [--depth <n>]`
 - `graphyn query usages <symbol> [--file <path>]`
 - `graphyn query deps <symbol> [--file <path>] [--depth <n>]`
-- `graphyn watch <path>`
+- `graphyn watch <path> [--include <csv>] [--exclude <csv>] [--no-gitignore]`
 - `graphyn serve [--stdio | --port 7700]`
 - `graphyn status <path>`
 
-## Example flow
+## Scan filtering
+
+- `.gitignore` is respected by default for `analyze` and `watch`.
+- `--include` and `--exclude` accept comma-separated multiple patterns.
+- `--exclude` has higher priority than `--include`.
+
+Example:
 
 ```bash
-graphyn analyze ./my-repo
-graphyn query blast-radius UserPayload --depth 3
-graphyn serve --stdio
+graphyn analyze . --include "src/**,packages/api/**" --exclude "**/*.test.ts,dist/**"
 ```
 
 ## Notes

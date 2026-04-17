@@ -5,6 +5,7 @@ pub mod index;
 pub mod ir;
 pub mod query;
 pub mod resolver;
+pub mod scan;
 
 pub use error::GraphynError;
 pub use graph::{GraphynGraph, RelationshipMeta};
