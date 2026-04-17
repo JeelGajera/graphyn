@@ -249,8 +249,17 @@ Graphyn exposes three tools via MCP:
 | `get_blast_radius` | What will break if I change symbol X? |
 | `get_dependencies` | What does symbol X depend on? |
 | `get_symbol_usages` | Where is symbol X used, including aliases? |
+| `refresh_graph` | Forces Graphyn to immediately re-scan files and rebuild the graph. |
 
-All three tools resolve aliased imports and track property-level access by default.
+All tools resolve aliased imports and track property-level access by default.
+
+### 🤖 Agent Skills & Filtering (For Coding Agents)
+
+Graphyn honors `.gitignore` by default. If your agent is failing to find symbols, it may be because you are working on files that are gitignored (e.g., inside `dist/`, or uncommitted scratch files). 
+
+As an agent, you can override blocklists:
+- **CLI Commands**: Pass `--no-gitignore`, `--include="src/**/*.ts"`, or `--exclude="tests/**"` to `graphyn analyze` or `graphyn watch`.
+- **MCP Auto-Sync**: The `refresh_graph` MCP tool accepts `respect_gitignore`, `include`, and `exclude` keys. If you generate a massive file and need it synced to the graph immediately without waiting for a watcher, invoke `refresh_graph({ "path": "." })`.
 
 ---
 
@@ -278,14 +287,12 @@ The graph lives in memory. Queries traverse in-memory edges with no network or d
 | Go | v2 — planned |
 | Java | v2 — planned |
 
-Adding a new language means writing a new adapter crate that outputs the [standard IR](docs/ir-spec.md). The core graph engine never changes.
-
 ---
 
 ## Building from source
 
 ```bash
-git clone https://github.com/avax-labs/graphyn
+git clone https://github.com/JeelGajera/graphyn
 cd graphyn
 cargo build --release
 ```
@@ -294,25 +301,6 @@ Run all tests:
 ```bash
 cargo test --workspace
 ```
-
----
-
-## Status
-
-**v0.1.0-beta** — TypeScript/JavaScript support is complete. All core features are implemented and tested.
-
-- [x] Core graph engine with alias resolution
-- [x] TypeScript/JavaScript adapter (tree-sitter)
-- [x] Blast radius, dependencies, usages queries
-- [x] Property-level access tracking
-- [x] RocksDB persistence
-- [x] Incremental file watching
-- [x] MCP server (stdio)
-- [x] CLI (analyze, query, watch, serve)
-- [ ] Python adapter (v2)
-- [ ] VS Code extension (post-beta)
-- [ ] Web dashboard (post-beta)
-
 ---
 
 ## License

@@ -32,6 +32,15 @@ enum Commands {
         /// Path to the repository root
         #[arg(default_value = ".")]
         path: String,
+        /// Comma-separated include patterns (relative paths/globs)
+        #[arg(long)]
+        include: Option<String>,
+        /// Comma-separated exclude patterns (relative paths/globs)
+        #[arg(long)]
+        exclude: Option<String>,
+        /// Disable .gitignore filtering
+        #[arg(long)]
+        no_gitignore: bool,
     },
 
     /// Query the symbol relationship graph
@@ -45,6 +54,15 @@ enum Commands {
         /// Path to the repository root
         #[arg(default_value = ".")]
         path: String,
+        /// Comma-separated include patterns (relative paths/globs)
+        #[arg(long)]
+        include: Option<String>,
+        /// Comma-separated exclude patterns (relative paths/globs)
+        #[arg(long)]
+        exclude: Option<String>,
+        /// Disable .gitignore filtering
+        #[arg(long)]
+        no_gitignore: bool,
     },
 
     /// Start the MCP server for agent integration
@@ -126,7 +144,12 @@ fn main() {
     let cli = Cli::parse();
 
     let result = match cli.command {
-        Commands::Analyze { path } => commands::analyze::run(&path),
+        Commands::Analyze {
+            path,
+            include,
+            exclude,
+            no_gitignore,
+        } => commands::analyze::run(&path, include.as_deref(), exclude.as_deref(), !no_gitignore),
 
         Commands::Query { subcommand } => match subcommand {
             QueryCommands::BlastRadius {
@@ -146,7 +169,12 @@ fn main() {
             } => commands::query::run_deps(&symbol, file.as_deref(), depth, &path),
         },
 
-        Commands::Watch { path } => commands::watch::run(&path),
+        Commands::Watch {
+            path,
+            include,
+            exclude,
+            no_gitignore,
+        } => commands::watch::run(&path, include.as_deref(), exclude.as_deref(), !no_gitignore),
 
         Commands::Serve { port, stdio } => commands::serve::run(port, stdio),
 

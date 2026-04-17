@@ -306,3 +306,5 @@ To add Python support (v2), the process is:
 9. Wire into `graphyn-cli analyze` as a new adapter for `.py` files
 
 `graphyn-core` is not touched. The IR schema is not changed. The MCP tools are not changed.
+
+See also: [Agent Guide](./agent-guide.md)

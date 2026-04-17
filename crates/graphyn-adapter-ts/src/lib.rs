@@ -2,12 +2,10 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use graphyn_core::ir::RepoIR;
-
 pub mod extractor;
 pub mod import_resolver;
 pub mod language;
 pub mod parser;
-pub mod walker;
 
 #[derive(Debug)]
 pub enum AdapterTsError {
@@ -32,13 +30,12 @@ impl From<std::io::Error> for AdapterTsError {
     }
 }
 
-pub fn analyze_repo(root: &Path) -> Result<RepoIR, AdapterTsError> {
-    let files = walker::walk_source_files(root)?;
+pub fn analyze_files(root: &Path, files: &[std::path::PathBuf]) -> Result<RepoIR, AdapterTsError> {
     let mut file_irs = Vec::new();
     let mut language_stats: HashMap<String, usize> = HashMap::new();
 
     for path in files {
-        let parsed = parser::parse_file(root, &path).map_err(AdapterTsError::Parse)?;
+        let parsed = parser::parse_file(root, path).map_err(AdapterTsError::Parse)?;
         let mut file_ir = extractor::extract_file_ir(&parsed);
         if file_ir.parse_errors.is_empty() {
             file_ir.parse_errors.extend(parsed.parse_errors);
