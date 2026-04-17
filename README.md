@@ -99,8 +99,24 @@ Your codebase
 
 ### Install
 
+Graphyn is distributed as a single standalone executable. You can install it on macOS, Linux, and Windows without needing Rust or node.js:
+
+**macOS / Linux:**
 ```bash
-cargo install graphyn-cli
+curl -fsSL https://raw.githubusercontent.com/JeelGajera/graphyn/main/install.sh | bash
+```
+
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/JeelGajera/graphyn/main/install.ps1 | iex
+```
+
+Once installed, verify it by running `graphyn --help`.
+
+**(Alternative) Cargo Install**
+If you prefer compiling from source via Cargo:
+```bash
+cargo install graphyn-cli --git https://github.com/JeelGajera/graphyn
 ```
 
 ### Index your repo

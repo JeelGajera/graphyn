@@ -129,8 +129,7 @@ fn handle_change(root: &Path, store: &RocksGraphStore, files: &[String], scan_co
     let start = Instant::now();
     let scan_res = walk_source_files_with_config(root, scan_config, is_supported_source_file);
     let repo_ir_res = scan_res.and_then(|files| {
-        analyze_files(root, &files)
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, format!("{e}")))
+        analyze_files(root, &files).map_err(|e| std::io::Error::other(format!("{e}")))
     });
 
     match repo_ir_res {
