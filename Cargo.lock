@@ -494,7 +494,7 @@ checksum = "0cc23270f6e1808e30a928bdc84dea0b9b4136a8bc82338574f23baf47bbd280"
 
 [[package]]
 name = "graphyn-adapter-ts"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "graphyn-core",
  "tree-sitter",
@@ -505,7 +505,7 @@ dependencies = [
 
 [[package]]
 name = "graphyn-cli"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "clap",
  "graphyn-adapter-ts",
@@ -518,7 +518,7 @@ dependencies = [
 
 [[package]]
 name = "graphyn-core"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "dashmap",
  "petgraph",
@@ -531,7 +531,7 @@ dependencies = [
 
 [[package]]
 name = "graphyn-mcp"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "graphyn-adapter-ts",
  "graphyn-core",
@@ -545,7 +545,7 @@ dependencies = [
 
 [[package]]
 name = "graphyn-store"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "graphyn-core",
  "rocksdb",
