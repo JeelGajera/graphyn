@@ -4,6 +4,11 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'The tag name to attach these binaries to (e.g., v0.1.1)'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -76,6 +81,7 @@ jobs:
       - name: Upload Release Asset
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ github.event.release.tag_name || github.event.inputs.tag_name }}
           files: ${{ matrix.asset_name }}
           fail_on_unmatched_files: true
           generate_release_notes: true
