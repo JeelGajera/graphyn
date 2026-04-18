@@ -103,12 +103,12 @@ Graphyn is distributed as a single standalone executable. You can install it on 
 
 **macOS / Linux:**
 ```bash
-curl -fsSL https://raw.githubusercontent.com/JeelGajera/graphyn/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/JeelGajera/graphyn/master/install.sh | bash
 ```
 
 **Windows (PowerShell):**
 ```powershell
-irm https://raw.githubusercontent.com/JeelGajera/graphyn/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/JeelGajera/graphyn/master/install.ps1 | iex
 ```
 
 Once installed, verify it by running `graphyn --help`.
