@@ -10,16 +10,42 @@ if [ "$EUID" -eq 0 ]; then
     INSTALL_DIR="/usr/local/bin"
 fi
 
-echo "=========================================="
-echo "⚡ Installing Graphyn Code Intelligence Engine"
-echo "=========================================="
+# Colors and formatting
+BOLD="$(tput bold 2>/dev/null || printf '')"
+GREY="$(tput setaf 0 2>/dev/null || printf '')"
+RED="$(tput setaf 1 2>/dev/null || printf '')"
+GREEN="$(tput setaf 2 2>/dev/null || printf '')"
+YELLOW="$(tput setaf 3 2>/dev/null || printf '')"
+BLUE="$(tput setaf 4 2>/dev/null || printf '')"
+MAGENTA="$(tput setaf 5 2>/dev/null || printf '')"
+CYAN="$(tput setaf 6 2>/dev/null || printf '')"
+RESET="$(tput sgr0 2>/dev/null || printf '')"
+
+info() { printf "${BLUE}info${RESET} %s\n" "$1"; }
+success() { printf "${GREEN}success${RESET} %s\n" "$1"; }
+error() { printf "${RED}error${RESET} %s\n" "$1"; exit 1; }
+warn() { printf "${YELLOW}warn${RESET} %s\n" "$1"; }
+step() { printf "${BOLD}${CYAN}»${RESET} ${BOLD}%s${RESET}\n" "$1"; }
+
+printf "${BLUE}${BOLD}"
+cat << "EOF"
+   ______                 __                  
+  / ____/________ _____  / /_  __  ______     
+ / / __/ ___/ __ `/ __ \/ __ \/ / / / __ \    
+/ /_/ / /  / /_/ / /_/ / / / / /_/ / / / /    
+\____/_/   \__,_/ .___/_/ /_/\__, /_/ /_/     
+               /_/          /____/            
+EOF
+printf "${RESET}\n"
+
+step "Initializing installation..."
 
 # 1. Detect OS
 OS="$(uname -s)"
 case "${OS}" in
     Linux*)     PLATFORM="unknown-linux-gnu";;
     Darwin*)    PLATFORM="apple-darwin";;
-    *)          echo "Error: Unsupported OS '${OS}'"; exit 1;;
+    *)          error "Unsupported OS '${OS}'";;
 esac
 
 # 2. Detect Architecture
@@ -27,64 +53,76 @@ ARCH="$(uname -m)"
 case "${ARCH}" in
     x86_64*)    ARCH="x86_64";;
     arm64*|aarch64*) ARCH="aarch64";;
-    *)          echo "Error: Unsupported architecture '${ARCH}'"; exit 1;;
+    *)          error "Unsupported architecture '${ARCH}'";;
 esac
 
 TARGET="${ARCH}-${PLATFORM}"
 ASSET_NAME="graphyn-${TARGET}.tar.gz"
 DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/latest/download/${ASSET_NAME}"
 
-echo "Detected Platform: ${OS} (${ARCH})"
-echo "Target: ${TARGET}"
+info "Detected Platform: ${BOLD}${OS} (${ARCH})${RESET}"
+info "Target: ${BOLD}${TARGET}${RESET}"
 
-# 3. Create temp directory
+# 3. Check for existing installation
+if command -v graphyn &> /dev/null; then
+    EXISTING_PATH=$(command -v graphyn)
+    OLD_VERSION=$(graphyn --version 2>/dev/null | awk '{print $NF}' || echo "unknown")
+    step "Updating existing installation..."
+    info "Found Graphyn ${BOLD}${OLD_VERSION}${RESET} at ${BOLD}${EXISTING_PATH}${RESET}"
+    INSTALL_TARGET="${EXISTING_PATH}"
+else
+    step "Preparing new installation..."
+    INSTALL_TARGET="${INSTALL_DIR}/graphyn"
+fi
+
+# 4. Create temp directory
 TMP_DIR=$(mktemp -d -t graphyn-install-XXXXXXXXXX)
 trap 'rm -rf "${TMP_DIR}"' EXIT
 
-cd "${TMP_DIR}"
+# 5. Download
+step "Downloading latest release..."
+info "URL: ${GREY}${DOWNLOAD_URL}${RESET}"
 
-# 4. Download
-echo "Downloading latest release..."
 if command -v curl &> /dev/null; then
-    curl -fsSLO "${DOWNLOAD_URL}"
+    curl -fsSL "${DOWNLOAD_URL}" -o "${TMP_DIR}/${ASSET_NAME}"
 elif command -v wget &> /dev/null; then
-    wget -qO "${ASSET_NAME}" "${DOWNLOAD_URL}"
+    wget -qO "${TMP_DIR}/${ASSET_NAME}" "${DOWNLOAD_URL}"
 else
-    echo "Error: Neither curl nor wget is installed."
-    exit 1
+    error "Neither curl nor wget is installed."
 fi
+success "Download complete."
 
-# 5. Extract
-echo "Extracting binary..."
-tar -xzf "${ASSET_NAME}"
-chmod +x graphyn
+# 6. Extract
+step "Extracting binary..."
+tar -xzf "${TMP_DIR}/${ASSET_NAME}" -C "${TMP_DIR}"
+chmod +x "${TMP_DIR}/graphyn"
+success "Extraction complete."
 
-# 6. Install
-echo "Installing to ${INSTALL_DIR}..."
-mkdir -p "${INSTALL_DIR}"
+# 7. Install
+step "Finalizing installation..."
+mkdir -p "$(dirname "${INSTALL_TARGET}")"
 
-if command -v graphyn &> /dev/null; then
-    OLD_VERSION=$(graphyn --version 2>/dev/null || echo "unknown")
-    echo "Updating existing installation (${OLD_VERSION})..."
-fi
-
-mv graphyn "${INSTALL_DIR}/graphyn"
-
-# 7. Check PATH
-NEW_VERSION=$("${INSTALL_DIR}/graphyn" --version)
-
-echo ""
-echo "✅ Successfully installed ${NEW_VERSION}!"
-echo ""
-
-if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
-    echo "⚠️  WARNING: ${INSTALL_DIR} is not in your PATH."
-    echo "   Please add the following to your .bashrc, .zshrc, or equivalent:"
-    echo ""
-    echo "   export PATH=\"${INSTALL_DIR}:\$PATH\""
-    echo ""
+# Move binary (handle permission issues)
+if [ -w "$(dirname "${INSTALL_TARGET}")" ]; then
+    mv "${TMP_DIR}/graphyn" "${INSTALL_TARGET}"
 else
-    echo "Graphyn is ready to use! Run 'graphyn --help' to get started."
+    warn "Root privileges required to install to $(dirname "${INSTALL_TARGET}")"
+    sudo mv "${TMP_DIR}/graphyn" "${INSTALL_TARGET}"
 fi
-echo "=========================================="
 
+# 8. Verification
+NEW_VERSION=$("${INSTALL_TARGET}" --version | awk '{print $NF}')
+success "Graphyn ${BOLD}${NEW_VERSION}${RESET} has been installed!"
+
+# 9. PATH Check
+if [[ ":$PATH:" != *":$(dirname "${INSTALL_TARGET}"):"* ]]; then
+    printf "\n"
+    warn "${BOLD}Installation directory is not in your PATH!${RESET}"
+    info "To use Graphyn from anywhere, add this to your shell profile (.bashrc, .zshrc, etc.):"
+    printf "\n  ${MAGENTA}export PATH=\"$(dirname "${INSTALL_TARGET}"):\$PATH\"${RESET}\n\n"
+else
+    printf "\n"
+    success "${BOLD}Graphyn is ready!${RESET} Run '${BOLD}graphyn --help${RESET}' to get started.\n"
+fi
+
+printf "${BLUE}==========================================${RESET}\n"

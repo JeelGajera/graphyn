@@ -40,7 +40,7 @@ impl TsConfigPaths {
             entries.push((prefix, suffix, repl_prefixes));
         }
         // Sort longest prefix first for greedy matching
-        entries.sort_by(|a, b| b.0.len().cmp(&a.0.len()));
+        entries.sort_by_key(|b| std::cmp::Reverse(b.0.len()));
 
         Some(Self {
             base_url,
