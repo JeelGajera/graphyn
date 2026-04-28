@@ -12,5 +12,5 @@ categories.workspace = true
 keywords.workspace = true
 
 [dependencies]
-rocksdb = { version = "0.21", default-features = false }
+rocksdb = { version = "0.22", default-features = false }
 graphyn-core = { path = "../graphyn-core", version = "0.1.1" }

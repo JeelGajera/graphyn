@@ -2,12 +2,14 @@ use std::fmt::{Display, Formatter};
 use std::path::Path;
 
 use graphyn_core::graph::GraphynGraph;
-use graphyn_core::ir::{Language, Relationship, RelationshipKind, Symbol, SymbolKind};
+use graphyn_core::ir::{
+    Language, ReExportEntry, Relationship, RelationshipKind, Symbol, SymbolKind,
+};
 use graphyn_core::resolver::{AliasEntry, AliasScope};
 use rocksdb::{Options, DB};
 
 const KEY_GRAPH_SNAPSHOT: &[u8] = b"graph_snapshot_v1";
-const SNAPSHOT_VERSION: u8 = 1;
+const SNAPSHOT_VERSION: u8 = 2;
 
 #[derive(Debug)]
 pub enum StoreError {
@@ -33,6 +35,7 @@ pub struct GraphSnapshot {
     pub symbols: Vec<Symbol>,
     pub relationships: Vec<Relationship>,
     pub alias_chains: Vec<(String, Vec<AliasEntry>)>,
+    pub file_reexports: Vec<(String, Vec<ReExportEntry>)>,
 }
 
 pub struct RocksGraphStore {
@@ -139,10 +142,26 @@ impl GraphSnapshot {
             .collect();
         alias_chains.sort_by(|a, b| a.0.cmp(&b.0));
 
+        let mut file_reexports: Vec<(String, Vec<ReExportEntry>)> = graph
+            .file_reexports
+            .iter()
+            .map(|entry| {
+                let mut re_exports = entry.value().clone();
+                re_exports.sort_by(|a, b| {
+                    a.exported_name
+                        .cmp(&b.exported_name)
+                        .then(a.source_module.cmp(&b.source_module))
+                });
+                (entry.key().clone(), re_exports)
+            })
+            .collect();
+        file_reexports.sort_by(|a, b| a.0.cmp(&b.0));
+
         Ok(Self {
             symbols,
             relationships,
             alias_chains,
+            file_reexports,
         })
     }
 
@@ -159,6 +178,10 @@ impl GraphSnapshot {
 
         for (canonical_id, aliases) in self.alias_chains {
             graph.alias_chains.insert(canonical_id, aliases);
+        }
+
+        for (file, re_exports) in self.file_reexports {
+            graph.file_reexports.insert(file, re_exports);
         }
 
         Ok(graph)
@@ -207,6 +230,16 @@ impl GraphSnapshot {
             }
         }
 
+        write_u32(&mut out, self.file_reexports.len() as u32);
+        for (file, entries) in &self.file_reexports {
+            write_string(&mut out, file)?;
+            write_u32(&mut out, entries.len() as u32);
+            for entry in entries {
+                write_string(&mut out, &entry.exported_name)?;
+                write_string(&mut out, &entry.source_module)?;
+            }
+        }
+
         Ok(out)
     }
 
@@ -214,7 +247,7 @@ impl GraphSnapshot {
         let mut cursor = ByteCursor::new(bytes);
 
         let version = cursor.read_u8()?;
-        if version != SNAPSHOT_VERSION {
+        if version != 1 && version != SNAPSHOT_VERSION {
             return Err(StoreError::Serialization(format!(
                 "unsupported snapshot version: {version}"
             )));
@@ -279,6 +312,24 @@ impl GraphSnapshot {
             alias_chains.push((canonical, entries));
         }
 
+        let mut file_reexports = Vec::new();
+        if version >= 2 {
+            let reexport_file_count = cursor.read_u32()? as usize;
+            file_reexports.reserve(reexport_file_count);
+            for _ in 0..reexport_file_count {
+                let file = cursor.read_string()?;
+                let entry_count = cursor.read_u32()? as usize;
+                let mut entries = Vec::with_capacity(entry_count);
+                for _ in 0..entry_count {
+                    entries.push(ReExportEntry {
+                        exported_name: cursor.read_string()?,
+                        source_module: cursor.read_string()?,
+                    });
+                }
+                file_reexports.push((file, entries));
+            }
+        }
+
         if !cursor.is_at_end() {
             return Err(StoreError::Serialization(
                 "trailing bytes found in snapshot".to_string(),
@@ -289,6 +340,7 @@ impl GraphSnapshot {
             symbols,
             relationships,
             alias_chains,
+            file_reexports,
         })
     }
 }
@@ -395,6 +447,7 @@ fn symbol_kind_to_u8(kind: &SymbolKind) -> u8 {
         SymbolKind::Module => 8,
         SymbolKind::Enum => 9,
         SymbolKind::EnumVariant => 10,
+        SymbolKind::ExternalPackage => 11,
     }
 }
 
@@ -410,6 +463,7 @@ fn u8_to_symbol_kind(input: u8) -> Result<SymbolKind, StoreError> {
         8 => Ok(SymbolKind::Module),
         9 => Ok(SymbolKind::Enum),
         10 => Ok(SymbolKind::EnumVariant),
+        11 => Ok(SymbolKind::ExternalPackage),
         other => Err(StoreError::Serialization(format!(
             "unknown symbol kind code: {other}"
         ))),

@@ -1,0 +1,9 @@
+---
+import type { LayoutProps } from "../types/layout";
+const { title } = Astro.props as LayoutProps;
+---
+<!DOCTYPE html>
+<html>
+  <head><title>{title}</title></head>
+  <body><slot /></body>
+</html>

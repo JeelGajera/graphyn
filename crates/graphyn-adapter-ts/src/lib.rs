@@ -3,9 +3,11 @@ use std::path::Path;
 
 use graphyn_core::ir::RepoIR;
 pub mod extractor;
+pub mod framework_preprocessor;
 pub mod import_resolver;
 pub mod language;
 pub mod parser;
+pub mod tsconfig;
 
 #[derive(Debug)]
 pub enum AdapterTsError {
@@ -37,8 +39,8 @@ pub fn analyze_files(root: &Path, files: &[std::path::PathBuf]) -> Result<RepoIR
     for path in files {
         let parsed = parser::parse_file(root, path).map_err(AdapterTsError::Parse)?;
         let mut file_ir = extractor::extract_file_ir(&parsed);
-        if file_ir.parse_errors.is_empty() {
-            file_ir.parse_errors.extend(parsed.parse_errors);
+        if file_ir.diagnostics.is_empty() {
+            file_ir.diagnostics.extend(parsed.diagnostics);
         }
         *language_stats
             .entry(format!("{:?}", file_ir.language))

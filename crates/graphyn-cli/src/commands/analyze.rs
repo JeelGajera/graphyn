@@ -43,10 +43,10 @@ pub fn run(
     let repo_ir = analyze_files(&root, &files).map_err(|e| format!("analysis failed: {e}"))?;
 
     let file_count = repo_ir.files.len();
-    let error_count: usize = repo_ir.files.iter().map(|f| f.parse_errors.len()).sum();
+    let error_count: usize = repo_ir.files.iter().map(|f| f.diagnostics.len()).sum();
     output::step(
         "Parsed files",
-        &format!("{file_count} OK, {error_count} error(s)"),
+        &format!("{file_count} OK, {error_count} diagnostic(s)"),
     );
 
     // ── 2. Build graph ───────────────────────────────────────
@@ -108,11 +108,63 @@ pub fn run(
 
     if error_count > 0 {
         output::blank();
-        output::warning(&format!("{error_count} parse error(s) encountered"));
-        for file_ir in &repo_ir.files {
-            for err in &file_ir.parse_errors {
-                output::dim_line(&format!("  {} — {err}", file_ir.file));
+
+        // Show parse errors
+        let errors: Vec<_> = repo_ir
+            .files
+            .iter()
+            .flat_map(|f| {
+                f.diagnostics
+                    .iter()
+                    .filter(|d| d.level == graphyn_core::ir::DiagnosticLevel::Error)
+                    .map(move |d| (f.file.as_str(), d))
+            })
+            .collect();
+        if !errors.is_empty() {
+            output::warning(&format!("{} parse error(s)", errors.len()));
+            for (file, diag) in &errors {
+                let loc = match diag.line {
+                    Some(l) => format!("{file}:{l}"),
+                    None => file.to_string(),
+                };
+                output::dim_line(&format!("  {} — {}", loc, diag.message));
             }
+        }
+
+        // Show resolution warnings
+        let warnings: Vec<_> = repo_ir
+            .files
+            .iter()
+            .flat_map(|f| {
+                f.diagnostics
+                    .iter()
+                    .filter(|d| d.level == graphyn_core::ir::DiagnosticLevel::Warning)
+                    .map(move |d| (f.file.as_str(), d))
+            })
+            .collect();
+        if !warnings.is_empty() {
+            output::warning(&format!("{} resolution warning(s)", warnings.len()));
+            for (file, diag) in &warnings {
+                let loc = match diag.line {
+                    Some(l) => format!("{file}:{l}"),
+                    None => file.to_string(),
+                };
+                output::dim_line(&format!("  {} — {}", loc, diag.message));
+            }
+        }
+
+        // Show info count (skipped files etc.) — no detail unless verbose
+        let info_count: usize = repo_ir
+            .files
+            .iter()
+            .flat_map(|f| f.diagnostics.iter())
+            .filter(|d| d.level == graphyn_core::ir::DiagnosticLevel::Info)
+            .count();
+        if info_count > 0 {
+            output::dim_line(&format!(
+                "  {} info diagnostic(s) (skipped files, policy exclusions)",
+                info_count
+            ));
         }
     }
 
@@ -144,6 +196,9 @@ pub fn build_graph(repo_ir: &RepoIR) -> (GraphynGraph, AnalyzeStats) {
         for relationship in &file_ir.relationships {
             graph.add_relationship(relationship);
         }
+        graph
+            .file_reexports
+            .insert(file_ir.file.clone(), file_ir.re_exports.clone());
         resolver.ingest_relationships(&graph, &file_ir.relationships);
     }
 
