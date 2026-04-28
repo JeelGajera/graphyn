@@ -56,6 +56,10 @@ case "${ARCH}" in
     *)          error "Unsupported architecture '${ARCH}'";;
 esac
 
+if [ "$OS" = "Darwin" ] && [ "$ARCH" = "x86_64" ]; then
+    error "Intel Macs (x86_64) are no longer supported for pre-built binaries. Graphyn requires Apple Silicon (M1/M2/M3...) for binary installation.\n\n  ${BOLD}Note:${RESET} You can still install from source using Cargo:\n  ${MAGENTA}cargo install graphyn-cli --git https://github.com/JeelGajera/graphyn${RESET}"
+fi
+
 TARGET="${ARCH}-${PLATFORM}"
 ASSET_NAME="graphyn-${TARGET}.tar.gz"
 DOWNLOAD_URL="https://github.com/${GITHUB_REPO}/releases/latest/download/${ASSET_NAME}"
