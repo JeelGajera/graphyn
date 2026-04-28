@@ -168,7 +168,10 @@ fn is_watchable(
         .extension()
         .and_then(|e| e.to_str())
         .unwrap_or_default();
-    if !matches!(ext, "ts" | "tsx" | "js" | "jsx") {
+    if !matches!(
+        ext,
+        "ts" | "tsx" | "js" | "jsx" | "mts" | "cts" | "mjs" | "cjs" | "vue" | "svelte" | "astro"
+    ) {
         return false;
     }
 

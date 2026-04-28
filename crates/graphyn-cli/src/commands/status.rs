@@ -98,5 +98,6 @@ fn format_kind(kind: &SymbolKind) -> &'static str {
         SymbolKind::Module => "module",
         SymbolKind::Enum => "enum",
         SymbolKind::EnumVariant => "variant",
+        SymbolKind::ExternalPackage => "external",
     }
 }

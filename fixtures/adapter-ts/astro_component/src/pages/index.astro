@@ -1,0 +1,10 @@
+---
+import { Layout } from "../layouts/Layout.astro";
+import { Card } from "../components/Card";
+import type { PageData } from "../types";
+
+const data: PageData = { title: "Home" };
+---
+<Layout title={data.title}>
+  <Card />
+</Layout>

@@ -1,7 +1,7 @@
 use dashmap::DashMap;
 use petgraph::graph::{DiGraph, NodeIndex};
 
-use crate::ir::{Relationship, RelationshipKind, Symbol, SymbolId};
+use crate::ir::{ReExportEntry, Relationship, RelationshipKind, Symbol, SymbolId};
 use crate::resolver::AliasEntry;
 
 #[derive(Debug, Clone)]
@@ -22,6 +22,7 @@ pub struct GraphynGraph {
     pub file_index: DashMap<String, Vec<SymbolId>>,
     pub symbols: DashMap<SymbolId, Symbol>,
     pub alias_chains: DashMap<SymbolId, Vec<AliasEntry>>,
+    pub file_reexports: DashMap<String, Vec<ReExportEntry>>,
 }
 
 impl Default for GraphynGraph {
@@ -39,6 +40,7 @@ impl GraphynGraph {
             file_index: DashMap::new(),
             symbols: DashMap::new(),
             alias_chains: DashMap::new(),
+            file_reexports: DashMap::new(),
         }
     }
 
@@ -118,6 +120,27 @@ impl GraphynGraph {
         let Some(from) = self.node_index.get(&relationship.from).map(|v| *v) else {
             return;
         };
+
+        // Auto-create external package nodes on first reference
+        if !self.node_index.contains_key(&relationship.to) && relationship.to.starts_with("ext::") {
+            let package_name = relationship
+                .to
+                .strip_prefix("ext::")
+                .and_then(|s| s.strip_suffix("::package"))
+                .unwrap_or(&relationship.to)
+                .to_string();
+            self.add_symbol(crate::ir::Symbol {
+                id: relationship.to.clone(),
+                name: package_name,
+                kind: crate::ir::SymbolKind::ExternalPackage,
+                language: crate::ir::Language::TypeScript,
+                file: String::new(),
+                line_start: 0,
+                line_end: 0,
+                signature: None,
+            });
+        }
+
         let Some(to) = self.node_index.get(&relationship.to).map(|v| *v) else {
             return;
         };
@@ -172,6 +195,7 @@ impl GraphynGraph {
             self.alias_chains.remove(symbol_id);
             removed.push(symbol_id.clone());
         }
+        self.file_reexports.remove(file);
 
         self.rebuild_node_index();
         removed.sort();

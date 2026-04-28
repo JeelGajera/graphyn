@@ -1,12 +1,103 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-use graphyn_core::ir::{FileIR, Language, Relationship, RelationshipKind, Symbol, SymbolKind};
+use graphyn_core::ir::{
+    FileIR, Language, ReExportEntry, Relationship, RelationshipKind, Symbol, SymbolKind,
+};
 use tree_sitter::Node;
 
 use crate::parser::ParsedFile;
 
 const UNRESOLVED_IMPORT_PREFIX: &str = "__UNRESOLVED_IMPORT__";
 const UNRESOLVED_LOCAL_TYPE_PREFIX: &str = "__UNRESOLVED_LOCAL_TYPE__";
+
+// Layer 1: TypeScript language primitives
+const TS_PRIMITIVES: &[&str] = &[
+    "any",
+    "bigint",
+    "boolean",
+    "never",
+    "null",
+    "number",
+    "object",
+    "string",
+    "symbol",
+    "undefined",
+    "unknown",
+    "void",
+];
+
+// Layer 2: TypeScript utility types
+const TS_UTILITY_TYPES: &[&str] = &[
+    "ConstructorParameters",
+    "Exclude",
+    "Extract",
+    "InstanceType",
+    "NonNullable",
+    "Omit",
+    "Parameters",
+    "Partial",
+    "Pick",
+    "Readonly",
+    "ReadonlyArray",
+    "Record",
+    "Required",
+    "ReturnType",
+    "ThisType",
+];
+
+// Layer 3: Standard library / runtime types
+const TS_STDLIB_TYPES: &[&str] = &[
+    "Array",
+    "ArrayBuffer",
+    "ArrayLike",
+    "Boolean",
+    "DataView",
+    "Date",
+    "Error",
+    "Float32Array",
+    "Float64Array",
+    "Function",
+    "Int16Array",
+    "Int32Array",
+    "Int8Array",
+    "Map",
+    "Number",
+    "Object",
+    "Promise",
+    "RegExp",
+    "Set",
+    "String",
+    "Symbol",
+    "TypeError",
+    "Uint16Array",
+    "Uint32Array",
+    "Uint8Array",
+    "WeakMap",
+    "WeakSet",
+];
+
+// Layer 4: DOM / platform types
+const DOM_TYPES: &[&str] = &[
+    "Document",
+    "Element",
+    "Event",
+    "EventTarget",
+    "HTMLElement",
+    "KeyboardEvent",
+    "MouseEvent",
+    "Window",
+];
+
+// Layer 5: Common framework types (React etc.)
+const FRAMEWORK_TYPES: &[&str] = &["Component", "FC", "JSX", "ReactElement", "ReactNode"];
+
+pub fn is_builtin_type(name: &str) -> bool {
+    TS_PRIMITIVES.contains(&name)
+        || TS_UTILITY_TYPES.contains(&name)
+        || TS_STDLIB_TYPES.contains(&name)
+        || DOM_TYPES.contains(&name)
+        || FRAMEWORK_TYPES.contains(&name)
+}
 
 pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
     let mut symbols = extract_symbols(parsed);
@@ -18,7 +109,7 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
     let from_symbol_id = first_primary_symbol_id(&symbols).unwrap_or(module_symbol.id.clone());
 
     let type_to_props = collect_property_accesses(parsed);
-    let mut relationships =
+    let (mut relationships, re_exports) =
         collect_import_and_reexport_relationships(parsed, &from_symbol_id, &type_to_props);
 
     for (type_name, (props, first_line)) in type_to_props {
@@ -50,7 +141,8 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
         language: parsed.language.clone(),
         symbols,
         relationships,
-        parse_errors: parsed.parse_errors.clone(),
+        diagnostics: parsed.diagnostics.clone(),
+        re_exports,
     }
 }
 
@@ -96,8 +188,9 @@ fn collect_import_and_reexport_relationships(
     parsed: &ParsedFile,
     from_symbol_id: &str,
     type_to_props: &BTreeMap<String, (BTreeSet<String>, u32)>,
-) -> Vec<Relationship> {
+) -> (Vec<Relationship>, Vec<ReExportEntry>) {
     let mut out = Vec::new();
+    let mut re_exports = Vec::new();
 
     walk_tree(parsed.tree.root_node(), &mut |node| {
         let kind = node.kind();
@@ -123,6 +216,14 @@ fn collect_import_and_reexport_relationships(
         };
 
         for entry in entries {
+            // Track named re-exports for barrel chain resolution
+            if entry.kind == RelationshipKind::ReExports && entry.imported_name != "*" {
+                re_exports.push(ReExportEntry {
+                    exported_name: entry.imported_name.clone(),
+                    source_module: entry.module_specifier.clone(),
+                });
+            }
+
             let properties_accessed = if entry.kind == RelationshipKind::Imports {
                 type_to_props
                     .get(&entry.local_name)
@@ -149,7 +250,7 @@ fn collect_import_and_reexport_relationships(
         }
     });
 
-    out
+    (out, re_exports)
 }
 
 fn parse_import_entries(statement: &str, module_specifier: &str, line: u32) -> Vec<ImportEntry> {
@@ -290,6 +391,11 @@ fn collect_property_accesses(parsed: &ParsedFile) -> BTreeMap<String, (BTreeSet<
         let Some(type_name) = typed_vars.get(object_name) else {
             return;
         };
+
+        // Skip built-in types — they are not codebase symbols
+        if is_builtin_type(type_name) {
+            return;
+        }
 
         let Some(property_text) = node_text(property_node, &parsed.source) else {
             return;
@@ -486,6 +592,7 @@ fn symbol_kind_suffix(kind: &SymbolKind) -> &'static str {
         SymbolKind::Module => "module",
         SymbolKind::Enum => "enum",
         SymbolKind::EnumVariant => "enum_variant",
+        SymbolKind::ExternalPackage => "package",
     }
 }
 

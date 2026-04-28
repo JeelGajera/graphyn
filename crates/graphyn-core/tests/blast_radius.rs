@@ -156,7 +156,8 @@ fn test_incremental_replace_file_preserves_indexes() {
         language: Language::TypeScript,
         symbols: vec![symbol("x.ts::X2::class", "X2", "x.ts", SymbolKind::Class)],
         relationships: vec![],
-        parse_errors: vec![],
+        diagnostics: vec![],
+        re_exports: vec![],
     };
 
     let result = replace_file_ir(&mut graph, &file_ir);

@@ -19,6 +19,8 @@ path = "src/main.rs"
 clap = { version = "4", features = ["derive"] }
 notify = "6"
 tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 graphyn-core = { path = "../graphyn-core", version = "0.1.1" }
 graphyn-adapter-ts = { path = "../graphyn-adapter-ts", version = "0.1.1" }
 graphyn-store = { path = "../graphyn-store", version = "0.1.1" }

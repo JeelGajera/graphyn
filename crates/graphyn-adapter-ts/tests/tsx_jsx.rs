@@ -42,14 +42,18 @@ fn test_tsx_and_jsx_files_parse_without_errors() {
         .expect("jsx file exists");
 
     assert!(
-        !tsx.parse_errors.iter().any(|e| e.starts_with("line ")),
+        !tsx.diagnostics
+            .iter()
+            .any(|d| d.message.starts_with("line ")),
         "tsx syntax parse errors: {:?}",
-        tsx.parse_errors
+        tsx.diagnostics
     );
     assert!(
-        !jsx.parse_errors.iter().any(|e| e.starts_with("line ")),
+        !jsx.diagnostics
+            .iter()
+            .any(|d| d.message.starts_with("line ")),
         "jsx syntax parse errors: {:?}",
-        jsx.parse_errors
+        jsx.diagnostics
     );
     assert!(tsx.symbols.iter().any(|s| s.name == "Header"));
     assert!(jsx.symbols.iter().any(|s| s.name == "View"));

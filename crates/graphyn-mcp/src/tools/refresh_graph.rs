@@ -29,7 +29,7 @@ pub struct RefreshResult {
     pub relationships: usize,
     pub alias_chains: usize,
     pub files_indexed: usize,
-    pub parse_errors: usize,
+    pub diagnostics: usize,
 }
 
 pub fn execute(
@@ -55,7 +55,7 @@ pub fn execute(
 
     let repo_ir = analyze_files(&root, &files).map_err(|e| format!("analysis failed: {e}"))?;
 
-    let parse_errors: usize = repo_ir.files.iter().map(|f| f.parse_errors.len()).sum();
+    let diagnostics: usize = repo_ir.files.iter().map(|f| f.diagnostics.len()).sum();
     let graph = build_graph(&repo_ir);
 
     let db = root.join(".graphyn").join("db");
@@ -72,7 +72,7 @@ pub fn execute(
         relationships: graph.graph.edge_count(),
         alias_chains: graph.alias_chains.len(),
         files_indexed: repo_ir.files.len(),
-        parse_errors,
+        diagnostics,
     };
 
     Ok((graph, result))
@@ -92,6 +92,9 @@ fn build_graph(repo_ir: &RepoIR) -> GraphynGraph {
         for relationship in &file_ir.relationships {
             graph.add_relationship(relationship);
         }
+        graph
+            .file_reexports
+            .insert(file_ir.file.clone(), file_ir.re_exports.clone());
         resolver.ingest_relationships(&graph, &file_ir.relationships);
     }
 

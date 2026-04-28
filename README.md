@@ -294,14 +294,18 @@ The graph lives in memory. Queries traverse in-memory edges with no network or d
 
 ## Language support
 
-| Language | Status |
+| Language/Framework | Status |
 |---|---|
 | TypeScript | v1 — supported |
 | JavaScript | v1 — supported |
-| Python | v2 — planned |
-| Rust | v2 — planned |
-| Go | v2 — planned |
-| Java | v2 — planned |
+| TypeScript ESM (`.mts`, `.cts`) | v1.2 — supported |
+| JavaScript ESM (`.mjs`, `.cjs`) | v1.2 — supported |
+| Vue (`.vue`) | v1.2 — supported |
+| Svelte (`.svelte`) | v1.2 — supported |
+| Astro (`.astro`) | v1.2 — supported |
+| Python | v1.3 — planned |
+| Rust | v1.3 — planned |
+| Go | v1.3 — planned |
 
 ---
 

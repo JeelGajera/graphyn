@@ -11,6 +11,9 @@ pub struct IncrementalUpdateResult {
 pub fn replace_file_ir(graph: &mut GraphynGraph, file_ir: &FileIR) -> IncrementalUpdateResult {
     let removed_relationships = graph.remove_relationships_in_file(&file_ir.file);
     let removed_symbol_ids = graph.remove_file(&file_ir.file);
+    graph
+        .file_reexports
+        .insert(file_ir.file.clone(), file_ir.re_exports.clone());
 
     let mut added_symbol_ids = Vec::new();
     for symbol in &file_ir.symbols {

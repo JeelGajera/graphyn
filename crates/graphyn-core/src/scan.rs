@@ -262,6 +262,30 @@ where
     Ok(out)
 }
 
+const DEFAULT_EXCLUDE_DIRS: &[&str] = &[
+    "node_modules",
+    "dist",
+    "build",
+    "out",
+    ".next",
+    ".nuxt",
+    ".output",
+    "coverage",
+    ".cache",
+    ".turbo",
+    ".parcel-cache",
+    ".graphyn",
+    ".git",
+    "target",
+];
+
+const DEFAULT_EXCLUDE_SUFFIXES: &[&str] = &[
+    ".d.ts", ".d.mts", ".d.cts", // TypeScript declarations
+    ".min.js", ".min.mjs", // Minified JS
+    ".min.css", // Minified CSS
+    ".map",     // Source maps
+];
+
 pub fn should_include_relative_path(
     relative_path: &str,
     is_dir: bool,
@@ -274,14 +298,20 @@ pub fn should_include_relative_path(
         return true;
     }
 
-    if rel.starts_with(".graphyn")
-        || rel.starts_with(".git")
-        || rel.contains("/node_modules/")
-        || rel.starts_with("node_modules")
-        || rel.contains("/target/")
-        || rel.starts_with("target")
-    {
-        return false;
+    // Check directory segments against default excludes
+    for segment in rel.split('/') {
+        if DEFAULT_EXCLUDE_DIRS.contains(&segment) {
+            return false;
+        }
+    }
+
+    // Check file suffixes (compound extensions like .d.ts)
+    if !is_dir {
+        for suffix in DEFAULT_EXCLUDE_SUFFIXES {
+            if rel.ends_with(suffix) {
+                return false;
+            }
+        }
     }
 
     if config.respect_gitignore && is_ignored_by_rules(&rel, is_dir, rules) {

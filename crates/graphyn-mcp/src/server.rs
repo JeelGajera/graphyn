@@ -109,12 +109,12 @@ impl GraphynMcpServer {
         }
 
         Ok(format!(
-            "Graph index refreshed successfully.\nFiles indexed: {}\nSymbols: {}\nRelationships: {}\nAlias chains: {}\nParse errors: {}",
+            "Graph index refreshed successfully.\nFiles indexed: {}\nSymbols: {}\nRelationships: {}\nAlias chains: {}\nDiagnostics: {}",
             result.files_indexed,
             result.symbols,
             result.relationships,
             result.alias_chains,
-            result.parse_errors
+            result.diagnostics
         ))
     }
 }
@@ -154,10 +154,13 @@ pub async fn serve_stdio(repo_root: PathBuf) -> Result<(), Box<dyn std::error::E
 fn load_graph(repo_root: &Path) -> Result<GraphynGraph, String> {
     let db = repo_root.join(".graphyn").join("db");
     if !db.exists() {
-        return Err(format!(
-            "No graph found at {}. Run `graphyn analyze <path>` first.",
-            db.display(),
-        ));
+        // Not an error — agent can call refresh_graph_index later
+        eprintln!(
+            "[graphyn] No graph at {}. Starting with empty graph. \
+             Run `graphyn analyze` or call refresh_graph_index tool.",
+            db.display()
+        );
+        return Ok(GraphynGraph::new());
     }
     let store = RocksGraphStore::open(&db).map_err(|e| format!("failed to open store: {e}"))?;
     store

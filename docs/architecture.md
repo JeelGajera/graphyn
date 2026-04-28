@@ -96,6 +96,9 @@ pub struct GraphynGraph {
 
     // Alias chains: canonical SymbolId → all known aliases
     pub alias_chains: DashMap<SymbolId, Vec<AliasEntry>>,
+
+    // Per-file re-export metadata for barrel-chain resolution
+    pub file_reexports: DashMap<String, Vec<ReExportEntry>>,
 }
 ```
 
@@ -166,13 +169,22 @@ The rest of the graph is untouched. This is what keeps incremental update time u
 
 TypeScript and JavaScript parser. Uses tree-sitter for parsing — no dependency on the TypeScript compiler, no `node_modules` required.
 
-### walker.rs
+### File discovery
 
-Discovers all `.ts`, `.tsx`, `.js`, `.jsx` files under the repo root. Respects `.gitignore` patterns. Skips `node_modules`, `dist`, `build`, `.graphyn` directories automatically.
+Source-file walking/filtering lives in `graphyn-core/src/scan.rs`, not a separate
+adapter `walker.rs`. The adapter relies on scan filters and language detection to
+discover supported files.
 
 ### parser.rs
 
 Calls `tree-sitter-typescript` or `tree-sitter-javascript` on each file. Returns a tree-sitter `Tree`. Non-fatal on parse errors — logs them and returns a partial tree.
+
+### framework_preprocessor.rs
+
+Framework files (`.vue`, `.svelte`, `.astro`) are pre-processed before parsing.
+The preprocessor blanks non-script regions with spaces while preserving newline
+positions exactly. This keeps line numbers stable for diagnostics and relationship
+metadata without adding additional parser dependencies.
 
 ### extractor.rs
 

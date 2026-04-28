@@ -2,7 +2,9 @@ use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use graphyn_core::graph::GraphynGraph;
-use graphyn_core::ir::{Language, Relationship, RelationshipKind, Symbol, SymbolKind};
+use graphyn_core::ir::{
+    Language, ReExportEntry, Relationship, RelationshipKind, Symbol, SymbolKind,
+};
 use graphyn_core::resolver::AliasResolver;
 use graphyn_store::{GraphSnapshot, RocksGraphStore, StoreError};
 
@@ -64,6 +66,13 @@ fn make_graph() -> GraphynGraph {
 
     let resolver = AliasResolver::default();
     resolver.ingest_relationships(&graph, &relationships);
+    graph.file_reexports.insert(
+        "barrel/index.ts".to_string(),
+        vec![ReExportEntry {
+            exported_name: "UserPayload".to_string(),
+            source_module: "./models/user_payload".to_string(),
+        }],
+    );
 
     graph
 }
@@ -149,6 +158,32 @@ fn test_snapshot_round_trip_preserves_literal_backslash_sequences() {
         .and_then(|s| s.signature.clone())
         .expect("restored signature exists");
     assert_eq!(restored_sig, "class UserPayload { note: \"\\\\t\\\\n\" }");
+
+    let _ = std::fs::remove_dir_all(&path);
+}
+
+#[test]
+fn test_snapshot_preserves_reexports() {
+    let path = temp_db_path("reexports-roundtrip");
+    {
+        let store = RocksGraphStore::open(&path).expect("db open");
+        let graph = make_graph();
+        store.save_graph(&graph).expect("graph saved");
+    }
+
+    let restored = {
+        let store = RocksGraphStore::open(&path).expect("db open");
+        store.load_graph().expect("graph loaded")
+    };
+
+    let reexports = restored
+        .file_reexports
+        .get("barrel/index.ts")
+        .expect("barrel re-exports should be restored");
+    assert_eq!(
+        reexports[0].source_module, "./models/user_payload",
+        "restored barrel re-export source should match saved data"
+    );
 
     let _ = std::fs::remove_dir_all(&path);
 }

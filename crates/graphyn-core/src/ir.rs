@@ -31,6 +31,7 @@ pub enum SymbolKind {
     Module,
     Enum,
     EnumVariant,
+    ExternalPackage,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -68,6 +69,49 @@ pub enum RelationshipKind {
     Instantiates,
 }
 
+// diagnostics
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum DiagnosticLevel {
+    /// Actual tree-sitter parse failures
+    Error,
+    /// Local relative import target not found, symbol not resolved
+    Warning,
+    /// Skipped minified file, .d.ts excluded, etc.
+    Info,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum DiagnosticCategory {
+    /// Tree-sitter parse errors
+    Parse,
+    /// Unresolved imports, symbols, types
+    Resolution,
+    /// Skipped minified or bundled files
+    Skip,
+    /// Excluded by file policy rules
+    Policy,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Diagnostic {
+    pub level: DiagnosticLevel,
+    pub category: DiagnosticCategory,
+    pub message: String,
+    pub file: Option<String>,
+    pub line: Option<u32>,
+}
+
+// re-export tracking (for barrel chain resolution)
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReExportEntry {
+    /// Name being re-exported (e.g. "renderBlockquote")
+    pub exported_name: String,
+    /// Module specifier (e.g. "./blockquote")
+    pub source_module: String,
+}
+
 /// The complete IR output from one file parse.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FileIR {
@@ -75,7 +119,8 @@ pub struct FileIR {
     pub language: Language,
     pub symbols: Vec<Symbol>,
     pub relationships: Vec<Relationship>,
-    pub parse_errors: Vec<String>,
+    pub diagnostics: Vec<Diagnostic>,
+    pub re_exports: Vec<ReExportEntry>,
 }
 
 /// The complete IR output from a full repo or incremental update.

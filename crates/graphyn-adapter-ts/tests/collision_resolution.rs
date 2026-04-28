@@ -45,8 +45,7 @@ fn test_unresolved_local_type_does_not_bind_to_random_global_symbol() {
         .expect("property access relationship exists");
 
     assert!(prop_rel.to.starts_with("__UNRESOLVED_LOCAL_TYPE__|Payload"));
-    assert!(usage
-        .parse_errors
-        .iter()
-        .any(|e| e.contains("unable to resolve property-access type 'Payload'")));
+    assert!(usage.diagnostics.iter().any(|d| d
+        .message
+        .contains("unable to resolve property-access type 'Payload'")));
 }
