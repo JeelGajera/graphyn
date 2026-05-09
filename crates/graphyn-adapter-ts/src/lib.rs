@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use graphyn_core::ir::RepoIR;
+use rayon::prelude::*;
 pub mod extractor;
 pub mod framework_preprocessor;
 pub mod import_resolver;
@@ -33,15 +34,23 @@ impl From<std::io::Error> for AdapterTsError {
 }
 
 pub fn analyze_files(root: &Path, files: &[std::path::PathBuf]) -> Result<RepoIR, AdapterTsError> {
-    let mut file_irs = Vec::new();
+    let parse_results: Vec<Result<_, AdapterTsError>> = files
+        .par_iter()
+        .map(|path| {
+            let parsed = parser::parse_file(root, path).map_err(AdapterTsError::Parse)?;
+            let mut file_ir = extractor::extract_file_ir(&parsed);
+            if file_ir.diagnostics.is_empty() {
+                file_ir.diagnostics.extend(parsed.diagnostics);
+            }
+            Ok(file_ir)
+        })
+        .collect();
+
+    let mut file_irs = Vec::with_capacity(files.len());
     let mut language_stats: HashMap<String, usize> = HashMap::new();
 
-    for path in files {
-        let parsed = parser::parse_file(root, path).map_err(AdapterTsError::Parse)?;
-        let mut file_ir = extractor::extract_file_ir(&parsed);
-        if file_ir.diagnostics.is_empty() {
-            file_ir.diagnostics.extend(parsed.diagnostics);
-        }
+    for result in parse_results {
+        let file_ir = result?;
         *language_stats
             .entry(format!("{:?}", file_ir.language))
             .or_insert(0) += 1;

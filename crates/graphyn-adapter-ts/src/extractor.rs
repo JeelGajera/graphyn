@@ -127,6 +127,7 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
             line: first_line,
         });
     }
+    relationships.extend(collect_method_scoped_accesses(parsed, &symbols));
 
     relationships.sort_by(|a, b| {
         a.file
@@ -144,6 +145,109 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
         diagnostics: parsed.diagnostics.clone(),
         re_exports,
     }
+}
+
+fn collect_method_scoped_accesses(parsed: &ParsedFile, symbols: &[Symbol]) -> Vec<Relationship> {
+    let mut out = Vec::new();
+    let constructor_fields = collect_constructor_field_types(parsed);
+    let method_ids: HashMap<String, String> = symbols
+        .iter()
+        .filter(|s| s.kind == SymbolKind::Method)
+        .map(|s| (s.name.clone(), s.id.clone()))
+        .collect();
+
+    walk_tree(parsed.tree.root_node(), &mut |node| {
+        if node.kind() != "method_definition" {
+            return;
+        }
+
+        let Some(name_node) = node.child_by_field_name("name") else {
+            return;
+        };
+        let Some(method_name_raw) = node_text(name_node, &parsed.source) else {
+            return;
+        };
+        let method_name = sanitize_identifier(method_name_raw);
+        if method_name.is_empty() || method_name == "constructor" {
+            return;
+        }
+        let Some(method_id) = method_ids.get(method_name) else {
+            return;
+        };
+
+        let mut typed_vars = HashMap::<String, String>::new();
+        walk_tree(node, &mut |inner| {
+            collect_typed_var(inner, &parsed.source, &mut typed_vars);
+        });
+
+        let mut type_to_props = BTreeMap::<String, (BTreeSet<String>, u32)>::new();
+        walk_tree(node, &mut |inner| {
+            if inner.kind() != "member_expression" {
+                return;
+            }
+            let Some(object_node) = inner.child_by_field_name("object") else {
+                return;
+            };
+            let Some(property_node) = inner.child_by_field_name("property") else {
+                return;
+            };
+            let Some(object_text) = node_text(object_node, &parsed.source) else {
+                return;
+            };
+            let Some(property_text) = node_text(property_node, &parsed.source) else {
+                return;
+            };
+            let property_name = sanitize_identifier(property_text);
+            if property_name.is_empty() {
+                return;
+            }
+
+            let type_name = if let Some(field_name) = object_text.strip_prefix("this.") {
+                constructor_fields
+                    .get(sanitize_identifier(field_name))
+                    .cloned()
+            } else {
+                let object_name = sanitize_identifier(object_text);
+                if object_name.is_empty() {
+                    return;
+                }
+                typed_vars.get(object_name).cloned()
+            };
+            let Some(type_name) = type_name else {
+                return;
+            };
+            if is_builtin_type(&type_name) {
+                return;
+            }
+
+            let line = inner.start_position().row as u32 + 1;
+            let (props, first_line) = type_to_props
+                .entry(type_name)
+                .or_insert_with(|| (BTreeSet::new(), line));
+            props.insert(property_name.to_string());
+            if line < *first_line {
+                *first_line = line;
+            }
+        });
+
+        for (type_name, (props, line)) in type_to_props {
+            if props.is_empty() {
+                continue;
+            }
+            out.push(Relationship {
+                from: method_id.clone(),
+                to: unresolved_local_type_symbol_id(&type_name),
+                kind: RelationshipKind::AccessesProperty,
+                alias: Some(type_name),
+                properties_accessed: props.into_iter().collect(),
+                context: format!("method property access: {method_name}"),
+                file: parsed.file.clone(),
+                line,
+            });
+        }
+    });
+
+    out
 }
 
 pub fn unresolved_import_symbol_id(module_specifier: &str, symbol_name: &str) -> String {
@@ -250,7 +354,72 @@ fn collect_import_and_reexport_relationships(
         }
     });
 
+    out.extend(collect_decorator_references(parsed, from_symbol_id));
+
     (out, re_exports)
+}
+
+fn collect_decorator_references(parsed: &ParsedFile, from_symbol_id: &str) -> Vec<Relationship> {
+    let mut out = Vec::new();
+
+    walk_tree(parsed.tree.root_node(), &mut |node| {
+        if node.kind() != "decorator" {
+            return;
+        }
+
+        let Some(text) = node_text(node, &parsed.source) else {
+            return;
+        };
+        let compact = compact_whitespace(text);
+        if !compact.starts_with("@Module(") {
+            return;
+        }
+        let condensed = compact.replace(' ', "");
+
+        let line = node.start_position().row as u32 + 1;
+        for key in ["providers", "controllers", "imports", "exports"] {
+            for reference in extract_module_array_identifiers(&condensed, key) {
+                if reference.is_empty() || is_builtin_type(reference) {
+                    continue;
+                }
+                out.push(Relationship {
+                    from: from_symbol_id.to_string(),
+                    to: unresolved_local_type_symbol_id(reference),
+                    kind: RelationshipKind::UsesType,
+                    alias: None,
+                    properties_accessed: Vec::new(),
+                    context: format!("@Module {key} reference"),
+                    file: parsed.file.clone(),
+                    line,
+                });
+            }
+        }
+    });
+
+    out
+}
+
+fn extract_module_array_identifiers<'a>(decorator_text: &'a str, key: &str) -> Vec<&'a str> {
+    let marker = format!("{key}:[");
+    let mut out = Vec::new();
+    let mut rest = decorator_text;
+
+    while let Some(idx) = rest.find(&marker) {
+        let after = &rest[idx + marker.len()..];
+        let Some(end_idx) = after.find(']') else {
+            break;
+        };
+        let slice = &after[..end_idx];
+        for token in slice.split(',').map(str::trim).filter(|t| !t.is_empty()) {
+            let name = sanitize_identifier(token);
+            if !name.is_empty() {
+                out.push(name);
+            }
+        }
+        rest = &after[end_idx + 1..];
+    }
+
+    out
 }
 
 fn parse_import_entries(statement: &str, module_specifier: &str, line: u32) -> Vec<ImportEntry> {
@@ -363,6 +532,7 @@ fn parse_reexport_entries(statement: &str, module_specifier: &str, line: u32) ->
 fn collect_property_accesses(parsed: &ParsedFile) -> BTreeMap<String, (BTreeSet<String>, u32)> {
     let mut typed_vars = HashMap::<String, String>::new();
     let mut type_to_props = BTreeMap::<String, (BTreeSet<String>, u32)>::new();
+    let constructor_fields = collect_constructor_field_types(parsed);
 
     walk_tree(parsed.tree.root_node(), &mut |node| {
         collect_typed_var(node, &parsed.source, &mut typed_vars);
@@ -383,20 +553,6 @@ fn collect_property_accesses(parsed: &ParsedFile) -> BTreeMap<String, (BTreeSet<
         let Some(object_text) = node_text(object_node, &parsed.source) else {
             return;
         };
-        let object_name = sanitize_identifier(object_text);
-        if object_name.is_empty() {
-            return;
-        }
-
-        let Some(type_name) = typed_vars.get(object_name) else {
-            return;
-        };
-
-        // Skip built-in types — they are not codebase symbols
-        if is_builtin_type(type_name) {
-            return;
-        }
-
         let Some(property_text) = node_text(property_node, &parsed.source) else {
             return;
         };
@@ -405,9 +561,29 @@ fn collect_property_accesses(parsed: &ParsedFile) -> BTreeMap<String, (BTreeSet<
             return;
         }
 
+        let type_name = if let Some(field_name) = object_text.strip_prefix("this.") {
+            constructor_fields
+                .get(sanitize_identifier(field_name))
+                .cloned()
+        } else {
+            let object_name = sanitize_identifier(object_text);
+            if object_name.is_empty() {
+                return;
+            }
+            typed_vars.get(object_name).cloned()
+        };
+        let Some(type_name) = type_name else {
+            return;
+        };
+
+        // Skip built-in types — they are not codebase symbols
+        if is_builtin_type(&type_name) {
+            return;
+        }
+
         let line = node.start_position().row as u32 + 1;
         let (props, first_line) = type_to_props
-            .entry(type_name.clone())
+            .entry(type_name)
             .or_insert_with(|| (BTreeSet::new(), line));
         props.insert(property_name.to_string());
         if line < *first_line {
@@ -416,6 +592,70 @@ fn collect_property_accesses(parsed: &ParsedFile) -> BTreeMap<String, (BTreeSet<
     });
 
     type_to_props
+}
+
+/// Collect constructor-injected `this.field: Type` mappings for DI-style classes.
+fn collect_constructor_field_types(parsed: &ParsedFile) -> HashMap<String, String> {
+    let mut field_types = HashMap::new();
+
+    walk_tree(parsed.tree.root_node(), &mut |node| {
+        if node.kind() != "method_definition" {
+            return;
+        }
+
+        let Some(name_node) = node.child_by_field_name("name") else {
+            return;
+        };
+        let Some(name_text) = node_text(name_node, &parsed.source) else {
+            return;
+        };
+        if sanitize_identifier(name_text) != "constructor" {
+            return;
+        }
+
+        let Some(params) = node.child_by_field_name("parameters") else {
+            return;
+        };
+
+        let mut cursor = params.walk();
+        for param in params.children(&mut cursor) {
+            if !param.kind().contains("parameter") {
+                continue;
+            }
+
+            if let Some((field_name, type_name)) =
+                parse_constructor_field_param(param, &parsed.source)
+            {
+                if !is_builtin_type(&type_name) {
+                    field_types.insert(field_name, type_name);
+                }
+            }
+        }
+    });
+
+    field_types
+}
+
+fn parse_constructor_field_param(node: Node<'_>, source: &str) -> Option<(String, String)> {
+    let text = compact_whitespace(node_text(node, source)?);
+    let (left, right) = text.split_once(':')?;
+    let field_token = left
+        .split_whitespace()
+        .last()
+        .unwrap_or(left)
+        .trim_end_matches('?');
+    let field_name = sanitize_identifier(field_token);
+    if field_name.is_empty() {
+        return None;
+    }
+
+    let type_text = right.split('=').next().map(str::trim).unwrap_or_default();
+    let type_name = primary_type_name(type_text);
+    if type_name.is_empty() {
+        return None;
+    }
+
+    Some((field_name.to_string(), type_name.to_string()))
 }
 
 fn collect_typed_var(node: Node<'_>, source: &str, typed_vars: &mut HashMap<String, String>) {

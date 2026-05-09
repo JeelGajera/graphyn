@@ -22,8 +22,9 @@ pub fn run(
     exclude_csv: Option<&str>,
     respect_gitignore: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let root =
-        std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?;
+    let root = super::normalize_path(
+        &std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?,
+    );
 
     output::banner("watch");
     output::info(&format!(

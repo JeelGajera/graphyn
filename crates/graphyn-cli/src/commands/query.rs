@@ -14,8 +14,9 @@ pub fn run_blast_radius(
     depth: usize,
     path: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let root =
-        std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?;
+    let root = super::normalize_path(
+        &std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?,
+    );
     let graph = super::analyze::load_graph(&root)?;
 
     output::banner("blast-radius");
@@ -89,8 +90,9 @@ pub fn run_usages(
     file: Option<&str>,
     path: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let root =
-        std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?;
+    let root = super::normalize_path(
+        &std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?,
+    );
     let graph = super::analyze::load_graph(&root)?;
 
     output::banner("usages");
@@ -122,8 +124,9 @@ pub fn run_deps(
     depth: usize,
     path: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let root =
-        std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?;
+    let root = super::normalize_path(
+        &std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?,
+    );
     let graph = super::analyze::load_graph(&root)?;
 
     output::banner("dependencies");
@@ -349,7 +352,8 @@ fn format_query_error(err: graphyn_core::GraphynError, symbol: &str) -> String {
         graphyn_core::GraphynError::SymbolNotFound(_) => {
             format!(
                 "Symbol '{}' not found in the graph.\n  \
-                 Hint: run `graphyn analyze` to index the repo, or check the symbol name.",
+                 Hint: run `graphyn analyze` to index the repo, or check the symbol name.\n  \
+                 If the symbol is a method, try: `graphyn query blast-radius ClassName`.",
                 symbol
             )
         }

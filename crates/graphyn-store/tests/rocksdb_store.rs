@@ -119,6 +119,15 @@ fn test_rocksdb_store_save_then_load_graph() {
 }
 
 #[test]
+fn test_open_does_not_panic_on_windows_style_path() {
+    let path = temp_db_path("windows-path-test");
+    let store = RocksGraphStore::open(&path)
+        .expect("store should open without mixed separator path errors on Windows");
+    drop(store);
+    let _ = std::fs::remove_dir_all(&path);
+}
+
+#[test]
 fn test_load_graph_without_snapshot_returns_not_found() {
     let path = temp_db_path("missing");
     let store = RocksGraphStore::open(&path).expect("db open");
