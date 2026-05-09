@@ -44,9 +44,11 @@ pub struct RocksGraphStore {
 
 impl RocksGraphStore {
     pub fn open(path: &Path) -> Result<Self, StoreError> {
+        let normalized = normalize_rocksdb_path(path);
         let mut options = Options::default();
         options.create_if_missing(true);
-        let db = DB::open(&options, path).map_err(|err| StoreError::RocksDb(err.to_string()))?;
+        let db =
+            DB::open(&options, &normalized).map_err(|err| StoreError::RocksDb(err.to_string()))?;
         Ok(Self { db })
     }
 
@@ -75,6 +77,30 @@ impl RocksGraphStore {
             .ok_or(StoreError::SnapshotNotFound)?;
 
         GraphSnapshot::from_bytes(&bytes)
+    }
+}
+
+/// Normalize a filesystem path for RocksDB.
+///
+/// On Windows, this strips the extended-length `\\?\`/`\\?\UNC\` prefix that
+/// may be introduced by `canonicalize`, because RocksDB's internal path joining
+/// can produce invalid mixed-separator paths with that prefix.
+fn normalize_rocksdb_path(path: &Path) -> std::path::PathBuf {
+    #[cfg(windows)]
+    {
+        let s = path.to_string_lossy();
+        let stripped = if s.starts_with(r"\\?\UNC\") {
+            format!(r"\\{}", &s[8..])
+        } else if s.starts_with(r"\\?\") {
+            s[4..].to_string()
+        } else {
+            s.into_owned()
+        };
+        std::path::PathBuf::from(stripped.replace('/', "\\"))
+    }
+    #[cfg(not(windows))]
+    {
+        path.to_path_buf()
     }
 }
 

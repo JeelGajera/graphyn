@@ -43,7 +43,7 @@ fn run_stdio() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap_or_else(|_| std::env::current_dir().unwrap_or_else(|_| ".".into()));
 
     let repo_root = match std::fs::canonicalize(&repo_root) {
-        Ok(p) => p,
+        Ok(p) => super::normalize_path(&p),
         Err(e) => {
             eprintln!(
                 "[graphyn] ERROR: cannot access '{}': {e}",

@@ -184,6 +184,7 @@ pub fn is_ignored_by_rules(rel_path: &str, _is_dir: bool, rules: &[GitignoreRule
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
 
     #[test]
     fn test_parse_csv_patterns() {
@@ -225,6 +226,73 @@ mod tests {
         assert!(is_ignored_by_rules("dist", true, &rules));
         assert!(is_ignored_by_rules("dist/a.ts", false, &rules));
         assert!(!is_ignored_by_rules("dist/keep.ts", false, &rules));
+    }
+
+    #[test]
+    fn test_include_patterns_descend_correctly_into_subdirectories() {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/scan/monorepo");
+        let config = ScanConfig {
+            include_patterns: vec!["projects/frontend/web-portal/**".to_string()],
+            exclude_patterns: Vec::new(),
+            respect_gitignore: false,
+        };
+
+        let files = walk_source_files_with_config(&root, &config, |_| true)
+            .expect("walk should succeed for monorepo fixture");
+        let rel_files: Vec<String> = files
+            .iter()
+            .filter_map(|p| {
+                p.strip_prefix(&root)
+                    .ok()
+                    .map(|r| r.to_string_lossy().replace('\\', "/"))
+            })
+            .collect();
+
+        assert!(
+            rel_files
+                .iter()
+                .any(|f| f.ends_with("projects/frontend/web-portal/src/App.ts")),
+            "should include App.ts under nested include path"
+        );
+        assert!(
+            rel_files
+                .iter()
+                .any(|f| f.ends_with("projects/frontend/web-portal/src/Component.ts")),
+            "should include Component.ts under nested include path"
+        );
+    }
+
+    #[test]
+    fn test_include_with_double_star_finds_nested_files() {
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/scan/monorepo");
+        let config = ScanConfig {
+            include_patterns: vec!["projects/**/*.ts".to_string()],
+            exclude_patterns: Vec::new(),
+            respect_gitignore: false,
+        };
+
+        let files = walk_source_files_with_config(&root, &config, |_| true)
+            .expect("walk should succeed for recursive glob include");
+        let rel_files: Vec<String> = files
+            .iter()
+            .filter_map(|p| {
+                p.strip_prefix(&root)
+                    .ok()
+                    .map(|r| r.to_string_lossy().replace('\\', "/"))
+            })
+            .collect();
+
+        assert_eq!(
+            rel_files.len(),
+            3,
+            "recursive include should find all three fixture TypeScript files"
+        );
+        assert!(
+            rel_files
+                .iter()
+                .any(|f| f.ends_with("projects/api/administration/src/AdminService.ts")),
+            "recursive include should include AdminService.ts"
+        );
     }
 }
 
@@ -338,8 +406,62 @@ fn should_descend(root: &Path, path: &Path, config: &ScanConfig, rules: &[Gitign
         return true;
     };
     let rel = relative.to_string_lossy().replace('\\', "/");
+    if rel.is_empty() {
+        return true;
+    }
 
-    should_include_relative_path(&rel, true, config, rules)
+    for segment in rel.split('/') {
+        if DEFAULT_EXCLUDE_DIRS.contains(&segment) {
+            return false;
+        }
+    }
+
+    if config.respect_gitignore && is_ignored_by_rules(&rel, true, rules) {
+        return false;
+    }
+
+    if !config.exclude_patterns.is_empty() && path_matches_any(&rel, &config.exclude_patterns) {
+        return false;
+    }
+
+    if !config.include_patterns.is_empty() {
+        return config
+            .include_patterns
+            .iter()
+            .any(|pattern| directory_could_contain_match(&rel, pattern));
+    }
+
+    true
+}
+
+fn directory_could_contain_match(dir_rel: &str, pattern: &str) -> bool {
+    let dir = normalize(dir_rel);
+    let pat = normalize(pattern);
+
+    if dir.is_empty() || pat.is_empty() {
+        return true;
+    }
+
+    if pat.starts_with("**") {
+        return true;
+    }
+
+    let pat_no_globstar = pat.strip_prefix("**/").unwrap_or(&pat);
+    let fixed_prefix = pat_no_globstar
+        .split('*')
+        .next()
+        .unwrap_or("")
+        .trim_matches('/');
+
+    if fixed_prefix.is_empty() {
+        return true;
+    }
+
+    if fixed_prefix.starts_with(&dir) || dir.starts_with(fixed_prefix) {
+        return true;
+    }
+
+    pattern_matches(&format!("{dir}/dummy"), &pat)
 }
 
 fn should_include_file(

@@ -57,7 +57,10 @@ case "${ARCH}" in
 esac
 
 if [ "$OS" = "Darwin" ] && [ "$ARCH" = "x86_64" ]; then
-    error "Intel Macs (x86_64) are no longer supported for pre-built binaries. Graphyn requires Apple Silicon (M1/M2/M3...) for binary installation.\n\n  ${BOLD}Note:${RESET} You can still install from source using Cargo:\n  ${MAGENTA}cargo install graphyn-cli --git https://github.com/JeelGajera/graphyn${RESET}"
+    warn "Pre-built binaries are not available for Intel Macs (x86_64 Darwin)."
+    info "Install from source with Cargo:"
+    info "  cargo install graphyn-cli --git https://github.com/JeelGajera/graphyn"
+    exit 0
 fi
 
 TARGET="${ARCH}-${PLATFORM}"

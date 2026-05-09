@@ -1,328 +1,145 @@
 # Graphyn
 
-> Understand the blast radius before you pull the trigger.
+Understand the blast radius before you change code.
 
-Graphyn is a code intelligence engine that models your codebase as a living graph of symbol relationships. It gives coding agents a precise knowledge of what will break before making a change or how a change will affect the codebase.
+Graphyn builds a deterministic symbol relationship graph for your repository so you and your coding agents can answer:
+- What breaks if I change this symbol?
+- Where is this symbol used (including aliases)?
+- What does this symbol depend on?
 
-It is not a search tool. It is not a chatbot over your repo. It is a deterministic relationship graph that resolves aliases, tracks property-level access, and answers the questions your agent needs answered before touching anything.
+## Why Graphyn
 
----
+- Alias-aware: resolves `import { A as B }`
+- Property-aware: tracks accessed members (for safer refactors)
+- Deterministic: no LLM in graph construction
+- Fast queries: in-memory graph traversal
+- Agent-ready: MCP server for Cursor, Claude Code, Codex, and others
 
-## The problem
+## Install
 
-You change a class. Your coding agent searches for usages, reads the files it finds, and makes changes. Three days later something breaks in production — a mapper three directories deep imported that class under a different name. The agent never found it because it was looking for the original name.
-
-This is not a search problem. It is a relationship graph problem.
-
-```typescript
-// src/models/user_payload.ts
-export class UserPayload {
-  userId: string;
-  timestamp: Date;
-  status: string;
-}
-
-// src/mappers/response/deep/view_model_mapper.ts
-import { UserPayload as ResponseModel } from '../../../models/user_payload';
-//                    ^^^^^^^^^^^^^^^ different name — agent missed this
-
-export class ViewModelMapper {
-  map(data: ResponseModel): object {
-    return {
-      id: data.userId,      // silently broken after your change
-      ts: data.timestamp,
-      st: data.status,
-    };
-  }
-}
-```
-
-Graphyn catches this. Always.
-
----
-
-## What Graphyn tells you
-
-Given any symbol — class, function, type, interface — Graphyn answers:
-
-**Blast radius** — what will break if you change this:
-```
-Symbol: UserPayload [class] — src/models/user_payload.ts:12
-
-Blast radius (3 dependents):
-
-DIRECT:
-  • src/handlers/auth.ts:45
-    → imports as UserPayload
-    → accesses: .userId, .email
-
-  • src/handlers/profile.ts:23
-    → imports as UserPayload
-    → accesses: .userId, .timestamp
-
-ALIASED (high risk — different import name):
-  • src/mappers/response/deep/view_model_mapper.ts:8
-    → imports as ResponseModel  ← ALIAS
-    → accesses: .userId, .timestamp, .status
-
-Properties at risk: .userId (3 files), .timestamp (2 files), .status (1 file)
-```
-
-**Dependencies** — everything this symbol depends on.
-
-**Usages** — every place this symbol appears, including aliases and re-exports.
-
----
-
-## How it works
-
-1. Graphyn parses your codebase using [tree-sitter](https://tree-sitter.github.io) — fast, incremental, no compiler needed
-2. Builds a deterministic relationship graph (no LLM involved in graph construction)
-3. Resolves aliases — `import { A as B }` is tracked across the entire codebase
-4. Tracks property-level access — not just "uses class" but "accesses `.userId`"
-5. Persists the graph to disk — sub-2s startup on any size codebase
-6. Exposes everything via an MCP server — works with any MCP-compatible agent
-
-```
-Your codebase
-      ↓  tree-sitter (language adapters)
-   Intermediate Representation (IR)
-      ↓  graphyn-core (Rust)
-   Relationship graph (petgraph + DashMap)
-      ↓  MCP server
-   Codex / Cursor / Claude Code / Copilot / any agent
-```
-
----
-
-## Quick start
-
-### Install
-
-Graphyn is distributed as a single standalone executable. You can install it on macOS, Linux, and Windows without needing Rust or node.js:
-
-**macOS / Linux:**
+macOS / Linux:
 ```bash
 curl -fsSL https://raw.githubusercontent.com/JeelGajera/graphyn/master/install.sh | bash
 ```
 
-**Windows (PowerShell):**
+Windows (PowerShell):
 ```powershell
 irm https://raw.githubusercontent.com/JeelGajera/graphyn/master/install.ps1 | iex
 ```
 
-Once installed, verify it by running `graphyn --help`.
-
-**(Alternative) Cargo Install**
-If you prefer compiling from source via Cargo:
+From source (Cargo):
 ```bash
 cargo install graphyn-cli --git https://github.com/JeelGajera/graphyn
 ```
 
-### Index your repo
+## Quick Start
 
+1. Index a repo:
 ```bash
 graphyn analyze ./my-repo
 ```
 
-This parses every TypeScript/JavaScript file, builds the relationship graph, and persists it to `.graphyn/db` in your repo root.
-
-### Query from the CLI
-
+2. Run queries:
 ```bash
-# What breaks if I change UserPayload?
+# impact analysis
 graphyn query blast-radius UserPayload
 
-# Narrow to a specific file if the name is ambiguous
-graphyn query blast-radius UserPayload --file src/models/user_payload.ts
-
-# All usages including aliases
+# usages (alias-aware)
 graphyn query usages UserPayload
 
-# Full dependency tree
+# dependency tree
 graphyn query deps UserPayload
 
-# Show graph stats
+# graph summary
 graphyn status
 ```
 
-### Connect to your agent
-
-Start the MCP server:
-```bash
-graphyn serve --stdio
-```
-
-Or run in watch mode (live incremental updates as you code):
+3. Keep graph updated while coding:
 ```bash
 graphyn watch ./my-repo
 ```
 
----
+## Core Commands
 
-## Agent integration
+- `graphyn analyze <path>`: parse and build graph into `.graphyn/db`
+- `graphyn watch <path>`: keep graph in sync on file changes
+- `graphyn query blast-radius <symbol> [--file <path>] [--depth <n>]`
+- `graphyn query usages <symbol> [--file <path>]`
+- `graphyn query deps <symbol> [--file <path>] [--depth <n>]`
+- `graphyn status`: graph stats and coverage
+- `graphyn serve --stdio`: start MCP server
 
-### Cursor
+## Filtering
 
-Add to `.cursor/mcp.json` in your project root:
+Graphyn honors `.gitignore` by default. If a symbol is missing, check whether it
+lives in an ignored folder such as `dist/`, generated output, or scratch files.
+
+Override filters when needed:
+
+```bash
+graphyn analyze . --no-gitignore
+graphyn analyze . --include "src/**/*.ts"
+graphyn analyze . --exclude "tests/**"
+graphyn watch . --include "packages/api/**/*.ts"
+```
+
+For MCP clients, `refresh_graph` accepts:
+
+- `path`
+- `respect_gitignore`
+- `include`
+- `exclude`
+
+Example:
 
 ```json
 {
-  "mcpServers": {
-    "graphyn": {
-      "command": "graphyn",
-      "args": ["serve", "--stdio"],
-      "env": {
-        "GRAPHYN_ROOT": "${workspaceFolder}"
-      }
-    }
-  }
+  "path": ".",
+  "respect_gitignore": false,
+  "include": "src/**/*.ts",
+  "exclude": "tests/**"
 }
 ```
 
-### Claude Code
+## MCP Integration
 
-Add to `.claude/mcp_settings.json`:
-
-```json
-{
-  "mcpServers": {
-    "graphyn": {
-      "command": "graphyn",
-      "args": ["serve", "--stdio"]
-    }
-  }
-}
-```
-
-### OpenAI Codex
-
-Add to your Codex agent configuration:
-
-```json
-{
-  "mcpServers": {
-    "graphyn": {
-      "command": "graphyn",
-      "args": ["serve", "--stdio"],
-      "env": {
-        "GRAPHYN_ROOT": "."
-      }
-    }
-  }
-}
-```
-
-### Antigravity
-
-Antigravity reads MCP servers from `.gemini/settings.json`:
-
-```json
-{
-  "mcpServers": {
-    "graphyn": {
-      "command": "graphyn",
-      "args": ["serve", "--stdio"],
-      "cwd": "${workspaceFolder}"
-    }
-  }
-}
-```
-
-### Any MCP-compatible agent
-
-Graphyn speaks standard MCP over stdio. Any agent that supports MCP can connect:
-
+Start server:
 ```bash
 graphyn serve --stdio
 ```
 
-The server accepts `initialize`, `tools/list`, and `tools/call` — standard MCP JSON-RPC protocol.
+Agent and MCP setup templates are in [`agent-configs/`](agent-configs/).
 
-### What your agent can now do
+The folder includes ready-to-use examples for:
+- `AGENTS.md`
+- Claude Code `CLAUDE.md`
+- Claude Code Skills
+- Cursor rules
+- GitHub Copilot instructions
+- Gemini guidance
+- Antigravity-style rules/workflows
+- MCP configs for Cursor, Claude Code, Antigravity and Codex
 
-```
-# Before changing a class, the agent calls:
-get_blast_radius("UserPayload")
+## Language Support
 
-# Before deleting a function:
-get_symbol_usages("processOrder")
+Supported now:
+- TypeScript / JavaScript
+- `.mts`, `.cts`, `.mjs`, `.cjs`
+- Vue (`.vue`), Svelte (`.svelte`), Astro (`.astro`)
 
-# To understand what a module needs:
-get_dependencies("AuthService")
-```
+Planned:
+- Python
+- Rust
+- Go
 
-The agent receives structured output it can act on — not a wall of code to search through.
-
----
-
-## MCP tools
-
-Graphyn exposes three tools via MCP:
-
-| Tool | What it answers |
-|---|---|
-| `get_blast_radius` | What will break if I change symbol X? |
-| `get_dependencies` | What does symbol X depend on? |
-| `get_symbol_usages` | Where is symbol X used, including aliases? |
-| `refresh_graph` | Forces Graphyn to immediately re-scan files and rebuild the graph. |
-
-All tools resolve aliased imports and track property-level access by default.
-
-### 🤖 Agent Skills & Filtering (For Coding Agents)
-
-Graphyn honors `.gitignore` by default. If your agent is failing to find symbols, it may be because you are working on files that are gitignored (e.g., inside `dist/`, or uncommitted scratch files). 
-
-As an agent, you can override blocklists:
-- **CLI Commands**: Pass `--no-gitignore`, `--include="src/**/*.ts"`, or `--exclude="tests/**"` to `graphyn analyze` or `graphyn watch`.
-- **MCP Auto-Sync**: The `refresh_graph` MCP tool accepts `respect_gitignore`, `include`, and `exclude` keys. If you generate a massive file and need it synced to the graph immediately without waiting for a watcher, invoke `refresh_graph({ "path": "." })`.
-
----
-
-## Performance
-
-| Operation | Target | Method |
-|---|---|---|
-| Query (blast radius) | < 100ms p95 | In-memory graph, no disk I/O on query path |
-| Initial parse (50k LOC) | < 10s | Parallel file parsing with rayon |
-| Incremental update (1 file) | < 500ms | Only re-parse changed file, diff graph |
-| Startup (graph persisted) | < 2s | Deserialize from RocksDB |
-
-The graph lives in memory. Queries traverse in-memory edges with no network or disk round-trip.
-
----
-
-## Language support
-
-| Language/Framework | Status |
-|---|---|
-| TypeScript | v1 — supported |
-| JavaScript | v1 — supported |
-| TypeScript ESM (`.mts`, `.cts`) | v1.2 — supported |
-| JavaScript ESM (`.mjs`, `.cjs`) | v1.2 — supported |
-| Vue (`.vue`) | v1.2 — supported |
-| Svelte (`.svelte`) | v1.2 — supported |
-| Astro (`.astro`) | v1.2 — supported |
-| Python | v1.3 — planned |
-| Rust | v1.3 — planned |
-| Go | v1.3 — planned |
-
----
-
-## Building from source
+## Build & Test
 
 ```bash
-git clone https://github.com/JeelGajera/graphyn
-cd graphyn
 cargo build --release
-```
-
-Run all tests:
-```bash
 cargo test --workspace
+cargo clippy --workspace -- -D warnings
 ```
----
 
 ## License
 
-Apache 2.0 — see [LICENSE](LICENSE)
+Apache-2.0 — see [LICENSE](LICENSE)

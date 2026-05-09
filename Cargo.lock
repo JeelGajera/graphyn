@@ -496,6 +496,7 @@ name = "graphyn-adapter-ts"
 version = "0.1.2"
 dependencies = [
  "graphyn-core",
+ "rayon",
  "serde_json",
  "tree-sitter",
  "tree-sitter-javascript",

@@ -17,8 +17,9 @@ pub fn run(
     exclude_csv: Option<&str>,
     respect_gitignore: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let root =
-        std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?;
+    let root = super::normalize_path(
+        &std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?,
+    );
 
     output::banner("analyze");
     output::info(&format!(
@@ -39,6 +40,20 @@ pub fn run(
 
     let files = walk_source_files_with_config(&root, &scan_config, is_supported_source_file)
         .map_err(|e| format!("scan failed: {e}"))?;
+    if files.is_empty() {
+        if !scan_config.include_patterns.is_empty() {
+            output::warning("No files matched your --include patterns.");
+            output::dim_line("  Tip: use ** for recursive matching, e.g. 'projects/api/**/*.ts'");
+            output::dim_line(&format!(
+                "  Patterns used: {}",
+                scan_config.include_patterns.join(", ")
+            ));
+        } else {
+            output::warning("No source files were found for analysis.");
+            output::dim_line("  Check your path and include/exclude filters, then retry.");
+        }
+        return Ok(());
+    }
 
     let repo_ir = analyze_files(&root, &files).map_err(|e| format!("analysis failed: {e}"))?;
 

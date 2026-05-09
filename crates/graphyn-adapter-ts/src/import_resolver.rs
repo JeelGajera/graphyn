@@ -108,12 +108,14 @@ fn extract_package_name(specifier: &str) -> String {
 pub fn resolve_repo_ir(root: &Path, repo_ir: &mut RepoIR) {
     let mut file_to_symbols: HashMap<String, Vec<Symbol>> = HashMap::new();
     let mut file_to_reexports: HashMap<String, Vec<ReExportEntry>> = HashMap::new();
+    let known_files: HashSet<String> = repo_ir.files.iter().map(|f| f.file.clone()).collect();
     for file in &repo_ir.files {
         file_to_symbols.insert(file.file.clone(), file.symbols.clone());
         if !file.re_exports.is_empty() {
             file_to_reexports.insert(file.file.clone(), file.re_exports.clone());
         }
     }
+    expand_star_reexports(root, &mut file_to_reexports, &file_to_symbols, &known_files);
 
     let tsconfig_paths = TsConfigPaths::load(root);
 
@@ -131,6 +133,7 @@ pub fn resolve_repo_ir(root: &Path, repo_ir: &mut RepoIR) {
                     relationship,
                     &file_to_symbols,
                     &file_to_reexports,
+                    &known_files,
                     tsconfig_paths.as_ref(),
                     &mut file_ir.diagnostics,
                 );
@@ -152,7 +155,9 @@ pub fn resolve_repo_ir(root: &Path, repo_ir: &mut RepoIR) {
         }
 
         for rel in &mut resolved {
-            if rel.kind != RelationshipKind::AccessesProperty {
+            if rel.kind != RelationshipKind::AccessesProperty
+                && rel.kind != RelationshipKind::UsesType
+            {
                 continue;
             }
             if let Some(type_name) = parse_unresolved_local_type_symbol_id(&rel.to) {
@@ -187,12 +192,61 @@ pub fn resolve_repo_ir(root: &Path, repo_ir: &mut RepoIR) {
     }
 }
 
+fn expand_star_reexports(
+    root: &Path,
+    file_to_reexports: &mut HashMap<String, Vec<ReExportEntry>>,
+    file_to_symbols: &HashMap<String, Vec<Symbol>>,
+    known_files: &HashSet<String>,
+) {
+    let files: Vec<String> = file_to_reexports.keys().cloned().collect();
+    for file in files {
+        let entries = file_to_reexports.get(&file).cloned().unwrap_or_default();
+        let mut expanded = Vec::new();
+        for entry in entries {
+            if entry.exported_name != "*" {
+                expanded.push(entry);
+                continue;
+            }
+
+            let Some(target_file) =
+                resolve_target_file_from_known(root, &file, &entry.source_module, known_files)
+            else {
+                expanded.push(entry);
+                continue;
+            };
+
+            let Some(symbols) = file_to_symbols.get(&target_file) else {
+                expanded.push(entry);
+                continue;
+            };
+
+            let mut added = false;
+            for symbol in symbols {
+                if symbol.name == "module" {
+                    continue;
+                }
+                expanded.push(ReExportEntry {
+                    exported_name: symbol.name.clone(),
+                    source_module: entry.source_module.clone(),
+                });
+                added = true;
+            }
+            if !added {
+                expanded.push(entry);
+            }
+        }
+        file_to_reexports.insert(file, expanded);
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
 fn resolve_import_like(
     root: &Path,
     file: &str,
     relationship: &Relationship,
     file_to_symbols: &HashMap<String, Vec<Symbol>>,
     file_to_reexports: &HashMap<String, Vec<ReExportEntry>>,
+    known_files: &HashSet<String>,
     tsconfig_paths: Option<&TsConfigPaths>,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Vec<Relationship> {
@@ -201,6 +255,7 @@ fn resolve_import_like(
         file,
         file_to_symbols,
         file_to_reexports,
+        known_files,
     };
 
     let Some((module_specifier, symbol_name)) = parse_unresolved_import_symbol_id(&relationship.to)
@@ -233,7 +288,9 @@ fn resolve_import_like(
         ModuleKind::Relative | ModuleKind::Absolute => {}
     }
 
-    let Some(target_file) = resolve_target_file(root, file, &module_specifier) else {
+    let Some(target_file) =
+        resolve_target_file_from_known(root, file, &module_specifier, known_files)
+    else {
         diagnostics.push(Diagnostic {
             level: DiagnosticLevel::Warning,
             category: DiagnosticCategory::Resolution,
@@ -309,6 +366,7 @@ fn resolve_local_import(
             symbol_name,
             context.file_to_symbols,
             context.file_to_reexports,
+            context.known_files,
             &mut visited,
             diagnostics,
         )
@@ -335,16 +393,19 @@ struct LocalImportContext<'a> {
     file: &'a str,
     file_to_symbols: &'a HashMap<String, Vec<Symbol>>,
     file_to_reexports: &'a HashMap<String, Vec<ReExportEntry>>,
+    known_files: &'a HashSet<String>,
 }
 
 const MAX_REEXPORT_DEPTH: usize = 10;
 
+#[allow(clippy::too_many_arguments)]
 fn follow_reexport_chain(
     root: &Path,
     current_file: &str,
     symbol_name: &str,
     file_to_symbols: &HashMap<String, Vec<Symbol>>,
     file_to_reexports: &HashMap<String, Vec<ReExportEntry>>,
+    known_files: &HashSet<String>,
     visited: &mut HashSet<String>,
     diagnostics: &mut Vec<Diagnostic>,
 ) -> Option<SymbolId> {
@@ -365,7 +426,8 @@ fn follow_reexport_chain(
 
     // Helper to follow a specific entry
     let mut try_follow = |entry: &ReExportEntry| -> Option<SymbolId> {
-        let chain_target = resolve_target_file(root, current_file, &entry.source_module)?;
+        let chain_target =
+            resolve_target_file_from_known(root, current_file, &entry.source_module, known_files)?;
 
         // Push visited
         if !visited.insert(chain_target.clone()) {
@@ -404,6 +466,7 @@ fn follow_reexport_chain(
             symbol_name,
             file_to_symbols,
             file_to_reexports,
+            known_files,
             visited,
             diagnostics,
         );
@@ -454,7 +517,12 @@ fn find_symbol_by_name_in_file(
     candidates.first().map(|s| s.id.clone())
 }
 
-fn resolve_target_file(root: &Path, from_file: &str, module_specifier: &str) -> Option<String> {
+fn resolve_target_file_from_known(
+    root: &Path,
+    from_file: &str,
+    module_specifier: &str,
+    known_files: &HashSet<String>,
+) -> Option<String> {
     if !module_specifier.starts_with('.') {
         return None;
     }
@@ -463,9 +531,19 @@ fn resolve_target_file(root: &Path, from_file: &str, module_specifier: &str) -> 
     let base_dir = from_file_path.parent()?;
     let candidate = base_dir.join(module_specifier);
 
-    let root_canon = std::fs::canonicalize(root).ok();
     let candidates = [
         candidate.clone(),
+        append_extension(&candidate, "ts"),
+        append_extension(&candidate, "tsx"),
+        append_extension(&candidate, "mts"),
+        append_extension(&candidate, "cts"),
+        append_extension(&candidate, "js"),
+        append_extension(&candidate, "jsx"),
+        append_extension(&candidate, "mjs"),
+        append_extension(&candidate, "cjs"),
+        append_extension(&candidate, "vue"),
+        append_extension(&candidate, "svelte"),
+        append_extension(&candidate, "astro"),
         with_extension(&candidate, "ts"),
         with_extension(&candidate, "tsx"),
         with_extension(&candidate, "mts"),
@@ -491,8 +569,8 @@ fn resolve_target_file(root: &Path, from_file: &str, module_specifier: &str) -> 
     ];
 
     for path in candidates {
-        if path.is_file() {
-            if let Some(rel) = relative_path_within_root(root, root_canon.as_deref(), &path) {
+        if let Some(rel) = relative_path_within_root(root, &path) {
+            if known_files.contains(&rel) {
                 return Some(rel);
             }
         }
@@ -507,18 +585,27 @@ fn with_extension(path: &Path, ext: &str) -> PathBuf {
     out
 }
 
-fn relative_path_within_root(
-    root: &Path,
-    root_canon: Option<&Path>,
-    path: &Path,
-) -> Option<String> {
-    if let Some(canon_root) = root_canon {
-        let canon_path = std::fs::canonicalize(path).ok()?;
-        let rel = canon_path.strip_prefix(canon_root).ok()?;
-        return Some(rel.to_string_lossy().replace('\\', "/"));
-    }
+fn append_extension(path: &Path, ext: &str) -> PathBuf {
+    PathBuf::from(format!("{}.{}", path.to_string_lossy(), ext))
+}
 
-    path.strip_prefix(root)
-        .ok()
-        .map(|p| p.to_string_lossy().replace('\\', "/"))
+fn relative_path_within_root(root: &Path, path: &Path) -> Option<String> {
+    let rel = path.strip_prefix(root).ok()?;
+    Some(normalize_relative_path(
+        &rel.to_string_lossy().replace('\\', "/"),
+    ))
+}
+
+fn normalize_relative_path(input: &str) -> String {
+    let mut stack: Vec<&str> = Vec::new();
+    for segment in input.split('/') {
+        match segment {
+            "" | "." => {}
+            ".." => {
+                let _ = stack.pop();
+            }
+            other => stack.push(other),
+        }
+    }
+    stack.join("/")
 }

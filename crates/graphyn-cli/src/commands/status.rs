@@ -3,8 +3,9 @@ use graphyn_core::ir::SymbolKind;
 use crate::output;
 
 pub fn run(path: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let root =
-        std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?;
+    let root = super::normalize_path(
+        &std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?,
+    );
     let graph = super::analyze::load_graph(&root)?;
 
     output::banner("status");
