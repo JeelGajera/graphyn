@@ -3,12 +3,13 @@ use std::path::Path;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use graphyn_adapter_ts::analyze_files;
-use graphyn_adapter_ts::language::is_supported_source_file;
+use graphyn_adapter_dispatch::analyze_files;
 use graphyn_core::graph::GraphynGraph;
 use graphyn_core::ir::RepoIR;
 use graphyn_core::resolver::AliasResolver;
-use graphyn_core::scan::{parse_csv_patterns, walk_source_files_with_config, ScanConfig};
+use graphyn_core::scan::{
+    is_any_supported_source_file, parse_csv_patterns, walk_source_files_with_config, ScanConfig,
+};
 use graphyn_store::RocksGraphStore;
 
 #[derive(Debug, Deserialize, JsonSchema)]
@@ -50,7 +51,7 @@ pub fn execute(
         respect_gitignore: params.respect_gitignore.unwrap_or(true),
     };
 
-    let files = walk_source_files_with_config(&root, &scan_config, is_supported_source_file)
+    let files = walk_source_files_with_config(&root, &scan_config, is_any_supported_source_file)
         .map_err(|e| format!("scan failed: {e}"))?;
 
     let repo_ir = analyze_files(&root, &files).map_err(|e| format!("analysis failed: {e}"))?;

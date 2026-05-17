@@ -15,8 +15,8 @@ Use Graphyn before edits that can affect other files.
 - Aliased imports mean the same symbol may appear under another name.
 - `properties_accessed` tells which fields or methods callers actually use.
 - DI-heavy TypeScript projects may show constructor-injected service usage.
+- Python dataclass/Pydantic fields, Rust struct fields, Go struct fields, and C/C++ typedef/using aliases are tracked when present.
 - Decorator/module references can create dependencies even without direct calls.
 
 Prefer Graphyn over `rg` when the question is about relationships. Use `rg` for
 plain text lookup only after Graphyn has answered the symbol graph question.
-

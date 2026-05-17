@@ -123,14 +123,18 @@ The folder includes ready-to-use examples for:
 ## Language Support
 
 Supported now:
-- TypeScript / JavaScript
-- `.mts`, `.cts`, `.mjs`, `.cjs`
-- Vue (`.vue`), Svelte (`.svelte`), Astro (`.astro`)
+- TypeScript / JavaScript (`.ts`, `.tsx`, `.js`, `.jsx`, `.mts`, `.cts`, `.mjs`, `.cjs`)
+- Framework files: Vue (`.vue`), Svelte (`.svelte`), Astro (`.astro`)
+- Python (`.py`, `.pyi`) — including dataclass DI, Pydantic, Django, FastAPI
+- Rust (`.rs`) — including trait bounds, derive macros, module tree resolution
+- Go (`.go`) — including implicit interface detection, struct embedding
+- C (`.c`, `.h`) — including typedef aliases, header/source split
+- C++ (`.cpp`, `.cc`, `.cxx`, `.hpp`, `.hxx`, `.hh`) — including using aliases, templates, inheritance
 
 Planned:
-- Python
-- Rust
-- Go
+- Java / Kotlin
+- Ruby
+- PHP
 
 ## Build & Test
 

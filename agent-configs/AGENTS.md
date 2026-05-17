@@ -1,6 +1,7 @@
 # Graphyn Agent Instructions
 
 Use Graphyn as the source of truth for symbol impact analysis in this repository.
+Graphyn supports TypeScript/JavaScript, Python, Rust, Go, C, and C++ analysis.
 
 ## Before Risky Code Changes
 

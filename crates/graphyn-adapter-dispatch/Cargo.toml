@@ -1,0 +1,12 @@
+[package]
+name = "graphyn-adapter-dispatch"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+graphyn-core = { path = "../graphyn-core", version = "0.1.3" }
+graphyn-adapter-ts = { path = "../graphyn-adapter-ts", version = "0.1.3" }
+graphyn-adapter-python = { path = "../graphyn-adapter-python", version = "0.1.3" }
+graphyn-adapter-rust = { path = "../graphyn-adapter-rust", version = "0.1.3" }
+graphyn-adapter-go = { path = "../graphyn-adapter-go", version = "0.1.3" }
+graphyn-adapter-c = { path = "../graphyn-adapter-c", version = "0.1.3" }

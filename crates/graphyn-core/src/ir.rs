@@ -42,6 +42,8 @@ pub enum Language {
     Rust,
     Go,
     Java,
+    C,
+    Cpp,
 }
 
 /// A directed relationship between two symbols.

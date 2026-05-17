@@ -1,12 +1,13 @@
 use std::path::Path;
 use std::time::Instant;
 
-use graphyn_adapter_ts::analyze_files;
-use graphyn_adapter_ts::language::is_supported_source_file;
+use graphyn_adapter_dispatch::analyze_files;
 use graphyn_core::graph::GraphynGraph;
 use graphyn_core::ir::RepoIR;
 use graphyn_core::resolver::AliasResolver;
-use graphyn_core::scan::{parse_csv_patterns, walk_source_files_with_config, ScanConfig};
+use graphyn_core::scan::{
+    is_any_supported_source_file, parse_csv_patterns, walk_source_files_with_config, ScanConfig,
+};
 use graphyn_store::RocksGraphStore;
 
 use crate::output;
@@ -38,7 +39,7 @@ pub fn run(
         respect_gitignore,
     };
 
-    let files = walk_source_files_with_config(&root, &scan_config, is_supported_source_file)
+    let files = walk_source_files_with_config(&root, &scan_config, is_any_supported_source_file)
         .map_err(|e| format!("scan failed: {e}"))?;
     if files.is_empty() {
         if !scan_config.include_patterns.is_empty() {
@@ -117,7 +118,17 @@ pub fn run(
         let mut langs: Vec<_> = repo_ir.language_stats.iter().collect();
         langs.sort_by(|a, b| b.1.cmp(a.1));
         for (lang, count) in langs {
-            output::stat(&format!("  {lang}"), &format!("{count} file(s)"));
+            let icon = match lang.as_str() {
+                "TypeScript" => "🔷",
+                "JavaScript" => "🟡",
+                "Python" => "🐍",
+                "Rust" => "🦀",
+                "Go" => "🐹",
+                "C" => "⚙",
+                "Cpp" => "⚙",
+                _ => "•",
+            };
+            output::stat(&format!("  {icon} {lang}"), &format!("{count} file(s)"));
         }
     }
 

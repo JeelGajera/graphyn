@@ -2,6 +2,11 @@
 members = [
   "crates/graphyn-core",
   "crates/graphyn-adapter-ts",
+  "crates/graphyn-adapter-python",
+  "crates/graphyn-adapter-rust",
+  "crates/graphyn-adapter-go",
+  "crates/graphyn-adapter-c",
+  "crates/graphyn-adapter-dispatch",
   "crates/graphyn-store",
   "crates/graphyn-mcp",
   "crates/graphyn-cli",
