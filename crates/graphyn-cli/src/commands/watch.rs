@@ -3,11 +3,11 @@ use std::path::Path;
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 
-use graphyn_adapter_ts::analyze_files;
-use graphyn_adapter_ts::language::is_supported_source_file;
+use graphyn_adapter_dispatch::analyze_files;
 use graphyn_core::scan::{
-    load_root_gitignore_rules, parse_csv_patterns, should_include_relative_path,
-    walk_source_files_with_config, GitignoreRule, ScanConfig,
+    detect_language_from_extension, is_any_supported_source_file, load_root_gitignore_rules,
+    parse_csv_patterns, should_include_relative_path, walk_source_files_with_config, GitignoreRule,
+    ScanConfig,
 };
 use graphyn_store::RocksGraphStore;
 use notify::{RecursiveMode, Watcher};
@@ -47,7 +47,7 @@ pub fn run(
 
     // ── initial analysis ─────────────────────────────────────
     let start = Instant::now();
-    let files = walk_source_files_with_config(&root, &scan_config, is_supported_source_file)
+    let files = walk_source_files_with_config(&root, &scan_config, is_any_supported_source_file)
         .map_err(|e| format!("initial scan failed: {e}"))?;
     let repo_ir =
         analyze_files(&root, &files).map_err(|e| format!("initial analysis failed: {e}"))?;
@@ -128,7 +128,7 @@ fn handle_change(root: &Path, store: &RocksGraphStore, files: &[String], scan_co
     print!("  {}      Re-analyzing … ", output::dim(""));
 
     let start = Instant::now();
-    let scan_res = walk_source_files_with_config(root, scan_config, is_supported_source_file);
+    let scan_res = walk_source_files_with_config(root, scan_config, is_any_supported_source_file);
     let repo_ir_res = scan_res.and_then(|files| {
         analyze_files(root, &files).map_err(|e| std::io::Error::other(format!("{e}")))
     });
@@ -169,10 +169,7 @@ fn is_watchable(
         .extension()
         .and_then(|e| e.to_str())
         .unwrap_or_default();
-    if !matches!(
-        ext,
-        "ts" | "tsx" | "js" | "jsx" | "mts" | "cts" | "mjs" | "cjs" | "vue" | "svelte" | "astro"
-    ) {
+    if detect_language_from_extension(ext).is_none() {
         return false;
     }
 

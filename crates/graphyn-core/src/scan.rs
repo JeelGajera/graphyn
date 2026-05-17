@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
+use crate::ir::Language;
 
 #[derive(Debug, Clone, Default)]
 pub struct ScanConfig {
@@ -330,6 +331,26 @@ where
     Ok(out)
 }
 
+pub fn detect_language_from_extension(ext: &str) -> Option<Language> {
+    match ext.to_ascii_lowercase().as_str() {
+        "py" | "pyi" => Some(Language::Python),
+        "rs" => Some(Language::Rust),
+        "go" => Some(Language::Go),
+        "c" | "h" => Some(Language::C),
+        "cpp" | "cc" | "cxx" | "hpp" | "hxx" | "hh" => Some(Language::Cpp),
+        "ts" | "tsx" | "mts" | "cts" | "vue" | "svelte" | "astro" => Some(Language::TypeScript),
+        "js" | "jsx" | "mjs" | "cjs" => Some(Language::JavaScript),
+        _ => None,
+    }
+}
+
+pub fn is_any_supported_source_file(path: &Path) -> bool {
+    path.extension()
+        .and_then(|e| e.to_str())
+        .and_then(detect_language_from_extension)
+        .is_some()
+}
+
 const DEFAULT_EXCLUDE_DIRS: &[&str] = &[
     "node_modules",
     "dist",
@@ -345,6 +366,24 @@ const DEFAULT_EXCLUDE_DIRS: &[&str] = &[
     ".graphyn",
     ".git",
     "target",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "env",
+    ".eggs",
+    ".mypy_cache",
+    ".pytest_cache",
+    ".tox",
+    "site-packages",
+    "dist-info",
+    "egg-info",
+    "vendor",
+    "CMakeFiles",
+    "_deps",
+    ".cmake",
+    "generated",
+    "gen",
+    "proto",
 ];
 
 const DEFAULT_EXCLUDE_SUFFIXES: &[&str] = &[
@@ -352,6 +391,20 @@ const DEFAULT_EXCLUDE_SUFFIXES: &[&str] = &[
     ".min.js", ".min.mjs", // Minified JS
     ".min.css", // Minified CSS
     ".map",     // Source maps
+    ".pyc",
+    ".pyo",
+    ".o",
+    ".a",
+    ".so",
+    ".dll",
+    ".obj",
+    ".lib",
+    ".exe",
+    ".pb.c",
+    ".pb.h",
+    "_gen.c",
+    "_gen.h",
+    ".pb.rs",
 ];
 
 pub fn should_include_relative_path(

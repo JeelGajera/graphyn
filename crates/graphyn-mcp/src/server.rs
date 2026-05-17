@@ -44,7 +44,7 @@ impl GraphynMcpServer {
     /// be affected by changes. Resolves aliases. Tracks property-level access.
     #[tool(
         name = "get_blast_radius",
-        description = "Given a symbol name, returns all symbols that depend on it and would be affected by changes. Resolves aliases. Tracks property-level access."
+        description = "Given a symbol name, returns all symbols that depend on it across TypeScript, JavaScript, Python, Rust, Go, C, and C++ codebases. Resolves import aliases (including `as` aliases in all languages). Tracks property-level field access."
     )]
     async fn get_blast_radius(
         &self,

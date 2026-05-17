@@ -504,6 +504,8 @@ fn language_to_u8(language: &Language) -> u8 {
         Language::Rust => 4,
         Language::Go => 5,
         Language::Java => 6,
+        Language::C => 7,
+        Language::Cpp => 8,
     }
 }
 
@@ -515,6 +517,8 @@ fn u8_to_language(input: u8) -> Result<Language, StoreError> {
         4 => Ok(Language::Rust),
         5 => Ok(Language::Go),
         6 => Ok(Language::Java),
+        7 => Ok(Language::C),
+        8 => Ok(Language::Cpp),
         other => Err(StoreError::Serialization(format!(
             "unknown language code: {other}"
         ))),

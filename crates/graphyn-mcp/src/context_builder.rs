@@ -4,7 +4,7 @@
 //! and highlighting aliased imports as high-risk items.
 
 use graphyn_core::graph::GraphynGraph;
-use graphyn_core::ir::SymbolKind;
+use graphyn_core::ir::{Language, SymbolKind};
 use graphyn_core::query::QueryEdge;
 
 use std::collections::BTreeMap;
@@ -74,7 +74,12 @@ pub fn format_blast_radius(
 
 fn format_blast_edge(graph: &GraphynGraph, edge: &QueryEdge) -> String {
     let mut out = String::new();
-    out.push_str(&format!("  • {}:{}\n", edge.file, edge.line));
+    let lang = graph
+        .symbols
+        .get(&edge.from)
+        .map(|s| format_language(&s.language))
+        .unwrap_or("??");
+    out.push_str(&format!("  • {}:{} [{}]\n", edge.file, edge.line, lang));
 
     if let Some(alias) = &edge.alias {
         out.push_str(&format!("    → imports as {} ← ALIAS\n", alias));
@@ -101,6 +106,19 @@ fn format_blast_edge(graph: &GraphynGraph, edge: &QueryEdge) -> String {
     }
 
     out
+}
+
+fn format_language(lang: &Language) -> &'static str {
+    match lang {
+        Language::TypeScript => "TS",
+        Language::JavaScript => "JS",
+        Language::Python => "PY",
+        Language::Rust => "RS",
+        Language::Go => "GO",
+        Language::C => "C",
+        Language::Cpp => "C++",
+        _ => "??",
+    }
 }
 
 // ── dependencies ─────────────────────────────────────────────
