@@ -1,79 +1,182 @@
+//! Turning placeholder ids into graph-addressable ones.
+//!
+//! Two passes over each file, in this order because the second depends on the
+//! first: resolve imports to build the file's local-name table, then resolve
+//! type references against that table.
+//!
+//! Anything still unresolved at the end is removed and reported. That matters
+//! because [`graphyn_core::graph::GraphynGraph::add_relationship`] silently
+//! drops edges pointing at ids it does not know — so an unresolved placeholder
+//! that reaches the graph is a missing edge nobody hears about. Reporting it
+//! here turns a silent gap into a diagnostic the user can act on.
+
 use std::collections::{BTreeSet, HashMap};
 use std::path::Path;
 
-use graphyn_core::ir::{RelationshipKind, RepoIR};
+use graphyn_core::ir::{
+    Diagnostic, DiagnosticCategory, DiagnosticLevel, RelationshipKind, RepoIR, SymbolKind,
+};
+use graphyn_core::symbol_id::{
+    external_package_id, parse_unresolved_import_id, parse_unresolved_local_type_id,
+};
 
-use crate::module_tree::ModuleTree;
+use crate::module_tree::{ModuleTree, Resolved};
+use crate::scope_analyzer::is_builtin_type;
 
 pub fn resolve_repo_ir(_root: &Path, repo_ir: &mut RepoIR) {
-    let module_tree = ModuleTree::build(&repo_ir.files);
+    let tree = ModuleTree::build(&repo_ir.files);
 
-    for f in &mut repo_ir.files {
-        let mut local_name_to_symbol_id: HashMap<String, String> = HashMap::new();
-        let prop_edges = f
-            .relationships
+    for file in &mut repo_ir.files {
+        let path = file.file.clone();
+
+        // Symbols this file defines, for resolving references to its own types.
+        let own_symbols: HashMap<String, String> = file
+            .symbols
             .iter()
-            .filter(|r| r.kind == RelationshipKind::AccessesProperty)
-            .cloned()
-            .collect::<Vec<_>>();
+            .filter(|s| s.kind != SymbolKind::Module)
+            .map(|s| (s.name.clone(), s.id.clone()))
+            .collect();
 
-        for r in &mut f.relationships {
-            if r.kind != RelationshipKind::Imports && r.kind != RelationshipKind::Implements {
+        // ── pass 1: imports ──────────────────────────────────
+        //
+        // Populates the table that pass 2 resolves type names against.
+        let mut local_names: HashMap<String, String> = HashMap::new();
+        let mut drop_import = Vec::new();
+
+        for (index, rel) in file.relationships.iter_mut().enumerate() {
+            if rel.kind != RelationshipKind::Imports {
                 continue;
             }
-            if !r.to.starts_with("unresolved_import::") {
+            let Some((module, symbol)) = parse_unresolved_import_id(&rel.to) else {
                 continue;
-            }
+            };
+            let (module, symbol) = (module.to_string(), symbol.to_string());
 
-            let raw = r.to.trim_start_matches("unresolved_import::").to_string();
-            let is_local = raw.starts_with("crate::")
-                || raw.starts_with("super::")
-                || raw.starts_with("self::")
-                || module_tree.could_be_local(&raw);
-
-            if is_local {
-                if let Some(id) = module_tree.resolve_use_path(&f.file, &raw) {
-                    r.to = id.clone();
-                    let local = r
-                        .alias
-                        .clone()
-                        .unwrap_or_else(|| raw.rsplit("::").next().unwrap_or("").to_string());
-                    local_name_to_symbol_id.insert(local, id);
+            // The name this import is known by for the rest of the file.
+            let local = rel.alias.clone().unwrap_or_else(|| {
+                if symbol == graphyn_core::symbol_id::IMPORT_ALL {
+                    last_segment(&module).to_string()
                 } else {
-                    r.to = format!("unresolved_local::{raw}");
+                    symbol.clone()
                 }
-            } else {
-                let pkg = raw.split("::").next().unwrap_or("ext");
-                r.to = format!("ext::{}::package", pkg);
+            });
+
+            match tree.resolve(&path, &module, &symbol) {
+                Resolved::Symbol(id) | Resolved::Module(id) => {
+                    rel.to = id.clone();
+                    local_names.insert(local, id);
+                }
+                Resolved::External(package) => {
+                    let id = external_package_id(&package);
+                    rel.to = id.clone();
+                    local_names.insert(local, id);
+                }
+                Resolved::UnknownMember => {
+                    // The module exists but does not export this name. Keep the
+                    // file-level dependency, which is still true, and say so.
+                    match tree.resolve(&path, &module, graphyn_core::symbol_id::IMPORT_ALL) {
+                        Resolved::Module(module_id) => {
+                            rel.to = module_id.clone();
+                            local_names.insert(local, module_id);
+                        }
+                        _ => drop_import.push(index),
+                    }
+                    file.diagnostics.push(Diagnostic {
+                        level: DiagnosticLevel::Warning,
+                        category: DiagnosticCategory::Resolution,
+                        message: format!(
+                            "module '{module}' does not export '{symbol}'; \
+                             recorded a dependency on the module instead"
+                        ),
+                        file: Some(path.clone()),
+                        line: Some(rel.line),
+                    });
+                }
+                Resolved::Unknown => {
+                    drop_import.push(index);
+                    file.diagnostics.push(Diagnostic {
+                        level: DiagnosticLevel::Warning,
+                        category: DiagnosticCategory::Resolution,
+                        message: format!("unable to resolve import '{module}::{symbol}'"),
+                        file: Some(path.clone()),
+                        line: Some(rel.line),
+                    });
+                }
             }
         }
 
-        for r in &mut f.relationships {
-            if r.kind != RelationshipKind::Imports {
-                continue;
-            }
-            if r.to.starts_with("unresolved_") || r.to.starts_with("ext::") {
-                continue;
-            }
+        // ── pass 2: type references ──────────────────────────
+        //
+        // `AccessesProperty` from field access, `Implements` from `impl … for`
+        // and `#[derive(..)]`. Both carry the type name in the placeholder.
+        let mut drop_type = Vec::new();
+        let mut resolved_props: HashMap<String, BTreeSet<String>> = HashMap::new();
 
-            let local_name = r
-                .alias
-                .clone()
-                .unwrap_or_else(|| r.to.split("::").nth(1).unwrap_or("").to_string());
+        for (index, rel) in file.relationships.iter_mut().enumerate() {
+            let Some(type_name) = parse_unresolved_local_type_id(&rel.to).map(str::to_string) else {
+                continue;
+            };
 
-            let mut props = BTreeSet::new();
-            for p in &prop_edges {
-                let var = p.to.trim_start_matches("unresolved_local_type::");
-                if var == "data" || var == local_name || local_name_to_symbol_id.contains_key(var) {
-                    for fld in &p.properties_accessed {
-                        props.insert(fld.clone());
+            let resolved = local_names
+                .get(&type_name)
+                .or_else(|| own_symbols.get(&type_name))
+                .cloned();
+
+            match resolved {
+                Some(id) => {
+                    if rel.kind == RelationshipKind::AccessesProperty {
+                        resolved_props
+                            .entry(id.clone())
+                            .or_default()
+                            .extend(rel.properties_accessed.iter().cloned());
+                    }
+                    rel.to = id;
+                }
+                None => {
+                    drop_type.push(index);
+                    // Standard-library types are genuine references to code
+                    // outside the repository, not resolution failures.
+                    if !is_builtin_type(&type_name) {
+                        file.diagnostics.push(Diagnostic {
+                            level: DiagnosticLevel::Warning,
+                            category: DiagnosticCategory::Resolution,
+                            message: format!(
+                                "unable to resolve type '{type_name}' referenced in {path}"
+                            ),
+                            file: Some(path.clone()),
+                            line: Some(rel.line),
+                        });
                     }
                 }
             }
-            r.properties_accessed = props.into_iter().collect();
         }
 
-        f.relationships
-            .retain(|r| r.kind != RelationshipKind::AccessesProperty);
+        // ── pass 3: attribute properties to their import ─────
+        //
+        // Keyed by resolved target, so a file that touches two imported types
+        // gives each one only its own fields.
+        for rel in &mut file.relationships {
+            if rel.kind != RelationshipKind::Imports {
+                continue;
+            }
+            if let Some(props) = resolved_props.get(&rel.to) {
+                rel.properties_accessed = props.iter().cloned().collect();
+            }
+        }
+
+        let mut unresolved: BTreeSet<usize> = drop_import.into_iter().collect();
+        unresolved.extend(drop_type);
+        if !unresolved.is_empty() {
+            let mut index = 0usize;
+            file.relationships.retain(|_| {
+                let keep = !unresolved.contains(&index);
+                index += 1;
+                keep
+            });
+        }
     }
+}
+
+fn last_segment(path: &str) -> &str {
+    path.rsplit("::").next().unwrap_or(path)
 }

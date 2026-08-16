@@ -1,98 +1,240 @@
-use std::collections::{BTreeSet, HashMap};
+//! Resolving Go imports and qualified references.
+//!
+//! Go imports a package, not a symbol, so an import edge should point at the
+//! package. The previous implementation pointed it at `symbol_ids.first()` —
+//! an arbitrary member decided by filename sort order, which meant adding an
+//! unrelated file to a package silently repointed every edge into it.
+//!
+//! Here an import edge points at a synthetic package symbol, and the members a
+//! file actually uses are recorded separately from the qualified references
+//! (`models.UserPayload`) and field accesses the scope analyzer resolved.
+
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::Path;
 
-use graphyn_core::ir::{RelationshipKind, RepoIR, SymbolKind};
+use graphyn_core::ir::{
+    Diagnostic, DiagnosticCategory, DiagnosticLevel, Language, RelationshipKind, RepoIR, Symbol,
+    SymbolKind,
+};
+use graphyn_core::symbol_id::{
+    external_package_id, make_symbol_id, parse_unresolved_import_id,
+    parse_unresolved_local_type_id,
+};
 
-use crate::module_resolver::GoModule;
+use crate::module_resolver::ModuleSet;
+use crate::scope_analyzer::is_builtin_type;
+
+/// A Go package: a directory's worth of files sharing a namespace.
+#[derive(Debug, Default)]
+struct Package {
+    /// Synthetic symbol every import of this package points at.
+    symbol_id: String,
+    /// Package-scoped symbol names → ids. Go has no file-level visibility, so
+    /// a name declared in any file of the package is visible from all of them.
+    symbols: HashMap<String, String>,
+    /// File that hosts the synthetic symbol, chosen deterministically.
+    owner_file: String,
+}
 
 pub fn resolve_repo_ir(root: &Path, repo_ir: &mut RepoIR) {
-    let module = GoModule::load(root);
+    let file_paths: Vec<String> = repo_ir.files.iter().map(|f| f.file.clone()).collect();
+    let modules = ModuleSet::discover(root, &file_paths);
 
-    let mut pkg_to_symbols: HashMap<String, Vec<String>> = HashMap::new();
-    if let Some(ref m) = module {
-        for f in &repo_ir.files {
-            let dir = Path::new(&f.file)
-                .parent()
-                .map(|p| p.to_string_lossy().replace('\\', "/"))
-                .unwrap_or_default();
-            if !dir.is_empty() {
-                let pkg_path = format!("{}/{}", m.module_path, dir);
-                for s in &f.symbols {
-                    if s.kind != SymbolKind::Module {
-                        pkg_to_symbols
-                            .entry(pkg_path.clone())
-                            .or_default()
-                            .push(s.id.clone());
-                    }
-                }
+    // ── index packages ───────────────────────────────────────
+    let mut packages: BTreeMap<String, Package> = BTreeMap::new();
+    let mut file_to_package: HashMap<String, String> = HashMap::new();
+
+    for file in &repo_ir.files {
+        let Some(import_path) = modules.import_path_for(&file.file) else {
+            continue;
+        };
+        file_to_package.insert(file.file.clone(), import_path.clone());
+
+        let package = packages.entry(import_path.clone()).or_insert_with(|| {
+            let dir = directory_of(&file.file);
+            Package {
+                symbol_id: make_symbol_id(&dir, last_segment(&import_path), &SymbolKind::Module),
+                symbols: HashMap::new(),
+                owner_file: file.file.clone(),
             }
+        });
+
+        // Files arrive sorted, but pin the owner explicitly so the synthetic
+        // symbol lands in the same file on every run regardless of input order.
+        if file.file < package.owner_file {
+            package.owner_file = file.file.clone();
+        }
+        for symbol in &file.symbols {
+            if symbol.kind == SymbolKind::Module {
+                continue;
+            }
+            package
+                .symbols
+                .entry(symbol.name.clone())
+                .or_insert_with(|| symbol.id.clone());
         }
     }
 
-    for f in &mut repo_ir.files {
-        let prop_edges = f
-            .relationships
-            .iter()
-            .filter(|r| r.kind == RelationshipKind::AccessesProperty)
-            .cloned()
-            .collect::<Vec<_>>();
+    // ── materialise package symbols ──────────────────────────
+    for (import_path, package) in &packages {
+        let Some(owner) = repo_ir
+            .files
+            .iter_mut()
+            .find(|f| f.file == package.owner_file)
+        else {
+            continue;
+        };
+        let dir = directory_of(&package.owner_file);
+        owner.symbols.push(Symbol {
+            id: package.symbol_id.clone(),
+            name: last_segment(import_path).to_string(),
+            kind: SymbolKind::Module,
+            language: Language::Go,
+            file: dir,
+            line_start: 1,
+            line_end: 1,
+            signature: Some(format!("package {import_path}")),
+        });
+    }
 
-        let mut alias_to_pkg: HashMap<String, String> = HashMap::new();
+    // ── resolve per file ─────────────────────────────────────
+    for file in &mut repo_ir.files {
+        let path = file.file.clone();
+        let own_package = file_to_package.get(&path).cloned();
 
-        for r in &mut f.relationships {
-            if r.kind != RelationshipKind::Imports || !r.to.starts_with("unresolved_import::") {
+        // alias (or default package name) → import path
+        let mut alias_to_package: HashMap<String, String> = HashMap::new();
+        let mut drop = BTreeSet::new();
+
+        for rel in file.relationships.iter_mut() {
+            if rel.kind != RelationshipKind::Imports {
                 continue;
             }
-
-            let pkg_path = r.to.trim_start_matches("unresolved_import::").to_string();
-            let leaf = pkg_path
-                .rsplit('/')
-                .next()
-                .unwrap_or(pkg_path.as_str())
-                .to_string();
-            let local_alias = r.alias.clone().unwrap_or_else(|| leaf.clone());
-
-            let is_local = module
-                .as_ref()
-                .map(|m| pkg_path.starts_with(&m.module_path))
-                .unwrap_or(false);
-
-            if is_local {
-                if let Some(symbol_ids) = pkg_to_symbols.get(&pkg_path) {
-                    r.to = symbol_ids
-                        .first()
-                        .cloned()
-                        .unwrap_or_else(|| format!("ext::{}::package", leaf));
-                } else {
-                    r.to = format!("ext::{}::package", leaf);
-                }
-                alias_to_pkg.insert(local_alias.clone(), pkg_path.clone());
-            } else {
-                r.to = format!("ext::{}::package", leaf);
-            }
-        }
-
-        for r in &mut f.relationships {
-            if r.kind != RelationshipKind::Imports || r.to.starts_with("ext::") {
+            let Some((import_path, _)) = parse_unresolved_import_id(&rel.to) else {
                 continue;
-            }
-            let local_alias = r
+            };
+            let import_path = import_path.to_string();
+            let local = rel
                 .alias
                 .clone()
-                .unwrap_or_else(|| r.to.split("::").nth(1).unwrap_or("").to_string());
-            let mut props = BTreeSet::new();
-            for p in &prop_edges {
-                let obj = p.to.trim_start_matches("unresolved_local_type::");
-                if obj == "data" || obj == local_alias || alias_to_pkg.contains_key(obj) {
-                    for fld in &p.properties_accessed {
-                        props.insert(fld.clone());
+                .unwrap_or_else(|| last_segment(&import_path).to_string());
+
+            match packages.get(&import_path) {
+                Some(package) => {
+                    rel.to = package.symbol_id.clone();
+                    alias_to_package.insert(local, import_path);
+                }
+                None => {
+                    // Inside a discovered module but with no matching package:
+                    // the directory holds no Go we indexed. Everything else is
+                    // a third-party dependency.
+                    rel.to = external_package_id(last_segment(&import_path));
+                    if modules.is_local_import(&import_path) {
+                        file.diagnostics.push(Diagnostic {
+                            level: DiagnosticLevel::Warning,
+                            category: DiagnosticCategory::Resolution,
+                            message: format!(
+                                "import '{import_path}' is inside this module but no \
+                                 package was indexed there"
+                            ),
+                            file: Some(path.clone()),
+                            line: Some(rel.line),
+                        });
                     }
                 }
             }
-            r.properties_accessed = props.into_iter().collect();
         }
 
-        f.relationships
-            .retain(|r| r.kind != RelationshipKind::AccessesProperty);
+        // Type references: `models.UserPayload` (qualified) or `Foo` (same package).
+        let mut resolved_props: HashMap<String, BTreeSet<String>> = HashMap::new();
+
+        for (index, rel) in file.relationships.iter_mut().enumerate() {
+            let Some(type_name) = parse_unresolved_local_type_id(&rel.to).map(str::to_string) else {
+                continue;
+            };
+
+            let resolved = match type_name.split_once('.') {
+                Some((alias, name)) => alias_to_package
+                    .get(alias)
+                    .and_then(|import_path| packages.get(import_path))
+                    .and_then(|package| package.symbols.get(name))
+                    .cloned(),
+                None => own_package
+                    .as_ref()
+                    .and_then(|p| packages.get(p))
+                    .and_then(|package| package.symbols.get(&type_name))
+                    .cloned(),
+            };
+
+            match resolved {
+                Some(id) => {
+                    if rel.kind == RelationshipKind::AccessesProperty {
+                        resolved_props
+                            .entry(id.clone())
+                            .or_default()
+                            .extend(rel.properties_accessed.iter().cloned());
+                    }
+                    rel.to = id;
+                }
+                None => {
+                    drop.insert(index);
+                    // A qualified name whose package is a third-party import is
+                    // an ordinary external reference, not a failure.
+                    let is_external_reference = type_name
+                        .split_once('.')
+                        .map(|(alias, _)| !alias_to_package.contains_key(alias))
+                        .unwrap_or(false);
+                    if !is_external_reference && !is_builtin_type(&type_name) {
+                        file.diagnostics.push(Diagnostic {
+                            level: DiagnosticLevel::Warning,
+                            category: DiagnosticCategory::Resolution,
+                            message: format!("unable to resolve type '{type_name}'"),
+                            file: Some(path.clone()),
+                            line: Some(rel.line),
+                        });
+                    }
+                }
+            }
+        }
+
+        for rel in &mut file.relationships {
+            if rel.kind != RelationshipKind::Imports {
+                continue;
+            }
+            // An import edge carries the members used from that package, which
+            // for a package node means the union across its used types.
+            let props: BTreeSet<String> = resolved_props
+                .iter()
+                .filter(|(id, _)| {
+                    packages
+                        .values()
+                        .any(|p| p.symbol_id == rel.to && p.symbols.values().any(|s| s == *id))
+                })
+                .flat_map(|(_, props)| props.iter().cloned())
+                .collect();
+            if !props.is_empty() {
+                rel.properties_accessed = props.into_iter().collect();
+            }
+        }
+
+        if !drop.is_empty() {
+            let mut index = 0usize;
+            file.relationships.retain(|_| {
+                let keep = !drop.contains(&index);
+                index += 1;
+                keep
+            });
+        }
     }
+}
+
+fn directory_of(file: &str) -> String {
+    match file.rfind('/') {
+        Some(cut) => file[..cut].to_string(),
+        None => ".".to_string(),
+    }
+}
+
+fn last_segment(path: &str) -> &str {
+    path.rsplit('/').next().unwrap_or(path)
 }

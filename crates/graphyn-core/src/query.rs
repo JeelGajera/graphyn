@@ -23,6 +23,50 @@ pub struct QueryEdge {
     pub hop: usize,
 }
 
+/// Split edges into those that reach the symbol under its own name and those
+/// that rename it.
+///
+/// The distinction drives the "HIGH RISK" labelling in both the CLI and the MCP
+/// server: a caller that imports `UserPayload as ResponseModel` will not turn up
+/// in a text search for the original name, which is exactly the case Graphyn
+/// exists to surface.
+///
+/// An `alias` equal to the symbol's own name is not a rename. Adapters record
+/// the local name on type-reference edges whether or not it differs, so testing
+/// `alias.is_some()` alone flagged ordinary same-name references as high risk
+/// and buried the genuine renames among them.
+pub fn partition_by_alias<'e>(
+    graph: &GraphynGraph,
+    edges: &'e [QueryEdge],
+) -> (Vec<&'e QueryEdge>, Vec<&'e QueryEdge>) {
+    let mut direct = Vec::new();
+    let mut aliased = Vec::new();
+
+    for edge in edges {
+        if is_renamed(graph, edge) {
+            aliased.push(edge);
+        } else {
+            direct.push(edge);
+        }
+    }
+
+    (direct, aliased)
+}
+
+/// True when `edge` refers to its target under a name other than the target's.
+pub fn is_renamed(graph: &GraphynGraph, edge: &QueryEdge) -> bool {
+    let Some(alias) = edge.alias.as_deref() else {
+        return false;
+    };
+    match graph.symbols.get(&edge.to) {
+        // A qualified reference such as `models.UserPayload` names the symbol
+        // directly; only the final segment is compared.
+        Some(symbol) => alias.rsplit(['.', ':']).next().unwrap_or(alias) != symbol.name,
+        // Unknown target: an alias is the only name we have, so treat it as one.
+        None => true,
+    }
+}
+
 pub fn blast_radius(
     graph: &GraphynGraph,
     symbol: &str,

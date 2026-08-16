@@ -36,6 +36,12 @@ jobs:
 
       # Crates must be published in dependency order.
       # `cargo publish` natively waits for the index to update before completing.
+      #
+      # Order follows the dependency graph:
+      #   core → store → the five adapters → dispatch → mcp → cli
+      # A crate published before its dependencies fails with "no matching
+      # package found", after earlier crates have already gone out and their
+      # versions can no longer be reused.
       - name: Publish all crates safely to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
@@ -43,5 +49,10 @@ jobs:
           cargo publish -p graphyn-core
           cargo publish -p graphyn-store
           cargo publish -p graphyn-adapter-ts
+          cargo publish -p graphyn-adapter-python
+          cargo publish -p graphyn-adapter-rust
+          cargo publish -p graphyn-adapter-go
+          cargo publish -p graphyn-adapter-c
+          cargo publish -p graphyn-adapter-dispatch
           cargo publish -p graphyn-mcp
           cargo publish -p graphyn-cli

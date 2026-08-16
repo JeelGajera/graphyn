@@ -1,4 +1,37 @@
+mod common;
+
+use common::*;
+use graphyn_core::ir::{RelationshipKind, SymbolKind};
+
 #[test]
-fn smoke() {
-    assert!(true);
+fn a_function_taking_a_struct_pointer_records_the_dependency() {
+    let repo = analyze("language_features");
+    let mapper = file(&repo, "src/mapper.c");
+
+    // C's equivalent of injection: the type arrives through the signature.
+    // The dependency shows up as the members the function reads.
+    assert!(
+        has_edge(
+            mapper,
+            RelationshipKind::AccessesProperty,
+            "include/user_payload.h::UserPayload::class"
+        ),
+        "have: {:?}",
+        targets(mapper, RelationshipKind::AccessesProperty)
+    );
+}
+
+#[test]
+fn functions_are_extracted_with_their_names() {
+    let repo = analyze("language_features");
+    let mapper = file(&repo, "src/mapper.c");
+
+    let functions: Vec<&str> = mapper
+        .symbols
+        .iter()
+        .filter(|s| s.kind == SymbolKind::Function)
+        .map(|s| s.name.as_str())
+        .collect();
+
+    assert!(functions.contains(&"describe"), "got {functions:?}");
 }

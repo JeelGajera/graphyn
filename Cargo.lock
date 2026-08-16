@@ -497,7 +497,6 @@ version = "0.1.3"
 dependencies = [
  "graphyn-core",
  "rayon",
- "regex",
  "tree-sitter",
  "tree-sitter-c",
  "tree-sitter-cpp",
@@ -514,6 +513,7 @@ dependencies = [
  "graphyn-adapter-rust",
  "graphyn-adapter-ts",
  "graphyn-core",
+ "rayon",
 ]
 
 [[package]]
@@ -522,7 +522,6 @@ version = "0.1.3"
 dependencies = [
  "graphyn-core",
  "rayon",
- "regex",
  "tree-sitter",
  "tree-sitter-go",
  "walkdir",
@@ -534,7 +533,6 @@ version = "0.1.3"
 dependencies = [
  "graphyn-core",
  "rayon",
- "regex",
  "tree-sitter",
  "tree-sitter-python",
  "walkdir",
@@ -546,7 +544,6 @@ version = "0.1.3"
 dependencies = [
  "graphyn-core",
  "rayon",
- "regex",
  "tree-sitter",
  "tree-sitter-rust",
  "walkdir",
@@ -591,6 +588,8 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 1.0.69",
+ "tree-sitter",
+ "tree-sitter-rust",
  "walkdir",
 ]
 

@@ -1,168 +1,285 @@
-use graphyn_core::ir::{FileIR, Language, Relationship, RelationshipKind, Symbol, SymbolKind};
+use std::collections::BTreeSet;
+
+use graphyn_core::ast::{first_line_of, node_text, start_line, walk};
+use graphyn_core::ir::{
+    Diagnostic, DiagnosticCategory, DiagnosticLevel, FileIR, Language, Relationship,
+    RelationshipKind, Symbol, SymbolKind,
+};
+use graphyn_core::symbol_id::{
+    make_symbol_id, module_symbol, module_symbol_id, unresolved_import_id, unresolved_local_type_id,
+    IMPORT_ALL,
+};
 use tree_sitter::Node;
 
+use crate::macro_analyzer::derived_traits;
 use crate::parser::ParsedFile;
-
-fn kind_suffix(kind: &SymbolKind) -> &'static str {
-    match kind {
-        SymbolKind::Class => "class",
-        SymbolKind::Interface => "interface",
-        SymbolKind::TypeAlias => "type_alias",
-        SymbolKind::Function => "function",
-        SymbolKind::Method => "method",
-        SymbolKind::Property => "property",
-        SymbolKind::Variable => "variable",
-        SymbolKind::Module => "module",
-        SymbolKind::Enum => "enum",
-        SymbolKind::EnumVariant => "enum_variant",
-        SymbolKind::ExternalPackage => "package",
-    }
-}
-
-fn make_symbol_id(file: &str, name: &str, kind: &SymbolKind) -> String {
-    format!("{}::{}::{}", file, name, kind_suffix(kind))
-}
-
-fn module_symbol(file: &str, lang: Language) -> Symbol {
-    Symbol {
-        id: make_symbol_id(file, "module", &SymbolKind::Module),
-        name: "module".to_string(),
-        kind: SymbolKind::Module,
-        language: lang,
-        file: file.to_string(),
-        line_start: 1,
-        line_end: 1,
-        signature: None,
-    }
-}
+use crate::scope_analyzer::collect_type_accesses;
 
 pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
-    let src = parsed.source.as_bytes();
+    let source = parsed.source.as_bytes();
     let root = parsed.tree.root_node();
+    let file = parsed.file.as_str();
 
-    let mut symbols = vec![module_symbol(&parsed.file, parsed.language.clone())];
+    let mut symbols = vec![module_symbol(file, Language::Rust)];
     let mut relationships = Vec::new();
+    let mut diagnostics = parsed.diagnostics.clone();
 
-    walk_tree(root, &mut |node| match node.kind() {
-        "struct_item" => {
-            if let Some(sym) = extract_named_item(node, src, &parsed.file, parsed.language.clone(), SymbolKind::Class) {
-                symbols.push(sym);
-            }
+    let stats = walk(root, &mut |node| match node.kind() {
+        "struct_item" | "union_item" => {
+            push_item(node, source, file, SymbolKind::Class, &mut symbols);
+            relationships.extend(derive_edges(node, source, file, SymbolKind::Class));
         }
         "enum_item" => {
-            if let Some(sym) = extract_named_item(node, src, &parsed.file, parsed.language.clone(), SymbolKind::Enum) {
-                symbols.push(sym);
-            }
-            symbols.extend(extract_enum_variants(node, src, &parsed.file, parsed.language.clone()));
+            push_item(node, source, file, SymbolKind::Enum, &mut symbols);
+            relationships.extend(derive_edges(node, source, file, SymbolKind::Enum));
+            symbols.extend(enum_variants(node, source, file));
         }
-        "trait_item" => {
-            if let Some(sym) = extract_named_item(node, src, &parsed.file, parsed.language.clone(), SymbolKind::Interface) {
-                symbols.push(sym);
-            }
+        "trait_item" => push_item(node, source, file, SymbolKind::Interface, &mut symbols),
+        "type_item" => push_item(node, source, file, SymbolKind::TypeAlias, &mut symbols),
+        "const_item" | "static_item" => {
+            push_item(node, source, file, SymbolKind::Variable, &mut symbols)
         }
         "function_item" => {
-            let parent_kind = node.parent().map(|p| p.kind()).unwrap_or("");
-            if parent_kind == "declaration_list" {
-                return;
-            }
-            if let Some(sym) = extract_named_item(node, src, &parsed.file, parsed.language.clone(), SymbolKind::Function) {
-                symbols.push(sym);
-            }
-        }
-        "impl_item" => {
-            relationships.extend(extract_impl_block(node, src, &parsed.file, parsed.language.clone(), &mut symbols));
-        }
-        "use_declaration" => {
-            relationships.extend(extract_use_declaration(node, src, &parsed.file));
-        }
-        "field_expression" => {
-            if let (Some(value), Some(field)) = (node.child_by_field_name("value"), node.child_by_field_name("field")) {
-                let obj = node_text(value, src).unwrap_or("");
-                let fld = node_text(field, src).unwrap_or("");
-                if !obj.is_empty() && !fld.is_empty() {
-                    relationships.push(Relationship {
-                        from: make_symbol_id(&parsed.file, "module", &SymbolKind::Module),
-                        to: format!("unresolved_local_type::{}", obj),
-                        kind: RelationshipKind::AccessesProperty,
-                        alias: Some(obj.to_string()),
-                        properties_accessed: vec![fld.to_string()],
-                        context: "property access".to_string(),
-                        file: parsed.file.clone(),
-                        line: node.start_position().row as u32 + 1,
-                    });
-                }
+            // Functions inside an `impl` or `trait` body are methods; they are
+            // emitted by `impl_block` so they can be qualified by their owning
+            // type, which keeps two `fn new` in one file from colliding.
+            if node.parent().map(|p| p.kind()) != Some("declaration_list") {
+                push_item(node, source, file, SymbolKind::Function, &mut symbols);
             }
         }
+        "impl_item" => impl_block(node, source, file, &mut symbols, &mut relationships),
+        "use_declaration" => relationships.extend(use_declaration(node, source, file)),
         _ => {}
     });
 
+    relationships.extend(property_access_edges(root, source, file));
+
+    if stats.truncated() {
+        diagnostics.push(Diagnostic {
+            level: DiagnosticLevel::Warning,
+            category: DiagnosticCategory::Parse,
+            message: format!(
+                "{} deeply nested subtree(s) exceeded the traversal depth limit; \
+                 symbols below them were not extracted",
+                stats.skipped_subtrees
+            ),
+            file: Some(parsed.file.clone()),
+            line: None,
+        });
+    }
+
     FileIR {
         file: parsed.file.clone(),
-        language: parsed.language.clone(),
+        language: Language::Rust,
         symbols,
         relationships,
-        diagnostics: Vec::new(),
+        diagnostics,
         re_exports: Vec::new(),
     }
 }
 
-fn extract_named_item(
+// ── symbols ──────────────────────────────────────────────────
+
+fn push_item(
     node: Node<'_>,
     source: &[u8],
     file: &str,
-    lang: Language,
     kind: SymbolKind,
-) -> Option<Symbol> {
-    let name_node = node.child_by_field_name("name")?;
-    let name = node_text(name_node, source)?;
-    Some(Symbol {
-        id: make_symbol_id(file, name, &kind),
-        name: name.to_string(),
+    symbols: &mut Vec<Symbol>,
+) {
+    let Some(name) = node
+        .child_by_field_name("name")
+        .and_then(|n| node_text(n, source))
+    else {
+        return;
+    };
+    symbols.push(symbol(file, name, name, kind, node, source));
+}
+
+/// Build a symbol whose id may be qualified (`Type::method`) while its
+/// searchable name stays bare (`method`).
+fn symbol(
+    file: &str,
+    id_name: &str,
+    display_name: &str,
+    kind: SymbolKind,
+    node: Node<'_>,
+    source: &[u8],
+) -> Symbol {
+    Symbol {
+        id: make_symbol_id(file, id_name, &kind),
+        name: display_name.to_string(),
         kind,
-        language: lang,
+        language: Language::Rust,
         file: file.to_string(),
-        line_start: node.start_position().row as u32 + 1,
+        line_start: start_line(node),
         line_end: node.end_position().row as u32 + 1,
-        signature: Some(node_text(node, source).unwrap_or("").lines().next().unwrap_or("").to_string()),
-    })
+        signature: first_line_of(node, source),
+    }
 }
 
-fn extract_enum_variants(node: Node<'_>, source: &[u8], file: &str, lang: Language) -> Vec<Symbol> {
+fn enum_variants(node: Node<'_>, source: &[u8], file: &str) -> Vec<Symbol> {
+    let Some(body) = node.child_by_field_name("body") else {
+        return Vec::new();
+    };
+    let enum_name = node
+        .child_by_field_name("name")
+        .and_then(|n| node_text(n, source))
+        .unwrap_or("");
+
     let mut out = Vec::new();
-    walk_tree(node, &mut |child| {
-        if child.kind() == "enum_variant" {
-            if let Some(name_node) = child.child_by_field_name("name") {
-                let name = node_text(name_node, source).unwrap_or("");
-                if !name.is_empty() {
-                    out.push(Symbol {
-                        id: make_symbol_id(file, name, &SymbolKind::EnumVariant),
-                        name: name.to_string(),
-                        kind: SymbolKind::EnumVariant,
-                        language: lang.clone(),
-                        file: file.to_string(),
-                        line_start: child.start_position().row as u32 + 1,
-                        line_end: child.end_position().row as u32 + 1,
-                        signature: None,
-                    });
-                }
-            }
+    let mut cursor = body.walk();
+    for child in body.children(&mut cursor) {
+        if child.kind() != "enum_variant" {
+            continue;
         }
-    });
-    out
-}
-
-fn extract_use_declaration(node: Node<'_>, source: &[u8], file: &str) -> Vec<Relationship> {
-    let mut out = Vec::new();
-    let line = node.start_position().row as u32 + 1;
-    let context = node_text(node, source).unwrap_or("").to_string();
-
-    if let Some(use_tree) = node.child_by_field_name("argument") {
-        collect_use_tree_items(use_tree, source, "", file, line, &context, &mut out);
+        let Some(name) = child
+            .child_by_field_name("name")
+            .and_then(|n| node_text(n, source))
+        else {
+            continue;
+        };
+        // Qualified id keeps `Status::Active` distinct from `State::Active`.
+        out.push(symbol(
+            file,
+            &format!("{enum_name}::{name}"),
+            name,
+            SymbolKind::EnumVariant,
+            child,
+            source,
+        ));
     }
     out
 }
 
-fn collect_use_tree_items(
+fn impl_block(
+    node: Node<'_>,
+    source: &[u8],
+    file: &str,
+    symbols: &mut Vec<Symbol>,
+    relationships: &mut Vec<Relationship>,
+) {
+    let impl_type = node
+        .child_by_field_name("type")
+        .and_then(|t| type_name_of(t, source));
+
+    // `impl Trait for Type` is an implementation edge.
+    if let (Some(trait_node), Some(type_name)) =
+        (node.child_by_field_name("trait"), impl_type.as_deref())
+    {
+        if let Some(trait_name) = type_name_of(trait_node, source) {
+            relationships.push(Relationship {
+                from: make_symbol_id(file, type_name, &SymbolKind::Class),
+                to: unresolved_local_type_id(&trait_name),
+                kind: RelationshipKind::Implements,
+                alias: Some(trait_name),
+                properties_accessed: Vec::new(),
+                context: first_line_of(node, source).unwrap_or_default(),
+                file: file.to_string(),
+                line: start_line(node),
+            });
+        }
+    }
+
+    let Some(body) = node.child_by_field_name("body") else {
+        return;
+    };
+    let owner = impl_type.as_deref().unwrap_or("impl");
+
+    let mut cursor = body.walk();
+    for child in body.children(&mut cursor) {
+        if child.kind() != "function_item" {
+            continue;
+        }
+        let Some(name) = child
+            .child_by_field_name("name")
+            .and_then(|n| node_text(n, source))
+        else {
+            continue;
+        };
+        let mut method = symbol(
+            file,
+            &format!("{owner}::{name}"),
+            name,
+            SymbolKind::Method,
+            child,
+            source,
+        );
+        method.signature = Some(format!(
+            "impl {owner} :: {}",
+            first_line_of(child, source).unwrap_or_else(|| name.to_string())
+        ));
+        symbols.push(method);
+    }
+}
+
+/// Traits brought in by `#[derive(..)]`, as implementation edges.
+fn derive_edges(
+    node: Node<'_>,
+    source: &[u8],
+    file: &str,
+    kind: SymbolKind,
+) -> Vec<Relationship> {
+    let Some(name) = node
+        .child_by_field_name("name")
+        .and_then(|n| node_text(n, source))
+    else {
+        return Vec::new();
+    };
+
+    derived_traits(node, source)
+        .into_iter()
+        // Prelude traits are on nearly every type and resolve to nothing local.
+        .filter(|d| !d.is_std)
+        .map(|d| Relationship {
+            from: make_symbol_id(file, name, &kind),
+            to: unresolved_local_type_id(&d.name),
+            kind: RelationshipKind::Implements,
+            alias: Some(d.name.clone()),
+            properties_accessed: Vec::new(),
+            context: format!("#[derive({})]", d.name),
+            file: file.to_string(),
+            line: d.line,
+        })
+        .collect()
+}
+
+/// The name a member access or trait reference resolves against.
+fn type_name_of(node: Node<'_>, source: &[u8]) -> Option<String> {
+    match node.kind() {
+        "type_identifier" => node_text(node, source).map(str::to_string),
+        "generic_type" => node
+            .child_by_field_name("type")
+            .and_then(|inner| type_name_of(inner, source)),
+        "scoped_type_identifier" => node
+            .child_by_field_name("name")
+            .and_then(|n| node_text(n, source))
+            .map(str::to_string),
+        "reference_type" | "pointer_type" => node
+            .child_by_field_name("type")
+            .and_then(|inner| type_name_of(inner, source)),
+        _ => None,
+    }
+}
+
+// ── imports ──────────────────────────────────────────────────
+
+fn use_declaration(node: Node<'_>, source: &[u8], file: &str) -> Vec<Relationship> {
+    let mut out = Vec::new();
+    let context = first_line_of(node, source).unwrap_or_default();
+    let line = start_line(node);
+    if let Some(tree) = node.child_by_field_name("argument") {
+        collect_use_tree(tree, source, "", file, line, &context, &mut out);
+    }
+    out
+}
+
+/// Flatten a `use` tree into one relationship per imported name.
+///
+/// `use a::{b::C, d as E, f::*}` yields three, each carrying the module path it
+/// came from so the resolver can look the name up in the right module rather
+/// than searching the whole repository for a matching leaf.
+fn collect_use_tree(
     node: Node<'_>,
     source: &[u8],
     prefix: &str,
@@ -171,139 +288,123 @@ fn collect_use_tree_items(
     context: &str,
     out: &mut Vec<Relationship>,
 ) {
+    let join = |head: &str, tail: &str| -> String {
+        if head.is_empty() {
+            tail.to_string()
+        } else {
+            format!("{head}::{tail}")
+        }
+    };
+
     match node.kind() {
         "use_as_clause" => {
-            let path_node = node.child_by_field_name("path");
-            let alias_node = node.child_by_field_name("alias");
-            if let (Some(p), Some(a)) = (path_node, alias_node) {
-                let path = node_text(p, source).unwrap_or("");
-                let alias = node_text(a, source).unwrap_or("");
-                let full_path = if prefix.is_empty() { path.to_string() } else { format!("{}::{}", prefix, path) };
-                out.push(Relationship {
-                    from: make_symbol_id(file, "module", &SymbolKind::Module),
-                    to: format!("unresolved_import::{}", full_path),
-                    kind: RelationshipKind::Imports,
-                    alias: Some(alias.to_string()),
-                    properties_accessed: Vec::new(),
-                    context: context.to_string(),
-                    file: file.to_string(),
-                    line,
-                });
-            }
+            let (Some(path), Some(alias)) = (
+                node.child_by_field_name("path")
+                    .and_then(|p| node_text(p, source)),
+                node.child_by_field_name("alias")
+                    .and_then(|a| node_text(a, source)),
+            ) else {
+                return;
+            };
+            let full = join(prefix, path);
+            let (module, symbol) = split_path(&full);
+            out.push(import(file, &module, &symbol, Some(alias), context, line));
         }
         "use_list" => {
             let mut cursor = node.walk();
             for child in node.children(&mut cursor) {
                 if !matches!(child.kind(), "{" | "}" | ",") {
-                    collect_use_tree_items(child, source, prefix, file, line, context, out);
+                    collect_use_tree(child, source, prefix, file, line, context, out);
                 }
             }
         }
         "scoped_use_list" => {
-            let path = node.child_by_field_name("path").and_then(|p| node_text(p, source)).unwrap_or("");
-            let new_prefix = if prefix.is_empty() { path.to_string() } else { format!("{}::{}", prefix, path) };
+            let path = node
+                .child_by_field_name("path")
+                .and_then(|p| node_text(p, source))
+                .unwrap_or("");
+            let inner = join(prefix, path);
             if let Some(list) = node.child_by_field_name("list") {
-                collect_use_tree_items(list, source, &new_prefix, file, line, context, out);
+                collect_use_tree(list, source, &inner, file, line, context, out);
             }
         }
         "use_wildcard" => {
-            let full = if prefix.is_empty() { "*".to_string() } else { format!("{}::*", prefix) };
-            out.push(Relationship {
-                from: make_symbol_id(file, "module", &SymbolKind::Module),
-                to: format!("unresolved_import::{}", full),
-                kind: RelationshipKind::Imports,
-                alias: None,
-                properties_accessed: Vec::new(),
-                context: context.to_string(),
-                file: file.to_string(),
-                line,
-            });
+            // `use foo::*` — the module itself, with no single named symbol.
+            let path = node
+                .named_child(0)
+                .and_then(|p| node_text(p, source))
+                .unwrap_or("");
+            let module = join(prefix, path);
+            out.push(import(file, &module, IMPORT_ALL, None, context, line));
         }
-        "identifier" | "scoped_identifier" | "self" => {
-            let name = node_text(node, source).unwrap_or("");
-            let full = if prefix.is_empty() { name.to_string() } else { format!("{}::{}", prefix, name) };
-            out.push(Relationship {
-                from: make_symbol_id(file, "module", &SymbolKind::Module),
-                to: format!("unresolved_import::{}", full),
-                kind: RelationshipKind::Imports,
-                alias: None,
-                properties_accessed: Vec::new(),
-                context: context.to_string(),
-                file: file.to_string(),
-                line,
-            });
+        "self" => {
+            // `use foo::{self, Bar}` — `self` is the module `foo`.
+            if !prefix.is_empty() {
+                out.push(import(file, prefix, IMPORT_ALL, None, context, line));
+            }
+        }
+        "identifier" | "scoped_identifier" | "crate" | "super" => {
+            let Some(path) = node_text(node, source) else {
+                return;
+            };
+            let full = join(prefix, path);
+            let (module, symbol) = split_path(&full);
+            out.push(import(file, &module, &symbol, None, context, line));
         }
         _ => {}
     }
 }
 
-fn extract_impl_block(
-    node: Node<'_>,
-    source: &[u8],
+/// Split `a::b::C` into the module `a::b` and the name `C`.
+fn split_path(path: &str) -> (String, String) {
+    match path.rfind("::") {
+        Some(cut) => (path[..cut].to_string(), path[cut + 2..].to_string()),
+        // A bare `use foo;` imports the module `foo` itself.
+        None => (path.to_string(), IMPORT_ALL.to_string()),
+    }
+}
+
+fn import(
     file: &str,
-    lang: Language,
-    symbols: &mut Vec<Symbol>,
-) -> Vec<Relationship> {
-    let mut out = Vec::new();
-    let line = node.start_position().row as u32 + 1;
-
-    let trait_node = node.child_by_field_name("trait");
-    let type_node = node.child_by_field_name("type");
-
-    if let (Some(trait_n), Some(type_n)) = (trait_node, type_node) {
-        let trait_name = node_text(trait_n, source).unwrap_or("");
-        let type_name = node_text(type_n, source).unwrap_or("");
-        if !trait_name.is_empty() && !type_name.is_empty() {
-            out.push(Relationship {
-                from: make_symbol_id(file, type_name, &SymbolKind::Class),
-                to: format!("unresolved_import::{}", trait_name),
-                kind: RelationshipKind::Implements,
-                alias: None,
-                properties_accessed: Vec::new(),
-                context: node_text(node, source).unwrap_or("").lines().next().unwrap_or("").to_string(),
-                file: file.to_string(),
-                line,
-            });
-        }
-    }
-
-    if let Some(body) = node.child_by_field_name("body") {
-        let impl_type = type_node.and_then(|n| node_text(n, source)).unwrap_or("unknown");
-        walk_tree(body, &mut |child| {
-            if child.kind() == "function_item" {
-                if let Some(name_node) = child.child_by_field_name("name") {
-                    let method_name = node_text(name_node, source).unwrap_or("");
-                    if !method_name.is_empty() {
-                        symbols.push(Symbol {
-                            id: make_symbol_id(file, method_name, &SymbolKind::Method),
-                            name: method_name.to_string(),
-                            kind: SymbolKind::Method,
-                            language: lang.clone(),
-                            file: file.to_string(),
-                            line_start: child.start_position().row as u32 + 1,
-                            line_end: child.end_position().row as u32 + 1,
-                            signature: Some(format!("impl {} :: {}", impl_type, method_name)),
-                        });
-                    }
-                }
-            }
-        });
-    }
-
-    out
-}
-
-fn walk_tree<F>(node: Node<'_>, f: &mut F)
-where
-    F: FnMut(Node<'_>),
-{
-    f(node);
-    let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
-        walk_tree(child, f);
+    module: &str,
+    symbol: &str,
+    alias: Option<&str>,
+    context: &str,
+    line: u32,
+) -> Relationship {
+    Relationship {
+        from: module_symbol_id(file),
+        to: unresolved_import_id(module, symbol),
+        kind: RelationshipKind::Imports,
+        alias: alias.map(str::to_string),
+        properties_accessed: Vec::new(),
+        context: context.to_string(),
+        file: file.to_string(),
+        line,
     }
 }
 
-fn node_text<'a>(node: Node<'_>, source: &'a [u8]) -> Option<&'a str> {
-    node.utf8_text(source).ok()
+// ── property access ──────────────────────────────────────────
+
+/// One edge per type whose members this file touches.
+///
+/// Grouping by resolved type — rather than merging every access in the file —
+/// is what keeps one struct's fields from being attributed to another.
+fn property_access_edges(root: Node<'_>, source: &[u8], file: &str) -> Vec<Relationship> {
+    collect_type_accesses(root, source)
+        .into_iter()
+        .filter(|(_, access)| !access.properties.is_empty())
+        .map(|(type_name, access)| Relationship {
+            from: module_symbol_id(file),
+            to: unresolved_local_type_id(&type_name),
+            kind: RelationshipKind::AccessesProperty,
+            alias: Some(type_name),
+            properties_accessed: access.properties.into_iter().collect::<BTreeSet<_>>()
+                .into_iter()
+                .collect(),
+            context: "property access".to_string(),
+            file: file.to_string(),
+            line: access.first_line,
+        })
+        .collect()
 }

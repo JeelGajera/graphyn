@@ -7,7 +7,6 @@ use rayon::prelude::*;
 pub mod extractor;
 pub mod framework;
 pub mod import_resolver;
-pub mod language;
 pub mod parser;
 pub mod scope_analyzer;
 

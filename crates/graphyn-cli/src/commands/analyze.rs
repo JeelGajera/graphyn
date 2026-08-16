@@ -6,7 +6,7 @@ use graphyn_core::graph::GraphynGraph;
 use graphyn_core::ir::RepoIR;
 use graphyn_core::resolver::AliasResolver;
 use graphyn_core::scan::{
-    is_any_supported_source_file, parse_csv_patterns, walk_source_files_with_config, ScanConfig,
+    is_any_supported_source_file, parse_csv_patterns, walk_source_files_reporting, ScanConfig,
 };
 use graphyn_store::RocksGraphStore;
 
@@ -31,7 +31,7 @@ pub fn run(
 
     let start = Instant::now();
 
-    // ── 1. Parse with the TypeScript adapter ─────────────────
+    // ── 1. Scan and parse ────────────────────────────────────
     output::step("Scanning files", "...");
     let scan_config = ScanConfig {
         include_patterns: parse_csv_patterns(include_csv),
@@ -39,8 +39,9 @@ pub fn run(
         respect_gitignore,
     };
 
-    let files = walk_source_files_with_config(&root, &scan_config, is_any_supported_source_file)
+    let scan = walk_source_files_reporting(&root, &scan_config, is_any_supported_source_file)
         .map_err(|e| format!("scan failed: {e}"))?;
+    let files = scan.files;
     if files.is_empty() {
         if !scan_config.include_patterns.is_empty() {
             output::warning("No files matched your --include patterns.");
@@ -54,6 +55,16 @@ pub fn run(
             output::dim_line("  Check your path and include/exclude filters, then retry.");
         }
         return Ok(());
+    }
+
+    // A directory pruned by a built-in rule is the most common reason a symbol
+    // "goes missing", so say so up front rather than leaving the user to guess.
+    if !scan.skipped_dirs.is_empty() {
+        let names: Vec<&str> = scan.skipped_dirs.iter().map(String::as_str).collect();
+        output::dim_line(&format!(
+            "  Skipped by default: {} — pass --include to index them",
+            names.join(", ")
+        ));
     }
 
     let repo_ir = analyze_files(&root, &files).map_err(|e| format!("analysis failed: {e}"))?;

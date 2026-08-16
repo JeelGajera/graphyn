@@ -5,6 +5,7 @@ use graphyn_adapter_ts::language::is_supported_source_file;
 use graphyn_core::ir::RelationshipKind;
 use graphyn_core::scan::{walk_source_files_with_config, ScanConfig};
 
+#[allow(dead_code)]
 fn analyze_repo(
     root: &std::path::Path,
 ) -> Result<graphyn_core::ir::RepoIR, graphyn_adapter_ts::AdapterTsError> {
