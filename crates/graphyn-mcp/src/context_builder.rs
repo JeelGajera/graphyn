@@ -34,7 +34,7 @@ pub fn format_blast_radius(
         return out;
     }
 
-    let (direct, aliased) = partition_by_alias(edges);
+    let (direct, aliased) = graphyn_core::query::partition_by_alias(graph, edges);
 
     // direct dependents
     if !direct.is_empty() {
@@ -252,18 +252,6 @@ fn symbol_header(graph: &GraphynGraph, symbol: &str, file: Option<&str>) -> Stri
     format!("Symbol: {}", symbol)
 }
 
-fn partition_by_alias(edges: &[QueryEdge]) -> (Vec<&QueryEdge>, Vec<&QueryEdge>) {
-    let mut direct = Vec::new();
-    let mut aliased = Vec::new();
-    for edge in edges {
-        if edge.alias.is_some() {
-            aliased.push(edge);
-        } else {
-            direct.push(edge);
-        }
-    }
-    (direct, aliased)
-}
 
 fn collect_property_summary(edges: &[QueryEdge]) -> Vec<(String, usize)> {
     let mut counts: BTreeMap<String, usize> = BTreeMap::new();

@@ -210,3 +210,82 @@ fn test_accesses_property_edge_can_be_canonicalized_from_alias() {
     assert_eq!(normalized.to, canonical.id);
     assert_eq!(normalized.properties_accessed, vec!["userId"]);
 }
+
+// ── alias risk classification ────────────────────────────────
+
+use graphyn_core::query::{is_renamed, QueryEdge};
+
+fn edge(to: &str, alias: Option<&str>) -> QueryEdge {
+    QueryEdge {
+        from: "src/consumer.ts::module::module".to_string(),
+        to: to.to_string(),
+        file: "src/consumer.ts".to_string(),
+        line: 1,
+        alias: alias.map(str::to_string),
+        properties_accessed: Vec::new(),
+        context: String::new(),
+        hop: 1,
+    }
+}
+
+fn graph_with_user_payload() -> GraphynGraph {
+    let mut graph = GraphynGraph::new();
+    graph.add_symbol(Symbol {
+        id: "src/models/user.ts::UserPayload::class".to_string(),
+        name: "UserPayload".to_string(),
+        kind: SymbolKind::Class,
+        language: Language::TypeScript,
+        file: "src/models/user.ts".to_string(),
+        line_start: 1,
+        line_end: 5,
+        signature: None,
+    });
+    graph
+}
+
+#[test]
+fn an_alias_matching_the_symbol_name_is_not_a_rename() {
+    // Adapters record the local name on type-reference edges whether or not it
+    // differs from the symbol's own name. Treating every populated `alias` as a
+    // rename flagged ordinary references as HIGH RISK and buried the genuine
+    // renames among them.
+    let graph = graph_with_user_payload();
+    let same = edge("src/models/user.ts::UserPayload::class", Some("UserPayload"));
+    assert!(!is_renamed(&graph, &same));
+}
+
+#[test]
+fn a_differing_alias_is_a_rename() {
+    let graph = graph_with_user_payload();
+    let renamed = edge(
+        "src/models/user.ts::UserPayload::class",
+        Some("ResponseModel"),
+    );
+    assert!(
+        is_renamed(&graph, &renamed),
+        "this is the case the tool exists to surface"
+    );
+}
+
+#[test]
+fn a_qualified_reference_is_compared_on_its_final_segment() {
+    // `models.UserPayload` in Go and `geometry::Circle` in C++ name the symbol
+    // directly; the qualifier is not a rename.
+    let graph = graph_with_user_payload();
+    for alias in ["models.UserPayload", "geometry::UserPayload"] {
+        let qualified = edge("src/models/user.ts::UserPayload::class", Some(alias));
+        assert!(
+            !is_renamed(&graph, &qualified),
+            "'{alias}' names the symbol directly"
+        );
+    }
+}
+
+#[test]
+fn an_edge_without_an_alias_is_never_a_rename() {
+    let graph = graph_with_user_payload();
+    assert!(!is_renamed(
+        &graph,
+        &edge("src/models/user.ts::UserPayload::class", None)
+    ));
+}

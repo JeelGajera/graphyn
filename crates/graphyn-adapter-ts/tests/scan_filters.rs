@@ -4,6 +4,7 @@ use graphyn_adapter_ts::analyze_files;
 use graphyn_adapter_ts::language::is_supported_source_file;
 use graphyn_core::scan::{walk_source_files_with_config, ScanConfig};
 
+#[allow(dead_code)]
 fn analyze_repo(
     root: &std::path::Path,
 ) -> Result<graphyn_core::ir::RepoIR, graphyn_adapter_ts::AdapterTsError> {
@@ -16,6 +17,7 @@ fn analyze_repo(
     analyze_files(root, &files)
 }
 
+#[allow(dead_code)]
 fn analyze_repo_with_config(
     root: &std::path::Path,
     config: &ScanConfig,

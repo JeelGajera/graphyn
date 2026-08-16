@@ -27,4 +27,46 @@ jobs:
       - name: Test
         run: cargo test --workspace
       - name: Clippy
-        run: cargo clippy --workspace -- -D warnings
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      # Catches missing crate metadata and crates left out of the publish
+      # workflow. Without this, both failures surface only during a release,
+      # partway through publishing, once earlier crates are already on
+      # crates.io and their versions cannot be republished.
+      #
+      # Only metadata is treated as fatal. A dry run of a crate whose workspace
+      # dependencies are not yet on crates.io always fails with "no matching
+      # package found" — that resolves itself at release time, because the
+      # publish workflow pushes crates in dependency order.
+      - name: Verify every crate has publishable metadata
+        run: |
+          status=0
+          for crate in $(cargo metadata --no-deps --format-version 1 \
+            | python3 -c 'import json,sys; print("\n".join(p["name"] for p in json.load(sys.stdin)["packages"]))'); do
+            if cargo publish -p "$crate" --dry-run --no-verify --allow-dirty 2>&1 \
+              | grep -qi "manifest has no description\|missing or empty metadata"; then
+              echo "::error::$crate is missing required crates.io metadata (description/license/repository)"
+              status=1
+            fi
+          done
+          exit $status
+
+      # Every workspace crate must appear in the release workflow, or a release
+      # publishes a partial set and the CLI fails to build from crates.io.
+      - name: Verify the publish workflow covers every crate
+        run: |
+          python3 - <<'EOF'
+          import json, pathlib, re, subprocess, sys
+
+          meta = json.loads(subprocess.run(
+              ["cargo", "metadata", "--no-deps", "--format-version", "1"],
+              capture_output=True, text=True, check=True).stdout)
+          crates = {p["name"] for p in meta["packages"]}
+          workflow = pathlib.Path(".github/workflows/publish_crates.yml").read_text()
+          published = set(re.findall(r"cargo publish -p (\S+)", workflow))
+
+          missing = sorted(crates - published)
+          if missing:
+              print(f"::error::not in publish_crates.yml: {', '.join(missing)}")
+              sys.exit(1)
+          print(f"all {len(crates)} crates are covered")
+          EOF

@@ -1,281 +1,309 @@
-use graphyn_core::ir::{FileIR, Language, Relationship, RelationshipKind, Symbol, SymbolKind};
+use graphyn_core::ast::{first_line_of, node_text, start_line, walk};
+use graphyn_core::ir::{
+    Diagnostic, DiagnosticCategory, DiagnosticLevel, FileIR, Language, Relationship,
+    RelationshipKind, Symbol, SymbolKind,
+};
+use graphyn_core::symbol_id::{
+    make_symbol_id, module_symbol, module_symbol_id, unresolved_local_type_id,
+};
 use tree_sitter::Node;
 
+use crate::include_resolver::unresolved_include_id;
 use crate::parser::ParsedFile;
-
-fn kind_suffix(kind: &SymbolKind) -> &'static str {
-    match kind {
-        SymbolKind::Class => "class",
-        SymbolKind::Interface => "interface",
-        SymbolKind::TypeAlias => "type_alias",
-        SymbolKind::Function => "function",
-        SymbolKind::Method => "method",
-        SymbolKind::Property => "property",
-        SymbolKind::Variable => "variable",
-        SymbolKind::Module => "module",
-        SymbolKind::Enum => "enum",
-        SymbolKind::EnumVariant => "enum_variant",
-        SymbolKind::ExternalPackage => "package",
-    }
-}
-fn make_symbol_id(file: &str, name: &str, kind: &SymbolKind) -> String {
-    format!("{}::{}::{}", file, name, kind_suffix(kind))
-}
-
-fn module_symbol(file: &str, lang: Language) -> Symbol {
-    Symbol {
-        id: make_symbol_id(file, "module", &SymbolKind::Module),
-        name: "module".to_string(),
-        kind: SymbolKind::Module,
-        language: lang,
-        file: file.to_string(),
-        line_start: 1,
-        line_end: 1,
-        signature: None,
-    }
-}
+use crate::scope_analyzer::{
+    collect_type_accesses, is_builtin_type, type_name_of, typedef_alias_names,
+};
 
 pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
-    let src = parsed.source.as_bytes();
+    let source = parsed.source.as_bytes();
     let root = parsed.tree.root_node();
+    let file = parsed.file.as_str();
+    let language = parsed.language.clone();
 
-    let mut symbols = vec![module_symbol(&parsed.file, parsed.language.clone())];
+    let mut symbols = vec![module_symbol(file, language.clone())];
     let mut relationships = Vec::new();
+    let mut diagnostics = parsed.diagnostics.clone();
 
-    walk_tree(root, &mut |node| match node.kind() {
-        "struct_specifier" | "class_specifier" => {
-            if let Some(sym) = extract_struct_or_class(
-                node,
-                src,
-                &parsed.file,
-                parsed.language.clone(),
-                &mut relationships,
-            ) {
-                symbols.push(sym);
-            }
+    let stats = walk(root, &mut |node| match node.kind() {
+        "struct_specifier" | "union_specifier" | "class_specifier" => {
+            record_record_type(node, source, file, &language, &mut symbols, &mut relationships)
         }
         "enum_specifier" => {
-            if let Some(sym) = extract_enum(node, src, &parsed.file, parsed.language.clone()) {
-                symbols.push(sym);
+            // Same rule as records: only a definition has a body.
+            if node.child_by_field_name("body").is_some() {
+                if let Some(name) = named(node, source) {
+                    symbols.push(symbol(
+                        file, &language, name, name, SymbolKind::Enum, node, source,
+                    ));
+                }
             }
         }
         "function_definition" => {
-            if let Some(sym) = extract_function(node, src, &parsed.file, parsed.language.clone()) {
-                symbols.push(sym);
+            if let Some(name) = function_name(node, source) {
+                symbols.push(symbol(
+                    file,
+                    &language,
+                    &name,
+                    &name,
+                    SymbolKind::Function,
+                    node,
+                    source,
+                ));
             }
         }
-        "declaration" | "type_definition" => {
-            relationships.extend(extract_typedef_decl(node, src, &parsed.file))
-        }
+        "type_definition" => relationships.extend(typedef(node, source, file)),
+        "alias_declaration" => relationships.extend(using_alias(node, source, file)),
         "preproc_include" => {
-            if let Some(rel) = extract_include(node, src, &parsed.file) {
+            if let Some(rel) = include(node, source, file) {
                 relationships.push(rel);
-            }
-        }
-        "alias_declaration" => {
-            if let Some(rel) = extract_using_alias(node, src, &parsed.file) {
-                relationships.push(rel);
-            }
-        }
-        "field_expression" => {
-            if let (Some(arg), Some(field)) = (node.child_by_field_name("argument"), node.child_by_field_name("field")) {
-                let obj = node_text(arg, src).unwrap_or("");
-                let fld = node_text(field, src).unwrap_or("");
-                if !obj.is_empty() && !fld.is_empty() {
-                    relationships.push(Relationship {
-                        from: make_symbol_id(&parsed.file, "module", &SymbolKind::Module),
-                        to: format!("unresolved_local_type::{}", obj),
-                        kind: RelationshipKind::AccessesProperty,
-                        alias: Some(obj.to_string()),
-                        properties_accessed: vec![fld.to_string()],
-                        context: "property access".to_string(),
-                        file: parsed.file.clone(),
-                        line: node.start_position().row as u32 + 1,
-                    });
-                }
             }
         }
         _ => {}
     });
 
+    for (type_name, access) in collect_type_accesses(root, source) {
+        if access.properties.is_empty() {
+            continue;
+        }
+        relationships.push(Relationship {
+            from: module_symbol_id(file),
+            to: unresolved_local_type_id(&type_name),
+            kind: RelationshipKind::AccessesProperty,
+            alias: Some(type_name),
+            properties_accessed: access.properties.into_iter().collect(),
+            context: "member access".to_string(),
+            file: file.to_string(),
+            line: access.first_line,
+        });
+    }
+
+    if stats.truncated() {
+        diagnostics.push(Diagnostic {
+            level: DiagnosticLevel::Warning,
+            category: DiagnosticCategory::Parse,
+            message: format!(
+                "{} deeply nested subtree(s) exceeded the traversal depth limit; \
+                 symbols below them were not extracted",
+                stats.skipped_subtrees
+            ),
+            file: Some(parsed.file.clone()),
+            line: None,
+        });
+    }
+
     FileIR {
         file: parsed.file.clone(),
-        language: parsed.language.clone(),
+        language,
         symbols,
         relationships,
-        diagnostics: Vec::new(),
+        diagnostics,
         re_exports: Vec::new(),
     }
 }
 
-fn extract_struct_or_class(
+/// Record a struct, union or class — but only where it is *defined*.
+///
+/// In C, `struct Foo *p` in a parameter list is also a `struct_specifier`.
+/// Treating those as definitions minted one `Foo` symbol per file that merely
+/// mentioned the type, which split the graph and made every struct name
+/// ambiguous to `find_symbol_id`. A definition is the form that carries a body;
+/// everything else is a reference.
+fn record_record_type(
     node: Node<'_>,
     source: &[u8],
     file: &str,
-    lang: Language,
+    language: &Language,
+    symbols: &mut Vec<Symbol>,
     relationships: &mut Vec<Relationship>,
-) -> Option<Symbol> {
-    let name_node = node.child_by_field_name("name")?;
-    let name = node_text(name_node, source)?;
-    if name.is_empty() {
-        return None;
-    }
+) {
+    let Some(name) = named(node, source) else {
+        return;
+    };
 
-    if let Some(base_clause) = node.child_by_field_name("base_class_clause") {
-        walk_tree(base_clause, &mut |bc| {
-            if bc.kind() == "type_identifier" || bc.kind() == "qualified_identifier" {
-                let base_name = node_text(bc, source).unwrap_or("");
-                if !base_name.is_empty() {
-                    relationships.push(Relationship {
-                        from: make_symbol_id(file, name, &SymbolKind::Class),
-                        to: format!("unresolved_alias::{}", base_name),
-                        kind: RelationshipKind::Extends,
-                        alias: None,
-                        properties_accessed: Vec::new(),
-                        context: node_text(node, source)
-                            .unwrap_or("")
-                            .lines()
-                            .next()
-                            .unwrap_or("")
-                            .to_string(),
-                        file: file.to_string(),
-                        line: node.start_position().row as u32 + 1,
-                    });
-                }
-            }
-        });
-    }
-
-    Some(Symbol {
-        id: make_symbol_id(file, name, &SymbolKind::Class),
-        name: name.to_string(),
-        kind: SymbolKind::Class,
-        language: lang,
-        file: file.to_string(),
-        line_start: node.start_position().row as u32 + 1,
-        line_end: node.end_position().row as u32 + 1,
-        signature: Some(
-            node_text(node, source)
-                .unwrap_or("")
-                .lines()
-                .next()
-                .unwrap_or("")
-                .to_string(),
-        ),
-    })
-}
-
-fn extract_enum(node: Node<'_>, source: &[u8], file: &str, lang: Language) -> Option<Symbol> {
-    let name_node = node.child_by_field_name("name")?;
-    let name = node_text(name_node, source)?;
-    Some(Symbol {
-        id: make_symbol_id(file, name, &SymbolKind::Enum),
-        name: name.to_string(),
-        kind: SymbolKind::Enum,
-        language: lang,
-        file: file.to_string(),
-        line_start: node.start_position().row as u32 + 1,
-        line_end: node.end_position().row as u32 + 1,
-        signature: Some(node_text(node, source).unwrap_or("").to_string()),
-    })
-}
-
-fn extract_function(node: Node<'_>, source: &[u8], file: &str, lang: Language) -> Option<Symbol> {
-    let declarator = node.child_by_field_name("declarator")?;
-    let name = node_text(declarator, source)?;
-    let fn_name = name.split('(').next().unwrap_or(name).trim();
-    if fn_name.is_empty() {
-        return None;
-    }
-    Some(Symbol {
-        id: make_symbol_id(file, fn_name, &SymbolKind::Function),
-        name: fn_name.to_string(),
-        kind: SymbolKind::Function,
-        language: lang,
-        file: file.to_string(),
-        line_start: node.start_position().row as u32 + 1,
-        line_end: node.end_position().row as u32 + 1,
-        signature: Some(node_text(node, source).unwrap_or("").lines().next().unwrap_or("").to_string()),
-    })
-}
-
-fn extract_include(node: Node<'_>, source: &[u8], file: &str) -> Option<Relationship> {
-    let text = node_text(node, source)?;
-    Some(Relationship {
-        from: make_symbol_id(file, "module", &SymbolKind::Module),
-        to: format!("unresolved_include::{}", text),
-        kind: RelationshipKind::Imports,
-        alias: None,
-        properties_accessed: Vec::new(),
-        context: text.to_string(),
-        file: file.to_string(),
-        line: node.start_position().row as u32 + 1,
-    })
-}
-
-fn extract_typedef_decl(node: Node<'_>, source: &[u8], file: &str) -> Vec<Relationship> {
-    let mut out = Vec::new();
-    let text = node_text(node, source).unwrap_or("");
-    let text_compact = text.replace('\n', " ");
-    if !text.contains("typedef") {
-        return out;
-    }
-
-    let re = regex::Regex::new(r"typedef\s+struct\s+([A-Za-z_][A-Za-z0-9_]*)\s+([A-Za-z_][A-Za-z0-9_]*)\s*;")
-        .expect("valid regex");
-    if let Some(caps) = re.captures(&text_compact) {
-        let base = caps.get(1).map(|m| m.as_str()).unwrap_or("");
-        let alias = caps.get(2).map(|m| m.as_str()).unwrap_or("");
-        if !base.is_empty() && !alias.is_empty() && base != alias {
-            out.push(Relationship {
-                from: make_symbol_id(file, "module", &SymbolKind::Module),
-                to: format!("unresolved_alias::{}", base),
-                kind: RelationshipKind::Imports,
-                alias: Some(alias.to_string()),
+    if node.child_by_field_name("body").is_none() {
+        // A forward declaration or a use of the type. Only record a reference
+        // when it stands alone as a declaration, so we do not emit one edge per
+        // parameter mention.
+        if node.parent().map(|p| p.kind()) == Some("declaration") && !is_builtin_type(name) {
+            relationships.push(Relationship {
+                from: module_symbol_id(file),
+                to: unresolved_local_type_id(name),
+                kind: RelationshipKind::UsesType,
+                alias: Some(name.to_string()),
                 properties_accessed: Vec::new(),
-                context: text.to_string(),
+                context: first_line_of(node, source).unwrap_or_default(),
                 file: file.to_string(),
-                line: node.start_position().row as u32 + 1,
+                line: start_line(node),
             });
         }
+        return;
+    }
+
+    symbols.push(symbol(
+        file,
+        language,
+        name,
+        name,
+        SymbolKind::Class,
+        node,
+        source,
+    ));
+
+    // C++ inheritance. The grammar makes `base_class_clause` an ordinary child
+    // rather than a named field, so it is located by kind.
+    let mut class_cursor = node.walk();
+    let base_clause = node
+        .children(&mut class_cursor)
+        .find(|child| child.kind() == "base_class_clause");
+
+    if let Some(bases) = base_clause {
+        let mut cursor = bases.walk();
+        for base in bases.children(&mut cursor) {
+            // `: public Shape` — skip the colon and the access specifier.
+            if matches!(base.kind(), ":" | "," | "access_specifier" | "virtual") {
+                continue;
+            }
+            let Some(base_name) = type_name_of(base, source).or_else(|| {
+                matches!(base.kind(), "type_identifier" | "qualified_identifier")
+                    .then(|| node_text(base, source).map(str::to_string))
+                    .flatten()
+            }) else {
+                continue;
+            };
+            relationships.push(Relationship {
+                from: make_symbol_id(file, name, &SymbolKind::Class),
+                to: unresolved_local_type_id(&base_name),
+                kind: RelationshipKind::Extends,
+                alias: Some(base_name),
+                properties_accessed: Vec::new(),
+                context: first_line_of(node, source).unwrap_or_default(),
+                file: file.to_string(),
+                line: start_line(node),
+            });
+        }
+    }
+}
+
+fn named<'a>(node: Node<'_>, source: &'a [u8]) -> Option<&'a str> {
+    let name = node
+        .child_by_field_name("name")
+        .and_then(|n| node_text(n, source))?;
+    (!name.is_empty()).then_some(name)
+}
+
+fn symbol(
+    file: &str,
+    language: &Language,
+    id_name: &str,
+    display_name: &str,
+    kind: SymbolKind,
+    node: Node<'_>,
+    source: &[u8],
+) -> Symbol {
+    Symbol {
+        id: make_symbol_id(file, id_name, &kind),
+        name: display_name.to_string(),
+        kind,
+        language: language.clone(),
+        file: file.to_string(),
+        line_start: start_line(node),
+        line_end: node.end_position().row as u32 + 1,
+        signature: first_line_of(node, source),
+    }
+}
+
+/// The declared name of a function, unwrapping pointers and qualifiers.
+fn function_name(node: Node<'_>, source: &[u8]) -> Option<String> {
+    fn inner(node: Node<'_>, source: &[u8]) -> Option<String> {
+        match node.kind() {
+            "identifier" | "field_identifier" | "operator_name" | "destructor_name" => {
+                node_text(node, source).map(str::to_string)
+            }
+            // `Class::method` — keep the qualification so two classes in one
+            // file do not collide on a shared method name.
+            "qualified_identifier" => node_text(node, source).map(str::to_string),
+            _ => {
+                let declarator = node
+                    .child_by_field_name("declarator")
+                    .or_else(|| node.named_child(0))?;
+                inner(declarator, source)
+            }
+        }
+    }
+    inner(node.child_by_field_name("declarator")?, source)
+}
+
+/// `typedef struct Foo Bar;` — `Bar` is another name for `Foo`.
+fn typedef(node: Node<'_>, source: &[u8], file: &str) -> Vec<Relationship> {
+    let Some(target) = node
+        .child_by_field_name("type")
+        .and_then(|t| type_name_of(t, source))
+    else {
+        return Vec::new();
+    };
+
+    let mut out = Vec::new();
+    for alias in typedef_alias_names(node, source) {
+        // `typedef struct Foo Foo;` is the idiomatic C self-naming typedef and
+        // carries no relationship.
+        if alias == target {
+            continue;
+        }
+        out.push(Relationship {
+            from: module_symbol_id(file),
+            to: unresolved_local_type_id(&target),
+            kind: RelationshipKind::Imports,
+            alias: Some(alias),
+            properties_accessed: Vec::new(),
+            context: first_line_of(node, source).unwrap_or_default(),
+            file: file.to_string(),
+            line: start_line(node),
+        });
     }
     out
 }
 
-fn extract_using_alias(node: Node<'_>, source: &[u8], file: &str) -> Option<Relationship> {
-    let alias_node = node.child_by_field_name("name")?;
-    let type_node = node.child_by_field_name("type")?;
-
-    let alias = node_text(alias_node, source)?;
-    let base = node_text(type_node, source)?;
-    if alias == base {
-        return None;
+/// C++ `using Bar = Foo;`
+fn using_alias(node: Node<'_>, source: &[u8], file: &str) -> Vec<Relationship> {
+    let (Some(alias), Some(target)) = (
+        node.child_by_field_name("name")
+            .and_then(|n| node_text(n, source)),
+        node.child_by_field_name("type")
+            .and_then(|t| type_name_of(t, source)),
+    ) else {
+        return Vec::new();
+    };
+    if alias == target {
+        return Vec::new();
     }
-    let base_leaf = base.rsplit("::").next().unwrap_or(base);
 
-    Some(Relationship {
-        from: make_symbol_id(file, "module", &SymbolKind::Module),
-        to: format!("unresolved_alias::{}", base_leaf),
+    vec![Relationship {
+        from: module_symbol_id(file),
+        to: unresolved_local_type_id(&target),
         kind: RelationshipKind::Imports,
         alias: Some(alias.to_string()),
         properties_accessed: Vec::new(),
-        context: node_text(node, source).unwrap_or("").to_string(),
+        context: first_line_of(node, source).unwrap_or_default(),
         file: file.to_string(),
-        line: node.start_position().row as u32 + 1,
+        line: start_line(node),
+    }]
+}
+
+fn include(node: Node<'_>, source: &[u8], file: &str) -> Option<Relationship> {
+    let path_node = node.child_by_field_name("path")?;
+    let raw = node_text(path_node, source)?;
+    // `"local.h"` versus `<system.h>` — the quoting says where to look.
+    let is_local = raw.starts_with('"');
+    let path = raw.trim_matches(['"', '<', '>'].as_ref());
+
+    Some(Relationship {
+        from: module_symbol_id(file),
+        to: unresolved_include_id(path, is_local),
+        kind: RelationshipKind::Imports,
+        alias: None,
+        properties_accessed: Vec::new(),
+        context: node_text(node, source).unwrap_or_default().trim().to_string(),
+        file: file.to_string(),
+        line: start_line(node),
     })
-}
-
-fn walk_tree<F>(node: Node<'_>, f: &mut F)
-where
-    F: FnMut(Node<'_>),
-{
-    f(node);
-    let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
-        walk_tree(child, f);
-    }
-}
-
-fn node_text<'a>(node: Node<'_>, source: &'a [u8]) -> Option<&'a str> {
-    node.utf8_text(source).ok()
 }

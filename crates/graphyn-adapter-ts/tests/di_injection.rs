@@ -6,6 +6,7 @@ use graphyn_core::graph::GraphynGraph;
 use graphyn_core::query::blast_radius;
 use graphyn_core::scan::{walk_source_files_with_config, ScanConfig};
 
+#[allow(dead_code)]
 fn analyze_repo(
     root: &std::path::Path,
 ) -> Result<graphyn_core::ir::RepoIR, graphyn_adapter_ts::AdapterTsError> {

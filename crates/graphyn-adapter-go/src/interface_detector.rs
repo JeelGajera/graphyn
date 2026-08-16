@@ -1,92 +1,135 @@
-use std::collections::{HashMap, HashSet};
+//! Structural interface satisfaction.
+//!
+//! Go has no `implements` keyword: a type satisfies an interface by having its
+//! methods. That makes interfaces invisible to a purely syntactic reading, and
+//! it is exactly the relationship a blast-radius query needs — changing a
+//! method signature can break an interface conformance stated nowhere in the
+//! source.
+//!
+//! Method sets come from the symbol table, where the extractor records both
+//! interface methods and concrete methods under ids qualified by their owning
+//! type. The previous implementation recovered them by splitting signature text
+//! on whitespace and punctuation, which treated parameter names and types as
+//! method names and produced conformance matches that were essentially random.
+
+use std::collections::{BTreeMap, BTreeSet};
 
 use graphyn_core::ir::{Relationship, RelationshipKind, RepoIR, SymbolKind};
+use graphyn_core::symbol_id::parse_symbol_id;
 
 pub fn detect_implementations(repo_ir: &mut RepoIR) {
-    let mut interface_methods: HashMap<String, HashSet<String>> = HashMap::new();
-    let mut struct_methods: HashMap<String, (HashSet<String>, String)> = HashMap::new();
+    // Package scope is directory scope in Go: a type's methods may live in any
+    // file of its package.
+    let mut interfaces: BTreeMap<String, (String, BTreeSet<String>, String)> = BTreeMap::new();
+    let mut concrete: BTreeMap<(String, String), (String, BTreeSet<String>, String)> =
+        BTreeMap::new();
 
     for file in &repo_ir.files {
-        for sym in &file.symbols {
-            if sym.kind == SymbolKind::Interface {
-                let req = extract_method_names(sym.signature.as_deref().unwrap_or(""));
-                interface_methods.insert(sym.id.clone(), req);
+        let package = directory_of(&file.file);
+
+        for symbol in &file.symbols {
+            match symbol.kind {
+                SymbolKind::Interface => {
+                    interfaces
+                        .entry(symbol.id.clone())
+                        .or_insert_with(|| (symbol.name.clone(), BTreeSet::new(), package.clone()));
+                }
+                SymbolKind::Class => {
+                    concrete
+                        .entry((package.clone(), symbol.name.clone()))
+                        .or_insert_with(|| {
+                            (symbol.id.clone(), BTreeSet::new(), file.file.clone())
+                        });
+                }
+                _ => {}
             }
         }
     }
 
+    // Attribute each method to the type that owns it.
     for file in &repo_ir.files {
-        for sym in &file.symbols {
-            if sym.kind != SymbolKind::Method {
+        let package = directory_of(&file.file);
+
+        for symbol in &file.symbols {
+            if symbol.kind != SymbolKind::Method {
                 continue;
             }
-            if let Some(receiver) = receiver_from_signature(sym.signature.as_deref().unwrap_or("")) {
-                if let Some(struct_sym) = file
-                    .symbols
-                    .iter()
-                    .find(|s| s.kind == SymbolKind::Class && s.name == receiver)
-                {
-                    struct_methods
-                        .entry(struct_sym.id.clone())
-                        .or_insert_with(|| (HashSet::new(), file.file.clone()))
-                        .0
-                        .insert(sym.name.clone());
+            let Some((owner, method)) = owner_and_method(&symbol.id) else {
+                continue;
+            };
+
+            // Interface methods: the owner is an interface declared in this file.
+            let interface_id = file
+                .symbols
+                .iter()
+                .find(|s| s.kind == SymbolKind::Interface && s.name == owner)
+                .map(|s| s.id.clone());
+            if let Some(id) = interface_id {
+                if let Some(entry) = interfaces.get_mut(&id) {
+                    entry.1.insert(method.to_string());
                 }
+                continue;
+            }
+
+            if let Some(entry) = concrete.get_mut(&(package.clone(), owner.to_string())) {
+                entry.1.insert(method.to_string());
             }
         }
     }
 
-    for (struct_id, (methods, struct_file)) in &struct_methods {
-        for (interface_id, required) in &interface_methods {
-            if required.is_empty() {
-                continue;
-            }
-            if required.is_subset(methods) {
-                if let Some(f) = repo_ir.files.iter_mut().find(|f| f.file == *struct_file) {
-                    f.relationships.push(Relationship {
-                        from: struct_id.clone(),
-                        to: interface_id.clone(),
-                        kind: RelationshipKind::Implements,
-                        alias: None,
-                        properties_accessed: Vec::new(),
-                        context: format!("implements {} (method set match)", interface_id),
-                        file: struct_file.clone(),
-                        line: 0,
-                    });
-                }
-            }
-        }
-    }
-}
+    // A type implements an interface when it has every method the interface
+    // requires. Empty interfaces (`any`) are satisfied by everything and carry
+    // no information, so they are skipped.
+    let mut new_edges: Vec<(String, Relationship)> = Vec::new();
 
-fn extract_method_names(signature: &str) -> HashSet<String> {
-    let mut out = HashSet::new();
-    for token in signature.split(|c: char| c.is_whitespace() || c == '(' || c == '{' || c == ';') {
-        if token.is_empty() {
+    for (struct_id, methods, struct_file) in concrete.values() {
+        if methods.is_empty() {
             continue;
         }
-        if (token
-            .chars()
-            .next()
-            .map(|c| c.is_ascii_uppercase() || c.is_ascii_lowercase())
-            .unwrap_or(false))
-            && token != "type"
-            && token != "interface"
-            && token != "struct"
-            && token != "func"
-            && token.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
-        {
-            out.insert(token.to_string());
+        for (interface_id, (interface_name, required, interface_package)) in &interfaces {
+            if required.is_empty() || !required.is_subset(methods) {
+                continue;
+            }
+            // Only match within the same package, or against interfaces the
+            // package can see. Cross-package structural matching produces a
+            // combinatorial number of edges that are technically true and
+            // practically noise.
+            if interface_package != &directory_of(struct_file) {
+                continue;
+            }
+            new_edges.push((
+                struct_file.clone(),
+                Relationship {
+                    from: struct_id.clone(),
+                    to: interface_id.clone(),
+                    kind: RelationshipKind::Implements,
+                    alias: None,
+                    properties_accessed: required.iter().cloned().collect(),
+                    context: format!("satisfies {interface_name} (method set match)"),
+                    file: struct_file.clone(),
+                    line: 0,
+                },
+            ));
         }
     }
-    out
+
+    for (file_path, edge) in new_edges {
+        if let Some(file) = repo_ir.files.iter_mut().find(|f| f.file == file_path) {
+            file.relationships.push(edge);
+        }
+    }
 }
 
-fn receiver_from_signature(signature: &str) -> Option<String> {
-    if !signature.starts_with("func (") {
-        return None;
+/// Split a qualified method id's name into `(owner, method)`.
+fn owner_and_method(symbol_id: &str) -> Option<(&str, &str)> {
+    let (_, name, _) = parse_symbol_id(symbol_id)?;
+    let cut = name.rfind("::")?;
+    Some((&name[..cut], &name[cut + 2..]))
+}
+
+fn directory_of(file: &str) -> String {
+    match file.rfind('/') {
+        Some(cut) => file[..cut].to_string(),
+        None => ".".to_string(),
     }
-    let inside = signature.trim_start_matches("func (").split(')').next()?;
-    let ty = inside.split_whitespace().last()?.trim_start_matches('*');
-    Some(ty.to_string())
 }

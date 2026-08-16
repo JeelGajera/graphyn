@@ -6,11 +6,8 @@ use rayon::prelude::*;
 
 pub mod extractor;
 pub mod include_resolver;
-pub mod namespace_resolver;
 pub mod parser;
-pub mod preprocessor;
 pub mod scope_analyzer;
-pub mod template_analyzer;
 
 #[derive(Debug)]
 pub enum AdapterCError {

@@ -123,13 +123,39 @@ The folder includes ready-to-use examples for:
 ## Language Support
 
 Supported now:
-- TypeScript / JavaScript (`.ts`, `.tsx`, `.js`, `.jsx`, `.mts`, `.cts`, `.mjs`, `.cjs`)
-- Framework files: Vue (`.vue`), Svelte (`.svelte`), Astro (`.astro`)
-- Python (`.py`, `.pyi`) — including dataclass DI, Pydantic, Django, FastAPI
-- Rust (`.rs`) — including trait bounds, derive macros, module tree resolution
-- Go (`.go`) — including implicit interface detection, struct embedding
-- C (`.c`, `.h`) — including typedef aliases, header/source split
-- C++ (`.cpp`, `.cc`, `.cxx`, `.hpp`, `.hxx`, `.hh`) — including using aliases, templates, inheritance
+
+| Language | Extensions | Resolves |
+| --- | --- | --- |
+| TypeScript / JavaScript | `.ts` `.tsx` `.js` `.jsx` `.mts` `.cts` `.mjs` `.cjs` | `tsconfig` paths, barrel re-exports, decorator DI |
+| Framework files | `.vue` `.svelte` `.astro` | script blocks within the component |
+| Python | `.py` `.pyi` | relative imports, `__init__` re-export chains, Pydantic / Django / dataclass fields |
+| Rust | `.rs` | module tree, `use` groups and aliases, trait impls, `#[derive]` |
+| Go | `.go` | package imports via `go.mod`, structural interface satisfaction |
+| C | `.c` `.h` | `#include` resolution, `typedef` aliases |
+| C++ | `.cpp` `.cc` `.cxx` `.hpp` `.hxx` `.hh` | `using` aliases, base classes, namespace-qualified names |
+
+Every adapter resolves import aliases and attributes member access to the type
+a value was declared as, so `payload.user_id` is recorded against `UserPayload`
+however the variable was named.
+
+### Known limits
+
+Being explicit about these is more useful than a feature list:
+
+- **Imports resolve within one language.** A Python module importing a
+  TypeScript file through a build step is not linked.
+- **Chained access is attributed to the first receiver only.** In `a.b.c`, the
+  `c` is not attributed to the type of `a.b`, which would require field-type
+  resolution.
+- **C++ templates are parsed but not instantiated.** `vector<Foo>` records a
+  reference to `Foo`; it does not model what the instantiation generates.
+- **Go structural matching is per-package.** A type satisfying an interface
+  declared in another package is not reported, because matching every method
+  set against every interface repository-wide produces far more noise than
+  signal.
+- **Rust macro bodies are token trees.** Field access inside `format!` and
+  friends is recovered by scanning tokens; more elaborate macro-generated code
+  is not expanded.
 
 Planned:
 - Java / Kotlin
