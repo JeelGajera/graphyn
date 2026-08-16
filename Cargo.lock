@@ -493,7 +493,7 @@ checksum = "0cc23270f6e1808e30a928bdc84dea0b9b4136a8bc82338574f23baf47bbd280"
 
 [[package]]
 name = "graphyn-adapter-c"
-version = "0.1.3"
+version = "0.2.0"
 dependencies = [
  "graphyn-core",
  "rayon",
@@ -505,7 +505,7 @@ dependencies = [
 
 [[package]]
 name = "graphyn-adapter-dispatch"
-version = "0.1.3"
+version = "0.2.0"
 dependencies = [
  "graphyn-adapter-c",
  "graphyn-adapter-go",
@@ -518,7 +518,7 @@ dependencies = [
 
 [[package]]
 name = "graphyn-adapter-go"
-version = "0.1.3"
+version = "0.2.0"
 dependencies = [
  "graphyn-core",
  "rayon",
@@ -529,7 +529,7 @@ dependencies = [
 
 [[package]]
 name = "graphyn-adapter-python"
-version = "0.1.3"
+version = "0.2.0"
 dependencies = [
  "graphyn-core",
  "rayon",
@@ -540,7 +540,7 @@ dependencies = [
 
 [[package]]
 name = "graphyn-adapter-rust"
-version = "0.1.3"
+version = "0.2.0"
 dependencies = [
  "graphyn-core",
  "rayon",
@@ -551,7 +551,7 @@ dependencies = [
 
 [[package]]
 name = "graphyn-adapter-ts"
-version = "0.1.3"
+version = "0.2.0"
 dependencies = [
  "graphyn-core",
  "rayon",
@@ -564,7 +564,7 @@ dependencies = [
 
 [[package]]
 name = "graphyn-cli"
-version = "0.1.3"
+version = "0.2.0"
 dependencies = [
  "clap",
  "graphyn-adapter-dispatch",
@@ -580,7 +580,7 @@ dependencies = [
 
 [[package]]
 name = "graphyn-core"
-version = "0.1.3"
+version = "0.2.0"
 dependencies = [
  "dashmap",
  "petgraph",
@@ -595,7 +595,7 @@ dependencies = [
 
 [[package]]
 name = "graphyn-mcp"
-version = "0.1.3"
+version = "0.2.0"
 dependencies = [
  "graphyn-adapter-dispatch",
  "graphyn-core",
@@ -609,7 +609,7 @@ dependencies = [
 
 [[package]]
 name = "graphyn-store"
-version = "0.1.3"
+version = "0.2.0"
 dependencies = [
  "graphyn-core",
  "rocksdb",

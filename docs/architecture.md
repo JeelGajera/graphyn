@@ -9,19 +9,24 @@ This document describes the internal architecture of Graphyn — how the crates 
 Graphyn is a Rust workspace. Each crate has exactly one responsibility. No crate reaches outside its defined scope.
 
 ```
-graphyn-core          Language-agnostic graph engine. No language knowledge.
-graphyn-adapter-ts    TypeScript/JavaScript → IR. No graph knowledge.
-graphyn-store         Graph persistence and cache. No parsing or query logic.
-graphyn-mcp           MCP protocol server. Calls into core. No parsing.
-graphyn-cli           Developer CLI. Orchestrates everything. No business logic.
+graphyn-core              Language-agnostic graph engine. No language knowledge.
+graphyn-adapter-ts        TypeScript/JavaScript → IR. No graph knowledge.
+graphyn-adapter-python    Python → IR.
+graphyn-adapter-rust      Rust → IR.
+graphyn-adapter-go        Go → IR.
+graphyn-adapter-c         C/C++ → IR.
+graphyn-adapter-dispatch  Routes files to the adapter that owns them. No parsing.
+graphyn-store             Graph persistence and cache. No parsing or query logic.
+graphyn-mcp               MCP protocol server. Calls into core. No parsing.
+graphyn-cli               Developer CLI. Orchestrates everything. No business logic.
 ```
 
 Dependency direction is strictly one-way:
 
 ```
 graphyn-cli
-  ├── graphyn-mcp → graphyn-core
-  ├── graphyn-adapter-ts → graphyn-core
+  ├── graphyn-mcp → graphyn-adapter-dispatch, graphyn-store, graphyn-core
+  ├── graphyn-adapter-dispatch → the five adapters → graphyn-core
   └── graphyn-store → graphyn-core
 ```
 
@@ -34,11 +39,15 @@ graphyn-cli
 ```
 Source files on disk
         ↓
-   graphyn-adapter-ts
-   (tree-sitter parse → FileIR per file, parallel via rayon)
+   graphyn-adapter-dispatch
+   (detect language per file, group by owning adapter)
+        ↓
+   graphyn-adapter-{ts,python,rust,go,c}
+   (tree-sitter parse → FileIR per file, parallel via rayon;
+    each adapter resolves imports within its own language)
         ↓
    RepoIR
-   (Vec<FileIR> + language stats)
+   (Vec<FileIR> + language stats, in a deterministic order)
         ↓
    graphyn-core: graph builder
    (Symbol nodes inserted, Relationship edges inserted, alias chains built)
@@ -211,6 +220,54 @@ Barrel file handling: when `index.ts` contains `export * from './user_payload'`,
 
 ---
 
+## graphyn-adapter-python, -rust, -go, -c
+
+Each of these follows the same shape as `graphyn-adapter-ts` — `parser.rs`,
+`extractor.rs`, `scope_analyzer.rs` and an import resolver — and exposes the
+same entrypoint, `analyze_files(root, files) -> Result<RepoIR, _>`. Shared
+symbol-id construction and AST traversal live in `graphyn-core/src/symbol_id.rs`
+and `graphyn-core/src/ast.rs` rather than being copied per adapter.
+
+What differs is the resolution model each language needs:
+
+| Adapter | Import model | Language-specific work |
+| --- | --- | --- |
+| `-python` | Relative imports, `__init__.py` re-export chains, star imports, `TYPE_CHECKING` guards | `framework.rs` classifies Pydantic / Django / dataclass models so their fields are attributed to the model |
+| `-rust` | `use` paths resolved through the module that declares the name, following `pub use` chains | `module_tree.rs` builds the module graph from `mod` declarations; `macro_analyzer.rs` reads `#[derive]` and recovers field access from macro token trees |
+| `-go` | Package imports resolved against `go.mod`, discovered per directory | `interface_detector.rs` matches method sets from the symbol table to detect structural interface satisfaction, per package |
+| `-c` | `#include` resolved structurally to the header's module symbol; the preprocessor is not run | Grammar chosen per extension (`tree-sitter-c` vs `tree-sitter-cpp`); handles `typedef` and `using` aliases, base classes and namespace-qualified names |
+
+### scope_analyzer.rs
+
+Every adapter has one, and they exist for the same reason: member access must be
+attributed to the type a value was *declared* as, not to the variable name. The
+analyzer binds receivers to declared types from parameters, `let`/`var`
+bindings, annotations and declarators, then keys properties per resolved type.
+So `payload.user_id` is recorded against `UserPayload` however the variable was
+named, and one struct does not inherit another's fields.
+
+---
+
+## graphyn-adapter-dispatch
+
+The single entrypoint the CLI and MCP server call. Detects each file's language
+via `graphyn_core::scan::detect_language_from_extension`, groups files by the
+adapter that owns them (TS and JS share one, C and C++ share one), runs the
+groups in parallel with rayon, and merges the `FileIR`s into a single `RepoIR`.
+Files in unsupported languages are skipped.
+
+Grouping uses an ordered key, and each group's files are sorted before analysis.
+`RepoIR.files` determines the order symbols and edges are inserted into the
+graph, and a deterministic graph is Graphyn's first documented guarantee —
+`HashMap` iteration order made two runs over identical input produce
+differently-ordered output.
+
+Imports resolve within one language. Each adapter analyses its own group
+independently, so a Python module importing a TypeScript file through a build
+step is not linked.
+
+---
+
 ## graphyn-store
 
 Persistence and caching.
@@ -301,22 +358,29 @@ RocksDB provides fast key-value storage with good compression. A serialized 100k
 
 ## Adding a new language adapter
 
-To add Python support (v2), the process is:
+Five adapters exist — TypeScript/JavaScript, Python, Rust, Go and C/C++. To add
+the next one (Java is the nearest candidate; `Language::Java` is already in the
+IR enum but has no adapter), the process is:
 
-1. Create `crates/graphyn-adapter-python/`
-2. Add `tree-sitter-python` as a dependency
-3. Implement `walker.rs` — find `.py` files, skip `__pycache__`, `.venv`, etc.
-4. Implement `parser.rs` — tree-sitter parse per file
-5. Implement `extractor.rs` — extract symbols and relationships into IR
-6. Implement `import_resolver.rs` — handle Python's import patterns:
-   - `from module import Class as Alias`
-   - `import module` then `module.Class` usage
-   - `from . import module` (relative imports)
-   - `__init__.py` barrel equivalents
-7. Add `fixtures/python-sample/` with representative Python code
-8. Write tests — the alias-import equivalent for Python must pass
-9. Wire into `graphyn-cli analyze` as a new adapter for `.py` files
+1. Create `crates/graphyn-adapter-<lang>/`
+2. Add the `tree-sitter-<lang>` grammar as a dependency, and `graphyn-core`
+   with the `ast` feature for the shared traversal and symbol-id helpers
+3. Implement `parser.rs` — tree-sitter parse per file
+4. Implement `extractor.rs` — extract symbols and relationships into IR
+5. Implement `scope_analyzer.rs` — bind receivers to their declared types, so
+   member access is attributed to the type rather than the variable name
+6. Implement `import_resolver.rs` — resolve the language's import forms to
+   canonical symbol IDs, including aliases and re-export chains
+7. Expose `analyze_files(root, files) -> Result<RepoIR, _>` from `lib.rs`
+8. Add `fixtures/adapter-<lang>/` with representative code, including the
+   alias-import bug scenario
+9. Write tests — the alias-import equivalent for the language must pass, plus a
+   case in `crates/graphyn-cli/tests/regression.rs`
+10. Register the language in `graphyn-adapter-dispatch`: extension detection in
+    `graphyn_core::scan`, `language_rank`, `adapter_group`, `run_adapter` and
+    `supported_languages`
 
-`graphyn-core` is not touched. The IR schema is not changed. The MCP tools are not changed.
+Only the dispatch layer learns about the new adapter. The graph engine, the IR
+schema and the MCP tools are not touched.
 
 See also: [Agent Guide](./agent-guide.md)

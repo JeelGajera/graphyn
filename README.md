@@ -27,7 +27,12 @@ Windows (PowerShell):
 irm https://raw.githubusercontent.com/JeelGajera/graphyn/master/install.ps1 | iex
 ```
 
-From source (Cargo):
+Cargo (crates.io):
+```bash
+cargo install graphyn-cli
+```
+
+From source:
 ```bash
 cargo install graphyn-cli --git https://github.com/JeelGajera/graphyn
 ```
@@ -169,6 +174,10 @@ cargo build --release
 cargo test --workspace
 cargo clippy --workspace -- -D warnings
 ```
+
+## Changelog
+
+Release history is in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
