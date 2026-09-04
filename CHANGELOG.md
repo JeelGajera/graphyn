@@ -36,6 +36,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   changes the graph everywhere. Regenerate with `UPDATE_GOLDEN=1 cargo test -p
   graphyn-cli --test golden_ir` and review the diff.
 
+### Changed
+
+- **Ten crates became five.** The five `graphyn-adapter-*` crates and
+  `graphyn-adapter-dispatch` are now one crate, `graphyn-lang`, with a module
+  and a Cargo feature per language. `graphyn-core`, `graphyn-lang`,
+  `graphyn-store`, `graphyn-mcp` and `graphyn-cli` remain.
+
+  Three arguments usually justify a crate per language and none held here:
+  every adapter depended on `graphyn-core` and was consumed only by dispatch,
+  so they versioned in lockstep and had exactly one consumer; and the expensive
+  compilation is the generated C in the upstream `tree-sitter-*` crates, which
+  cargo caches regardless of how this code is laid out.
+
+  The cost was real, though. The publish job had to push ten crates in
+  dependency order, and a failure partway through leaves earlier crates on
+  crates.io at a version that cannot be reused. Every new language lengthened
+  that chain. Adding a language no longer touches the publish job at all.
+
+  Under SemVer 0.x this is a permitted breaking change, and 1.0.0 is the last
+  point at which the crate names are not yet a public commitment.
+
+- **`supported_languages()` reports what a build carries**, rather than a
+  hardcoded list that happened to be accurate because only one build existed.
+
+- Per-language features reach the binary: `cargo install graphyn-cli
+  --no-default-features --features python` produces a working Python-only
+  `graphyn` that indexes Python and skips other languages rather than failing
+  on them. Measured on this machine, that binary is 16M against 27M for all six
+  languages.
+
 ### Known limits
 
 - **Fully-qualified paths used inline are not resolved.** A type written as

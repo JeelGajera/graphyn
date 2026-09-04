@@ -212,6 +212,23 @@ Planned:
 - Ruby
 - PHP
 
+## Slim builds
+
+A default `graphyn` carries every supported language. To build only what you
+need:
+
+```bash
+cargo install graphyn-cli --no-default-features --features python
+```
+
+Features: `typescript` (includes JavaScript), `python`, `rust`, `go`, `c`
+(includes C++). `graphyn status` and `--help` report what your build can
+analyse; a build skips files in languages it does not carry rather than
+failing on them.
+
+Measured on one machine, a Python-only binary is 16M against 27M for all six
+languages.
+
 ## Build & Test
 
 ```bash

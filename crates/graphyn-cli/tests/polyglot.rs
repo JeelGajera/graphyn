@@ -13,7 +13,7 @@ fn all_files(root: &Path) -> Vec<PathBuf> {
 #[test]
 fn test_polyglot_repo_is_analyzed_without_errors() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/polyglot");
-    let repo_ir = graphyn_adapter_dispatch::analyze_files(&root, &all_files(&root))
+    let repo_ir = graphyn_lang::analyze_files(&root, &all_files(&root))
         .expect("polyglot analysis must succeed");
 
     assert!(repo_ir.language_stats.contains_key("TypeScript"));

@@ -492,85 +492,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0cc23270f6e1808e30a928bdc84dea0b9b4136a8bc82338574f23baf47bbd280"
 
 [[package]]
-name = "graphyn-adapter-c"
-version = "0.2.0"
-dependencies = [
- "graphyn-core",
- "rayon",
- "tree-sitter",
- "tree-sitter-c",
- "tree-sitter-cpp",
- "walkdir",
-]
-
-[[package]]
-name = "graphyn-adapter-dispatch"
-version = "0.2.0"
-dependencies = [
- "graphyn-adapter-c",
- "graphyn-adapter-go",
- "graphyn-adapter-python",
- "graphyn-adapter-rust",
- "graphyn-adapter-ts",
- "graphyn-core",
- "rayon",
-]
-
-[[package]]
-name = "graphyn-adapter-go"
-version = "0.2.0"
-dependencies = [
- "graphyn-core",
- "rayon",
- "tree-sitter",
- "tree-sitter-go",
- "walkdir",
-]
-
-[[package]]
-name = "graphyn-adapter-python"
-version = "0.2.0"
-dependencies = [
- "graphyn-core",
- "rayon",
- "tree-sitter",
- "tree-sitter-python",
- "walkdir",
-]
-
-[[package]]
-name = "graphyn-adapter-rust"
-version = "0.2.0"
-dependencies = [
- "glob",
- "graphyn-core",
- "rayon",
- "toml",
- "tree-sitter",
- "tree-sitter-rust",
- "walkdir",
-]
-
-[[package]]
-name = "graphyn-adapter-ts"
-version = "0.2.0"
-dependencies = [
- "graphyn-core",
- "rayon",
- "serde_json",
- "tree-sitter",
- "tree-sitter-javascript",
- "tree-sitter-typescript",
- "walkdir",
-]
-
-[[package]]
 name = "graphyn-cli"
 version = "0.2.0"
 dependencies = [
  "clap",
- "graphyn-adapter-dispatch",
  "graphyn-core",
+ "graphyn-lang",
  "graphyn-mcp",
  "graphyn-store",
  "notify",
@@ -598,11 +525,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "graphyn-lang"
+version = "0.2.0"
+dependencies = [
+ "glob",
+ "graphyn-core",
+ "rayon",
+ "serde_json",
+ "toml",
+ "tree-sitter",
+ "tree-sitter-c",
+ "tree-sitter-cpp",
+ "tree-sitter-go",
+ "tree-sitter-javascript",
+ "tree-sitter-python",
+ "tree-sitter-rust",
+ "tree-sitter-typescript",
+ "walkdir",
+]
+
+[[package]]
 name = "graphyn-mcp"
 version = "0.2.0"
 dependencies = [
- "graphyn-adapter-dispatch",
  "graphyn-core",
+ "graphyn-lang",
  "graphyn-store",
  "rmcp",
  "schemars",

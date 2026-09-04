@@ -26,7 +26,7 @@ fn all_files(root: &Path) -> Vec<PathBuf> {
 
 fn analyze(name: &str) -> RepoIR {
     let root = fixture(name);
-    graphyn_adapter_dispatch::analyze_files(&root, &all_files(&root))
+    graphyn_lang::analyze_files(&root, &all_files(&root))
         .unwrap_or_else(|e| panic!("analysis of '{name}' failed: {e}"))
 }
 
