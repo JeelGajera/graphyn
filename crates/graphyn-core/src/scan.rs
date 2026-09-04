@@ -435,6 +435,7 @@ pub fn detect_language_from_extension(ext: &str) -> Option<Language> {
         "cpp" | "cc" | "cxx" | "hpp" | "hxx" | "hh" => Some(Language::Cpp),
         "ts" | "tsx" | "mts" | "cts" | "vue" | "svelte" | "astro" => Some(Language::TypeScript),
         "js" | "jsx" | "mjs" | "cjs" => Some(Language::JavaScript),
+        "java" => Some(Language::Java),
         _ => None,
     }
 }

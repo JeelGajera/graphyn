@@ -38,6 +38,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **A tier model, so "supports N languages" means something.** `LanguageSpec`
+  describes a language and how much of it Graphyn can resolve. Tier 1
+  (`resolved`) has full import, alias and declared-type resolution and is safe
+  to gate on. Tier 2 (`structural`) has symbols and intra-file references only,
+  and is advisory by construction — a gate can fail open on it automatically
+  rather than reporting a pass it did not earn. `graphyn status` reports the
+  tier of every language a build carries.
+
+  Consolidating the adapters removed the packaging cost of a language, not the
+  engineering cost. Import resolution, alias resolution and declared-type
+  binding are irreducibly per-language and cost weeks; every bug 0.2.0 fixed
+  was a resolution bug, not a parse bug. Tiers are how breadth stays honest.
+
+- **Tier 2 needs no query files written for it.** Every tree-sitter grammar
+  Graphyn vendors already ships `queries/tags.scm` and exposes it as
+  `TAGS_QUERY`, using a standard capture vocabulary — `@definition.*`,
+  `@reference.*`, `@name` — that maps onto Graphyn's own `SymbolKind` and
+  `RelationshipKind`. One generic analyzer covers every structural language.
+  Adding one is a dependency, a feature flag and a spec.
+
+- **Java, as the first Tier 2 language** (`--features java`, not in `default`).
+  Its whole module is a spec: no parser, no extractor, no resolver, no queries.
+  It extracts classes, interfaces and methods and links intra-file calls and
+  `implements`; it resolves nothing across files, and `status` says so.
+
 - **Ten crates became five.** The five `graphyn-adapter-*` crates and
   `graphyn-adapter-dispatch` are now one crate, `graphyn-lang`, with a module
   and a Cargo feature per language. `graphyn-core`, `graphyn-lang`,
@@ -73,6 +98,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   languages.
 
 ### Known limits
+
+- **Tier 2 languages resolve nothing across files.** A structural language
+  records a reference only when the name is defined in the same file. A tags
+  query reports that a call to `foo` happened; it does not say which `foo`, and
+  matching by leaf name repository-wide is precisely the bug 0.2.0 fixed in the
+  Rust adapter. "No usages found" in a Tier 2 file is a statement about that
+  file.
 
 - **Fully-qualified paths used inline are not resolved.** A type written as
   `graphyn_core::ir::RepoIR` in a signature, with no `use` bringing it into

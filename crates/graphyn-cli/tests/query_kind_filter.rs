@@ -72,10 +72,15 @@ fn an_unknown_kind_is_rejected_rather_than_ignored() {
 
 #[test]
 fn a_kind_nothing_emits_says_so() {
-    // `calls` is declared on RelationshipKind but no adapter produces it. A
-    // silent empty result here would read as "nothing calls this".
+    // `instantiates` is declared on RelationshipKind but nothing produces it.
+    // A silent empty result here would read as "nothing instantiates this".
+    // (`calls` used to be the example, until structural analysis started
+    // emitting it from a grammar's own tags query.)
     let root = scratch_copy("unemitted");
-    let run = query(&root, &["blast-radius", "UserPayload", "--kind", "calls"]);
+    let run = query(
+        &root,
+        &["blast-radius", "UserPayload", "--kind", "instantiates"],
+    );
 
     assert!(run.success, "a known kind is a valid query: {}", run.stdout);
     assert!(

@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
-use graphyn_core::ir::RepoIR;
+use graphyn_core::ir::{Language, RepoIR};
 use rayon::prelude::*;
 pub mod extractor;
 pub mod framework_preprocessor;
@@ -66,4 +66,47 @@ pub fn analyze_files(root: &Path, files: &[std::path::PathBuf]) -> Result<RepoIR
     import_resolver::resolve_repo_ir(root, &mut repo_ir);
 
     Ok(repo_ir)
+}
+
+// ── language spec ────────────────────────────────────────────
+
+/// This language's entry in the registry.
+///
+/// Tier 1: resolution here follows imports across files, tracks aliases, and
+/// binds declared types for property attribution, so a gate may draw a
+/// conclusion from it. The pipeline is [`analyze_files`] above, kept as it was
+/// rather than rewritten into resolution hooks — it works and it is tested,
+/// and a rewrite would forfeit the one property this change must preserve.
+pub struct Spec;
+
+impl crate::spec::LanguageSpec for Spec {
+    fn language(&self) -> Language {
+        Language::TypeScript
+    }
+
+    fn tier(&self) -> crate::spec::Tier {
+        crate::spec::Tier::Resolved
+    }
+
+    fn name(&self) -> &'static str {
+        "TypeScript"
+    }
+
+    fn extensions(&self) -> &'static [&'static str] {
+        &[
+            "ts", "tsx", "mts", "cts", "vue", "svelte", "astro", "js", "jsx", "mjs", "cjs",
+        ]
+    }
+
+    fn analyze(
+        &self,
+        root: &std::path::Path,
+        files: &[std::path::PathBuf],
+    ) -> Option<Result<Vec<graphyn_core::ir::FileIR>, String>> {
+        Some(
+            analyze_files(root, files)
+                .map(|ir| ir.files)
+                .map_err(|e| e.to_string()),
+        )
+    }
 }
