@@ -26,6 +26,27 @@ jobs:
         run: cargo check --workspace
       - name: Test
         run: cargo test --workspace
+
+      # Determinism is the property every other claim rests on: you cannot gate
+      # CI on a graph that disagrees with itself between runs. The golden tests
+      # cover each fixture; this covers the largest polyglot repository to hand,
+      # which is Graphyn itself. It reuses the binary `cargo test` already
+      # built, so it costs a fraction of a second.
+      #
+      # `language_stats` was a `HashMap` and serialized in a different order on
+      # every run. Nothing caught it because nothing compared two runs.
+      - name: Verify analysis is reproducible
+        run: |
+          cargo build -p graphyn-cli
+          ./target/debug/graphyn analyze . --json > /tmp/analysis-1.json
+          ./target/debug/graphyn analyze . --json > /tmp/analysis-2.json
+          if ! cmp -s /tmp/analysis-1.json /tmp/analysis-2.json; then
+            echo "::error::two analyses of identical input produced different output"
+            diff /tmp/analysis-1.json /tmp/analysis-2.json | head -40
+            exit 1
+          fi
+          echo "reproducible: $(wc -c < /tmp/analysis-1.json) bytes, byte-identical across two runs"
+
       - name: Clippy
         run: cargo clippy --workspace --all-targets -- -D warnings
       # Catches missing crate metadata and crates left out of the publish

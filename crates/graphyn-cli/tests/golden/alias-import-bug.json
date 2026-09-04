@@ -1,0 +1,167 @@
+{
+  "files": [
+    {
+      "diagnostics": [],
+      "file": "src/mappers/deep/view_model_mapper.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": "ResponseModel",
+          "context": "import { UserPayload as ResponseModel } from '../../models/user_payload';",
+          "file": "src/mappers/deep/view_model_mapper.ts",
+          "from": "src/mappers/deep/view_model_mapper.ts::ViewModelMapper::class",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [
+            "status",
+            "timestamp",
+            "userId"
+          ],
+          "to": "src/models/user_payload.ts::UserPayload::class"
+        },
+        {
+          "alias": "ResponseModel",
+          "context": "property access",
+          "file": "src/mappers/deep/view_model_mapper.ts",
+          "from": "src/mappers/deep/view_model_mapper.ts::ViewModelMapper::class",
+          "kind": "AccessesProperty",
+          "line": 6,
+          "properties_accessed": [
+            "status",
+            "timestamp",
+            "userId"
+          ],
+          "to": "src/models/user_payload.ts::UserPayload::class"
+        },
+        {
+          "alias": "ResponseModel",
+          "context": "method property access: map",
+          "file": "src/mappers/deep/view_model_mapper.ts",
+          "from": "src/mappers/deep/view_model_mapper.ts::map::method",
+          "kind": "AccessesProperty",
+          "line": 6,
+          "properties_accessed": [
+            "status",
+            "timestamp",
+            "userId"
+          ],
+          "to": "src/models/user_payload.ts::UserPayload::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "src/mappers/deep/view_model_mapper.ts",
+          "id": "src/mappers/deep/view_model_mapper.ts::ViewModelMapper::class",
+          "kind": "Class",
+          "language": "TypeScript",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "ViewModelMapper",
+          "signature": "class ViewModelMapper { map(data: ResponseModel): object { return { id: data.userId, ts: data.timestamp, st: data.status, }; } }"
+        },
+        {
+          "file": "src/mappers/deep/view_model_mapper.ts",
+          "id": "src/mappers/deep/view_model_mapper.ts::map::method",
+          "kind": "Method",
+          "language": "TypeScript",
+          "line_end": 4,
+          "line_start": 4,
+          "name": "map",
+          "signature": "map(data: ResponseModel): object { return { id: data.userId, ts: data.timestamp, st: data.status, }; }"
+        },
+        {
+          "file": "src/mappers/deep/view_model_mapper.ts",
+          "id": "src/mappers/deep/view_model_mapper.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "src/models/user_payload.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "src/models/user_payload.ts",
+          "id": "src/models/user_payload.ts::UserPayload::class",
+          "kind": "Class",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "UserPayload",
+          "signature": "class UserPayload { userId: string; timestamp: Date; status: string; email: string; }"
+        },
+        {
+          "file": "src/models/user_payload.ts",
+          "id": "src/models/user_payload.ts::email::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 5,
+          "line_start": 5,
+          "name": "email",
+          "signature": "email: string"
+        },
+        {
+          "file": "src/models/user_payload.ts",
+          "id": "src/models/user_payload.ts::status::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 4,
+          "line_start": 4,
+          "name": "status",
+          "signature": "status: string"
+        },
+        {
+          "file": "src/models/user_payload.ts",
+          "id": "src/models/user_payload.ts::timestamp::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "timestamp",
+          "signature": "timestamp: Date"
+        },
+        {
+          "file": "src/models/user_payload.ts",
+          "id": "src/models/user_payload.ts::userId::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 2,
+          "line_start": 2,
+          "name": "userId",
+          "signature": "userId: string"
+        },
+        {
+          "file": "src/models/user_payload.ts",
+          "id": "src/models/user_payload.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    }
+  ],
+  "language_stats": {
+    "TypeScript": 2
+  },
+  "root": "<root>",
+  "schema_version": 1,
+  "stats": {
+    "alias_chains": 1,
+    "diagnostics": 0,
+    "files_indexed": 2,
+    "relationships": 3,
+    "symbols": 9
+  }
+}

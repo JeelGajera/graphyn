@@ -1,0 +1,580 @@
+{
+  "files": [
+    {
+      "diagnostics": [],
+      "file": "py/models/types.py",
+      "language": "Python",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "py/models/types.py",
+          "id": "py/models/types.py::module::module",
+          "kind": "Module",
+          "language": "Python",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "py/models/types.py",
+          "id": "py/models/types.py::Alpha::class",
+          "kind": "Class",
+          "language": "Python",
+          "line_end": 2,
+          "line_start": 1,
+          "name": "Alpha",
+          "signature": "class Alpha:"
+        },
+        {
+          "file": "py/models/types.py",
+          "id": "py/models/types.py::Alpha::a_field::property",
+          "kind": "Property",
+          "language": "Python",
+          "line_end": 2,
+          "line_start": 2,
+          "name": "a_field",
+          "signature": "a_field: str"
+        },
+        {
+          "file": "py/models/types.py",
+          "id": "py/models/types.py::Beta::class",
+          "kind": "Class",
+          "language": "Python",
+          "line_end": 6,
+          "line_start": 5,
+          "name": "Beta",
+          "signature": "class Beta:"
+        },
+        {
+          "file": "py/models/types.py",
+          "id": "py/models/types.py::Beta::b_field::property",
+          "kind": "Property",
+          "language": "Python",
+          "line_end": 6,
+          "line_start": 6,
+          "name": "b_field",
+          "signature": "b_field: str"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "py/svc/svc.py",
+      "language": "Python",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "from ..models.types import Alpha, Beta",
+          "file": "py/svc/svc.py",
+          "from": "py/svc/svc.py::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [
+            "a_field"
+          ],
+          "to": "py/models/types.py::Alpha::class"
+        },
+        {
+          "alias": null,
+          "context": "from ..models.types import Alpha, Beta",
+          "file": "py/svc/svc.py",
+          "from": "py/svc/svc.py::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [
+            "b_field"
+          ],
+          "to": "py/models/types.py::Beta::class"
+        },
+        {
+          "alias": "Alpha",
+          "context": "attribute access",
+          "file": "py/svc/svc.py",
+          "from": "py/svc/svc.py::module::module",
+          "kind": "AccessesProperty",
+          "line": 5,
+          "properties_accessed": [
+            "a_field"
+          ],
+          "to": "py/models/types.py::Alpha::class"
+        },
+        {
+          "alias": "Beta",
+          "context": "attribute access",
+          "file": "py/svc/svc.py",
+          "from": "py/svc/svc.py::module::module",
+          "kind": "AccessesProperty",
+          "line": 9,
+          "properties_accessed": [
+            "b_field"
+          ],
+          "to": "py/models/types.py::Beta::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "py/svc/svc.py",
+          "id": "py/svc/svc.py::module::module",
+          "kind": "Module",
+          "language": "Python",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "py/svc/svc.py",
+          "id": "py/svc/svc.py::use_alpha::function",
+          "kind": "Function",
+          "language": "Python",
+          "line_end": 5,
+          "line_start": 4,
+          "name": "use_alpha",
+          "signature": "def use_alpha(whatever: Alpha) -> str:"
+        },
+        {
+          "file": "py/svc/svc.py",
+          "id": "py/svc/svc.py::use_beta::function",
+          "kind": "Function",
+          "language": "Python",
+          "line_end": 9,
+          "line_start": 8,
+          "name": "use_beta",
+          "signature": "def use_beta(anything: Beta) -> str:"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "rust/src/alpha.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "rust/src/alpha.rs",
+          "id": "rust/src/alpha.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "rust/src/alpha.rs",
+          "id": "rust/src/alpha.rs::Alpha::class",
+          "kind": "Class",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "Alpha",
+          "signature": "pub struct Alpha { pub a_field: String }"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "rust/src/beta.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "rust/src/beta.rs",
+          "id": "rust/src/beta.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "rust/src/beta.rs",
+          "id": "rust/src/beta.rs::Beta::class",
+          "kind": "Class",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "Beta",
+          "signature": "pub struct Beta { pub b_field: String }"
+        }
+      ]
+    },
+    {
+      "diagnostics": [
+        {
+          "category": "Resolution",
+          "file": "rust/src/consumer.rs",
+          "level": "Warning",
+          "line": 1,
+          "message": "unable to resolve import 'crate::alpha::Alpha'"
+        },
+        {
+          "category": "Resolution",
+          "file": "rust/src/consumer.rs",
+          "level": "Warning",
+          "line": 2,
+          "message": "unable to resolve import 'crate::beta::Beta'"
+        },
+        {
+          "category": "Resolution",
+          "file": "rust/src/consumer.rs",
+          "level": "Warning",
+          "line": 4,
+          "message": "unable to resolve type 'Alpha' referenced in rust/src/consumer.rs"
+        },
+        {
+          "category": "Resolution",
+          "file": "rust/src/consumer.rs",
+          "level": "Warning",
+          "line": 5,
+          "message": "unable to resolve type 'Beta' referenced in rust/src/consumer.rs"
+        }
+      ],
+      "file": "rust/src/consumer.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "rust/src/consumer.rs",
+          "id": "rust/src/consumer.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "rust/src/consumer.rs",
+          "id": "rust/src/consumer.rs::use_alpha::function",
+          "kind": "Function",
+          "language": "Rust",
+          "line_end": 4,
+          "line_start": 4,
+          "name": "use_alpha",
+          "signature": "pub fn use_alpha(whatever: &Alpha) -> usize { whatever.a_field.len() }"
+        },
+        {
+          "file": "rust/src/consumer.rs",
+          "id": "rust/src/consumer.rs::use_beta::function",
+          "kind": "Function",
+          "language": "Rust",
+          "line_end": 5,
+          "line_start": 5,
+          "name": "use_beta",
+          "signature": "pub fn use_beta(anything: &Beta) -> usize { anything.b_field.len() }"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "rust/src/lib.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "rust/src/lib.rs",
+          "id": "rust/src/lib.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "go/models/alpha.go",
+      "language": "Go",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "go/models/alpha.go",
+          "id": "go/models/alpha.go::module::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "go/models/alpha.go",
+          "id": "go/models/alpha.go::Alpha::class",
+          "kind": "Class",
+          "language": "Go",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "Alpha",
+          "signature": "Alpha struct{ AField string }"
+        },
+        {
+          "file": "go/models/alpha.go",
+          "id": "go/models/alpha.go::Beta::class",
+          "kind": "Class",
+          "language": "Go",
+          "line_end": 4,
+          "line_start": 4,
+          "name": "Beta",
+          "signature": "Beta struct{ BField string }"
+        },
+        {
+          "file": "go/models",
+          "id": "go/models::models::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "models",
+          "signature": "package github.com/test/regression/models"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "go/svc/svc.go",
+      "language": "Go",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "\"github.com/test/regression/models\"",
+          "file": "go/svc/svc.go",
+          "from": "go/svc/svc.go::module::module",
+          "kind": "Imports",
+          "line": 3,
+          "properties_accessed": [
+            "AField",
+            "BField"
+          ],
+          "to": "go/models::models::module"
+        },
+        {
+          "alias": "models.Alpha",
+          "context": "property access",
+          "file": "go/svc/svc.go",
+          "from": "go/svc/svc.go::module::module",
+          "kind": "AccessesProperty",
+          "line": 5,
+          "properties_accessed": [
+            "AField"
+          ],
+          "to": "go/models/alpha.go::Alpha::class"
+        },
+        {
+          "alias": "models.Beta",
+          "context": "property access",
+          "file": "go/svc/svc.go",
+          "from": "go/svc/svc.go::module::module",
+          "kind": "AccessesProperty",
+          "line": 6,
+          "properties_accessed": [
+            "BField"
+          ],
+          "to": "go/models/alpha.go::Beta::class"
+        },
+        {
+          "alias": "models.Alpha",
+          "context": "type reference",
+          "file": "go/svc/svc.go",
+          "from": "go/svc/svc.go::module::module",
+          "kind": "UsesType",
+          "line": 5,
+          "properties_accessed": [],
+          "to": "go/models/alpha.go::Alpha::class"
+        },
+        {
+          "alias": "models.Beta",
+          "context": "type reference",
+          "file": "go/svc/svc.go",
+          "from": "go/svc/svc.go::module::module",
+          "kind": "UsesType",
+          "line": 6,
+          "properties_accessed": [],
+          "to": "go/models/alpha.go::Beta::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "go/svc/svc.go",
+          "id": "go/svc/svc.go::module::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "go/svc/svc.go",
+          "id": "go/svc/svc.go::UseAlpha::function",
+          "kind": "Function",
+          "language": "Go",
+          "line_end": 5,
+          "line_start": 5,
+          "name": "UseAlpha",
+          "signature": "func UseAlpha(whatever *models.Alpha) string { return whatever.AField }"
+        },
+        {
+          "file": "go/svc/svc.go",
+          "id": "go/svc/svc.go::UseBeta::function",
+          "kind": "Function",
+          "language": "Go",
+          "line_end": 6,
+          "line_start": 6,
+          "name": "UseBeta",
+          "signature": "func UseBeta(anything *models.Beta) string   { return anything.BField }"
+        },
+        {
+          "file": "go/svc",
+          "id": "go/svc::svc::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "svc",
+          "signature": "package github.com/test/regression/svc"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "c/include/types.h",
+      "language": "C",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "c/include/types.h",
+          "id": "c/include/types.h::module::module",
+          "kind": "Module",
+          "language": "C",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "c/include/types.h",
+          "id": "c/include/types.h::Alpha::class",
+          "kind": "Class",
+          "language": "C",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "Alpha",
+          "signature": "struct Alpha { char *a_field; }"
+        },
+        {
+          "file": "c/include/types.h",
+          "id": "c/include/types.h::Beta::class",
+          "kind": "Class",
+          "language": "C",
+          "line_end": 2,
+          "line_start": 2,
+          "name": "Beta",
+          "signature": "struct Beta { char *b_field; }"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "c/src/svc.c",
+      "language": "C",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "#include \"../include/types.h\"",
+          "file": "c/src/svc.c",
+          "from": "c/src/svc.c::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "c/include/types.h::module::module"
+        },
+        {
+          "alias": "Alpha",
+          "context": "member access",
+          "file": "c/src/svc.c",
+          "from": "c/src/svc.c::module::module",
+          "kind": "AccessesProperty",
+          "line": 3,
+          "properties_accessed": [
+            "a_field"
+          ],
+          "to": "c/include/types.h::Alpha::class"
+        },
+        {
+          "alias": "Beta",
+          "context": "member access",
+          "file": "c/src/svc.c",
+          "from": "c/src/svc.c::module::module",
+          "kind": "AccessesProperty",
+          "line": 4,
+          "properties_accessed": [
+            "b_field"
+          ],
+          "to": "c/include/types.h::Beta::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "c/src/svc.c",
+          "id": "c/src/svc.c::module::module",
+          "kind": "Module",
+          "language": "C",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "c/src/svc.c",
+          "id": "c/src/svc.c::use_alpha::function",
+          "kind": "Function",
+          "language": "C",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "use_alpha",
+          "signature": "char *use_alpha(Alpha *whatever) { return whatever->a_field; }"
+        },
+        {
+          "file": "c/src/svc.c",
+          "id": "c/src/svc.c::use_beta::function",
+          "kind": "Function",
+          "language": "C",
+          "line_end": 4,
+          "line_start": 4,
+          "name": "use_beta",
+          "signature": "char *use_beta(Beta *anything) { return anything->b_field; }"
+        }
+      ]
+    }
+  ],
+  "language_stats": {
+    "C": 2,
+    "Go": 2,
+    "Python": 2,
+    "Rust": 4
+  },
+  "root": "<root>",
+  "schema_version": 1,
+  "stats": {
+    "alias_chains": 0,
+    "diagnostics": 4,
+    "files_indexed": 10,
+    "relationships": 12,
+    "symbols": 30
+  }
+}

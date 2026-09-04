@@ -1,0 +1,464 @@
+{
+  "files": [
+    {
+      "diagnostics": [],
+      "file": "alias_import_bug_c/include/user_payload.h",
+      "language": "C",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "alias_import_bug_c/include/user_payload.h",
+          "id": "alias_import_bug_c/include/user_payload.h::module::module",
+          "kind": "Module",
+          "language": "C",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "alias_import_bug_c/include/user_payload.h",
+          "id": "alias_import_bug_c/include/user_payload.h::UserPayload::class",
+          "kind": "Class",
+          "language": "C",
+          "line_end": 5,
+          "line_start": 1,
+          "name": "UserPayload",
+          "signature": "struct UserPayload {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "alias_import_bug_c/src/view_model_mapper.c",
+      "language": "C",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "#include \"../include/user_payload.h\"",
+          "file": "alias_import_bug_c/src/view_model_mapper.c",
+          "from": "alias_import_bug_c/src/view_model_mapper.c::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "alias_import_bug_c/include/user_payload.h::module::module"
+        },
+        {
+          "alias": "ResponseModel",
+          "context": "typedef struct UserPayload ResponseModel;",
+          "file": "alias_import_bug_c/src/view_model_mapper.c",
+          "from": "alias_import_bug_c/src/view_model_mapper.c::module::module",
+          "kind": "Imports",
+          "line": 3,
+          "properties_accessed": [
+            "status",
+            "timestamp",
+            "user_id"
+          ],
+          "to": "alias_import_bug_c/include/user_payload.h::UserPayload::class"
+        },
+        {
+          "alias": "ResponseModel",
+          "context": "member access",
+          "file": "alias_import_bug_c/src/view_model_mapper.c",
+          "from": "alias_import_bug_c/src/view_model_mapper.c::module::module",
+          "kind": "AccessesProperty",
+          "line": 6,
+          "properties_accessed": [
+            "status",
+            "timestamp",
+            "user_id"
+          ],
+          "to": "alias_import_bug_c/include/user_payload.h::UserPayload::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "alias_import_bug_c/src/view_model_mapper.c",
+          "id": "alias_import_bug_c/src/view_model_mapper.c::module::module",
+          "kind": "Module",
+          "language": "C",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "alias_import_bug_c/src/view_model_mapper.c",
+          "id": "alias_import_bug_c/src/view_model_mapper.c::map::function",
+          "kind": "Function",
+          "language": "C",
+          "line_end": 9,
+          "line_start": 5,
+          "name": "map",
+          "signature": "void map(ResponseModel *data) {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "alias_import_bug_cpp/include/user_payload.hpp",
+      "language": "Cpp",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "alias_import_bug_cpp/include/user_payload.hpp",
+          "id": "alias_import_bug_cpp/include/user_payload.hpp::module::module",
+          "kind": "Module",
+          "language": "Cpp",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "alias_import_bug_cpp/include/user_payload.hpp",
+          "id": "alias_import_bug_cpp/include/user_payload.hpp::UserPayload::class",
+          "kind": "Class",
+          "language": "Cpp",
+          "line_end": 6,
+          "line_start": 1,
+          "name": "UserPayload",
+          "signature": "class UserPayload {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "alias_import_bug_cpp/src/view_model_mapper.cpp",
+      "language": "Cpp",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "#include \"../include/user_payload.hpp\"",
+          "file": "alias_import_bug_cpp/src/view_model_mapper.cpp",
+          "from": "alias_import_bug_cpp/src/view_model_mapper.cpp::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "alias_import_bug_cpp/include/user_payload.hpp::module::module"
+        },
+        {
+          "alias": "ResponseModel",
+          "context": "using ResponseModel = UserPayload;",
+          "file": "alias_import_bug_cpp/src/view_model_mapper.cpp",
+          "from": "alias_import_bug_cpp/src/view_model_mapper.cpp::module::module",
+          "kind": "Imports",
+          "line": 3,
+          "properties_accessed": [
+            "status",
+            "timestamp",
+            "user_id"
+          ],
+          "to": "alias_import_bug_cpp/include/user_payload.hpp::UserPayload::class"
+        },
+        {
+          "alias": "ResponseModel",
+          "context": "member access",
+          "file": "alias_import_bug_cpp/src/view_model_mapper.cpp",
+          "from": "alias_import_bug_cpp/src/view_model_mapper.cpp::module::module",
+          "kind": "AccessesProperty",
+          "line": 6,
+          "properties_accessed": [
+            "status",
+            "timestamp",
+            "user_id"
+          ],
+          "to": "alias_import_bug_cpp/include/user_payload.hpp::UserPayload::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "alias_import_bug_cpp/src/view_model_mapper.cpp",
+          "id": "alias_import_bug_cpp/src/view_model_mapper.cpp::module::module",
+          "kind": "Module",
+          "language": "Cpp",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "alias_import_bug_cpp/src/view_model_mapper.cpp",
+          "id": "alias_import_bug_cpp/src/view_model_mapper.cpp::map::function",
+          "kind": "Function",
+          "language": "Cpp",
+          "line_end": 9,
+          "line_start": 5,
+          "name": "map",
+          "signature": "void map(ResponseModel *data) {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "language_features/include/shapes.hpp",
+      "language": "Cpp",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": "Shape",
+          "context": "class Circle : public Shape {",
+          "file": "language_features/include/shapes.hpp",
+          "from": "language_features/include/shapes.hpp::Circle::class",
+          "kind": "Extends",
+          "line": 11,
+          "properties_accessed": [],
+          "to": "language_features/include/shapes.hpp::Shape::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "language_features/include/shapes.hpp",
+          "id": "language_features/include/shapes.hpp::module::module",
+          "kind": "Module",
+          "language": "Cpp",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "language_features/include/shapes.hpp",
+          "id": "language_features/include/shapes.hpp::Shape::class",
+          "kind": "Class",
+          "language": "Cpp",
+          "line_end": 9,
+          "line_start": 5,
+          "name": "Shape",
+          "signature": "class Shape {"
+        },
+        {
+          "file": "language_features/include/shapes.hpp",
+          "id": "language_features/include/shapes.hpp::Circle::class",
+          "kind": "Class",
+          "language": "Cpp",
+          "line_end": 15,
+          "line_start": 11,
+          "name": "Circle",
+          "signature": "class Circle : public Shape {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "language_features/include/user_payload.h",
+      "language": "C",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "language_features/include/user_payload.h",
+          "id": "language_features/include/user_payload.h::module::module",
+          "kind": "Module",
+          "language": "C",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "language_features/include/user_payload.h",
+          "id": "language_features/include/user_payload.h::UserPayload::class",
+          "kind": "Class",
+          "language": "C",
+          "line_end": 8,
+          "line_start": 4,
+          "name": "UserPayload",
+          "signature": "struct UserPayload {"
+        },
+        {
+          "file": "language_features/include/user_payload.h",
+          "id": "language_features/include/user_payload.h::Order::class",
+          "kind": "Class",
+          "language": "C",
+          "line_end": 13,
+          "line_start": 10,
+          "name": "Order",
+          "signature": "struct Order {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "language_features/src/mapper.c",
+      "language": "C",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "#include \"../include/user_payload.h\"",
+          "file": "language_features/src/mapper.c",
+          "from": "language_features/src/mapper.c::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "language_features/include/user_payload.h::module::module"
+        },
+        {
+          "alias": null,
+          "context": "#include <stdio.h>",
+          "file": "language_features/src/mapper.c",
+          "from": "language_features/src/mapper.c::module::module",
+          "kind": "Imports",
+          "line": 2,
+          "properties_accessed": [],
+          "to": "ext::stdio.h::package"
+        },
+        {
+          "alias": "ResponseModel",
+          "context": "typedef struct UserPayload ResponseModel;",
+          "file": "language_features/src/mapper.c",
+          "from": "language_features/src/mapper.c::module::module",
+          "kind": "Imports",
+          "line": 4,
+          "properties_accessed": [
+            "email",
+            "user_id"
+          ],
+          "to": "language_features/include/user_payload.h::UserPayload::class"
+        },
+        {
+          "alias": "UserPayload",
+          "context": "struct UserPayload",
+          "file": "language_features/src/mapper.c",
+          "from": "language_features/src/mapper.c::module::module",
+          "kind": "UsesType",
+          "line": 12,
+          "properties_accessed": [],
+          "to": "language_features/include/user_payload.h::UserPayload::class"
+        },
+        {
+          "alias": "Order",
+          "context": "member access",
+          "file": "language_features/src/mapper.c",
+          "from": "language_features/src/mapper.c::module::module",
+          "kind": "AccessesProperty",
+          "line": 9,
+          "properties_accessed": [
+            "order_id"
+          ],
+          "to": "language_features/include/user_payload.h::Order::class"
+        },
+        {
+          "alias": "ResponseModel",
+          "context": "member access",
+          "file": "language_features/src/mapper.c",
+          "from": "language_features/src/mapper.c::module::module",
+          "kind": "AccessesProperty",
+          "line": 7,
+          "properties_accessed": [
+            "email",
+            "user_id"
+          ],
+          "to": "language_features/include/user_payload.h::UserPayload::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "language_features/src/mapper.c",
+          "id": "language_features/src/mapper.c::module::module",
+          "kind": "Module",
+          "language": "C",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "language_features/src/mapper.c",
+          "id": "language_features/src/mapper.c::describe::function",
+          "kind": "Function",
+          "language": "C",
+          "line_end": 10,
+          "line_start": 6,
+          "name": "describe",
+          "signature": "void describe(ResponseModel *payload, Order *order) {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "language_features/src/render.cpp",
+      "language": "Cpp",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "#include \"../include/shapes.hpp\"",
+          "file": "language_features/src/render.cpp",
+          "from": "language_features/src/render.cpp::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "language_features/include/shapes.hpp::module::module"
+        },
+        {
+          "alias": "Figure",
+          "context": "using Figure = geometry::Circle;",
+          "file": "language_features/src/render.cpp",
+          "from": "language_features/src/render.cpp::module::module",
+          "kind": "Imports",
+          "line": 3,
+          "properties_accessed": [
+            "area",
+            "radius"
+          ],
+          "to": "language_features/include/shapes.hpp::Circle::class"
+        },
+        {
+          "alias": "Figure",
+          "context": "member access",
+          "file": "language_features/src/render.cpp",
+          "from": "language_features/src/render.cpp::module::module",
+          "kind": "AccessesProperty",
+          "line": 6,
+          "properties_accessed": [
+            "area",
+            "radius"
+          ],
+          "to": "language_features/include/shapes.hpp::Circle::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "language_features/src/render.cpp",
+          "id": "language_features/src/render.cpp::module::module",
+          "kind": "Module",
+          "language": "Cpp",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "language_features/src/render.cpp",
+          "id": "language_features/src/render.cpp::render::function",
+          "kind": "Function",
+          "language": "Cpp",
+          "line_end": 7,
+          "line_start": 5,
+          "name": "render",
+          "signature": "double render(Figure *figure) {"
+        }
+      ]
+    }
+  ],
+  "language_stats": {
+    "C": 4,
+    "Cpp": 4
+  },
+  "root": "<root>",
+  "schema_version": 1,
+  "stats": {
+    "alias_chains": 4,
+    "diagnostics": 0,
+    "files_indexed": 8,
+    "relationships": 16,
+    "symbols": 19
+  }
+}

@@ -40,6 +40,21 @@ cargo clippy --workspace --all-targets -- -D warnings
 Clippy warnings are errors. Every PR adds real tests — 0.2.0 deliberately
 removed 27 `assert!(true)` stubs, so do not reintroduce that pattern.
 
+### Golden snapshots
+
+`crates/graphyn-cli/tests/golden/` records the full analysis of every fixture
+project. A change there is not a failure — it is the diff you are being asked
+to review — but it must never be invisible. After an intended change:
+
+```bash
+UPDATE_GOLDEN=1 cargo test -p graphyn-cli --test golden_ir
+git diff crates/graphyn-cli/tests/golden
+```
+
+Read that diff before committing. For a change that claims to preserve
+behaviour, an empty diff is the evidence; a non-empty one means the claim is
+wrong or needs explaining in the PR.
+
 ## Dogfooding
 
 Graphyn analyzing Graphyn is the best available test corpus, and a standing
