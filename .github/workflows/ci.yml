@@ -3,8 +3,11 @@ name: CI
 on:
   push:
     branches: [main, master]
+  # Every pull request, whatever it targets. Restricting this to main and
+  # master meant a pull request based on another pull request's branch got no
+  # checks at all — not a failure, no runs — so a stacked series would reach
+  # the default branch having never been tested as it was reviewed.
   pull_request:
-    branches: [main, master]
 
 env:
   CARGO_TERM_COLOR: always
