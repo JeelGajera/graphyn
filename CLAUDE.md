@@ -111,3 +111,4 @@ These are honest and stay honest. Do not quietly widen them:
 - C++ templates are parsed but not instantiated.
 - Go structural interface matching is per-package.
 - Rust macro bodies are token trees; macro-generated code is not expanded.
+- Fully-qualified paths used inline without a `use` record no edge.

@@ -20,26 +20,40 @@
       ]
     },
     {
-      "diagnostics": [
-        {
-          "category": "Resolution",
-          "file": "alias_import_bug/src/mappers/view_model_mapper.rs",
-          "level": "Warning",
-          "line": 1,
-          "message": "unable to resolve import 'crate::models::user_payload::UserPayload'"
-        },
-        {
-          "category": "Resolution",
-          "file": "alias_import_bug/src/mappers/view_model_mapper.rs",
-          "level": "Warning",
-          "line": 7,
-          "message": "unable to resolve type 'ResponseModel' referenced in alias_import_bug/src/mappers/view_model_mapper.rs"
-        }
-      ],
+      "diagnostics": [],
       "file": "alias_import_bug/src/mappers/view_model_mapper.rs",
       "language": "Rust",
       "re_exports": [],
-      "relationships": [],
+      "relationships": [
+        {
+          "alias": "ResponseModel",
+          "context": "use crate::models::user_payload::UserPayload as ResponseModel;",
+          "file": "alias_import_bug/src/mappers/view_model_mapper.rs",
+          "from": "alias_import_bug/src/mappers/view_model_mapper.rs::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [
+            "status",
+            "timestamp",
+            "user_id"
+          ],
+          "to": "alias_import_bug/src/models/user_payload.rs::UserPayload::class"
+        },
+        {
+          "alias": "ResponseModel",
+          "context": "property access",
+          "file": "alias_import_bug/src/mappers/view_model_mapper.rs",
+          "from": "alias_import_bug/src/mappers/view_model_mapper.rs::module::module",
+          "kind": "AccessesProperty",
+          "line": 7,
+          "properties_accessed": [
+            "status",
+            "timestamp",
+            "user_id"
+          ],
+          "to": "alias_import_bug/src/models/user_payload.rs::UserPayload::class"
+        }
+      ],
       "symbols": [
         {
           "file": "alias_import_bug/src/mappers/view_model_mapper.rs",
@@ -361,54 +375,82 @@
       ]
     },
     {
-      "diagnostics": [
-        {
-          "category": "Resolution",
-          "file": "language_features/src/services/reporting.rs",
-          "level": "Warning",
-          "line": 1,
-          "message": "unable to resolve import 'crate::models::order::Order'"
-        },
-        {
-          "category": "Resolution",
-          "file": "language_features/src/services/reporting.rs",
-          "level": "Warning",
-          "line": 2,
-          "message": "unable to resolve import 'crate::models::user::Identify'"
-        },
-        {
-          "category": "Resolution",
-          "file": "language_features/src/services/reporting.rs",
-          "level": "Warning",
-          "line": 2,
-          "message": "unable to resolve import 'crate::models::user::UserPayload'"
-        },
-        {
-          "category": "Resolution",
-          "file": "language_features/src/services/reporting.rs",
-          "level": "Warning",
-          "line": 3,
-          "message": "unable to resolve import 'crate::models::*'"
-        },
-        {
-          "category": "Resolution",
-          "file": "language_features/src/services/reporting.rs",
-          "level": "Warning",
-          "line": 9,
-          "message": "unable to resolve type 'Customer' referenced in language_features/src/services/reporting.rs"
-        },
-        {
-          "category": "Resolution",
-          "file": "language_features/src/services/reporting.rs",
-          "level": "Warning",
-          "line": 9,
-          "message": "unable to resolve type 'Order' referenced in language_features/src/services/reporting.rs"
-        }
-      ],
+      "diagnostics": [],
       "file": "language_features/src/services/reporting.rs",
       "language": "Rust",
       "re_exports": [],
-      "relationships": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "use crate::models::order::Order;",
+          "file": "language_features/src/services/reporting.rs",
+          "from": "language_features/src/services/reporting.rs::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [
+            "total"
+          ],
+          "to": "language_features/src/models/order.rs::Order::class"
+        },
+        {
+          "alias": null,
+          "context": "use crate::models::user::{Identify, UserPayload as Customer};",
+          "file": "language_features/src/services/reporting.rs",
+          "from": "language_features/src/services/reporting.rs::module::module",
+          "kind": "Imports",
+          "line": 2,
+          "properties_accessed": [],
+          "to": "language_features/src/models/user.rs::Identify::interface"
+        },
+        {
+          "alias": "Customer",
+          "context": "use crate::models::user::{Identify, UserPayload as Customer};",
+          "file": "language_features/src/services/reporting.rs",
+          "from": "language_features/src/services/reporting.rs::module::module",
+          "kind": "Imports",
+          "line": 2,
+          "properties_accessed": [
+            "email",
+            "user_id"
+          ],
+          "to": "language_features/src/models/user.rs::UserPayload::class"
+        },
+        {
+          "alias": null,
+          "context": "use crate::models::*;",
+          "file": "language_features/src/services/reporting.rs",
+          "from": "language_features/src/services/reporting.rs::module::module",
+          "kind": "Imports",
+          "line": 3,
+          "properties_accessed": [],
+          "to": "language_features/src/models/mod.rs::module::module"
+        },
+        {
+          "alias": "Customer",
+          "context": "property access",
+          "file": "language_features/src/services/reporting.rs",
+          "from": "language_features/src/services/reporting.rs::module::module",
+          "kind": "AccessesProperty",
+          "line": 9,
+          "properties_accessed": [
+            "email",
+            "user_id"
+          ],
+          "to": "language_features/src/models/user.rs::UserPayload::class"
+        },
+        {
+          "alias": "Order",
+          "context": "property access",
+          "file": "language_features/src/services/reporting.rs",
+          "from": "language_features/src/services/reporting.rs::module::module",
+          "kind": "AccessesProperty",
+          "line": 9,
+          "properties_accessed": [
+            "total"
+          ],
+          "to": "language_features/src/models/order.rs::Order::class"
+        }
+      ],
       "symbols": [
         {
           "file": "language_features/src/services/reporting.rs",
@@ -451,18 +493,420 @@
           "signature": "impl Reporter :: pub fn label<T: Identify>(&self, subject: &T) -> String {"
         }
       ]
+    },
+    {
+      "diagnostics": [],
+      "file": "workspace/crates/app/src/lib.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "workspace/crates/app/src/lib.rs",
+          "id": "workspace/crates/app/src/lib.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "workspace/crates/app/src/main.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "use app::service::Service;",
+          "file": "workspace/crates/app/src/main.rs",
+          "from": "workspace/crates/app/src/main.rs::module::module",
+          "kind": "Imports",
+          "line": 2,
+          "properties_accessed": [],
+          "to": "workspace/crates/app/src/service.rs::Service::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "workspace/crates/app/src/main.rs",
+          "id": "workspace/crates/app/src/main.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "workspace/crates/app/src/main.rs",
+          "id": "workspace/crates/app/src/main.rs::main::function",
+          "kind": "Function",
+          "language": "Rust",
+          "line_end": 6,
+          "line_start": 4,
+          "name": "main",
+          "signature": "fn main() {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "workspace/crates/app/src/service.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "use core_lib::models::UserPayload;",
+          "file": "workspace/crates/app/src/service.rs",
+          "from": "workspace/crates/app/src/service.rs::module::module",
+          "kind": "Imports",
+          "line": 4,
+          "properties_accessed": [
+            "email",
+            "user_id"
+          ],
+          "to": "workspace/crates/core-lib/src/models/payload.rs::UserPayload::class"
+        },
+        {
+          "alias": "Renamed",
+          "context": "use aliased_core::models::payload::UserPayload as Renamed;",
+          "file": "workspace/crates/app/src/service.rs",
+          "from": "workspace/crates/app/src/service.rs::module::module",
+          "kind": "Imports",
+          "line": 7,
+          "properties_accessed": [
+            "email",
+            "user_id"
+          ],
+          "to": "workspace/crates/core-lib/src/models/payload.rs::UserPayload::class"
+        },
+        {
+          "alias": null,
+          "context": "use kernel::Kernel;",
+          "file": "workspace/crates/app/src/service.rs",
+          "from": "workspace/crates/app/src/service.rs::module::module",
+          "kind": "Imports",
+          "line": 10,
+          "properties_accessed": [
+            "id"
+          ],
+          "to": "workspace/crates/renamed-lib/src/lib.rs::Kernel::class"
+        },
+        {
+          "alias": "Kernel",
+          "context": "property access",
+          "file": "workspace/crates/app/src/service.rs",
+          "from": "workspace/crates/app/src/service.rs::module::module",
+          "kind": "AccessesProperty",
+          "line": 24,
+          "properties_accessed": [
+            "id"
+          ],
+          "to": "workspace/crates/renamed-lib/src/lib.rs::Kernel::class"
+        },
+        {
+          "alias": "Renamed",
+          "context": "property access",
+          "file": "workspace/crates/app/src/service.rs",
+          "from": "workspace/crates/app/src/service.rs::module::module",
+          "kind": "AccessesProperty",
+          "line": 20,
+          "properties_accessed": [
+            "email"
+          ],
+          "to": "workspace/crates/core-lib/src/models/payload.rs::UserPayload::class"
+        },
+        {
+          "alias": "UserPayload",
+          "context": "property access",
+          "file": "workspace/crates/app/src/service.rs",
+          "from": "workspace/crates/app/src/service.rs::module::module",
+          "kind": "AccessesProperty",
+          "line": 16,
+          "properties_accessed": [
+            "user_id"
+          ],
+          "to": "workspace/crates/core-lib/src/models/payload.rs::UserPayload::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "workspace/crates/app/src/service.rs",
+          "id": "workspace/crates/app/src/service.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "workspace/crates/app/src/service.rs",
+          "id": "workspace/crates/app/src/service.rs::Service::class",
+          "kind": "Class",
+          "language": "Rust",
+          "line_end": 12,
+          "line_start": 12,
+          "name": "Service",
+          "signature": "pub struct Service;"
+        },
+        {
+          "file": "workspace/crates/app/src/service.rs",
+          "id": "workspace/crates/app/src/service.rs::Service::handle::method",
+          "kind": "Method",
+          "language": "Rust",
+          "line_end": 17,
+          "line_start": 15,
+          "name": "handle",
+          "signature": "impl Service :: pub fn handle(&self, payload: UserPayload) -> String {"
+        },
+        {
+          "file": "workspace/crates/app/src/service.rs",
+          "id": "workspace/crates/app/src/service.rs::Service::renamed::method",
+          "kind": "Method",
+          "language": "Rust",
+          "line_end": 21,
+          "line_start": 19,
+          "name": "renamed",
+          "signature": "impl Service :: pub fn renamed(&self, other: Renamed) -> String {"
+        },
+        {
+          "file": "workspace/crates/app/src/service.rs",
+          "id": "workspace/crates/app/src/service.rs::Service::kernel_id::method",
+          "kind": "Method",
+          "language": "Rust",
+          "line_end": 25,
+          "line_start": 23,
+          "name": "kernel_id",
+          "signature": "impl Service :: pub fn kernel_id(&self, k: Kernel) -> u32 {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "workspace/crates/core-lib/src/lib.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "workspace/crates/core-lib/src/lib.rs",
+          "id": "workspace/crates/core-lib/src/lib.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "workspace/crates/core-lib/src/models/mod.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "pub use payload::UserPayload;",
+          "file": "workspace/crates/core-lib/src/models/mod.rs",
+          "from": "workspace/crates/core-lib/src/models/mod.rs::module::module",
+          "kind": "Imports",
+          "line": 5,
+          "properties_accessed": [],
+          "to": "workspace/crates/core-lib/src/models/payload.rs::UserPayload::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "workspace/crates/core-lib/src/models/mod.rs",
+          "id": "workspace/crates/core-lib/src/models/mod.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "workspace/crates/core-lib/src/models/payload.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "workspace/crates/core-lib/src/models/payload.rs",
+          "id": "workspace/crates/core-lib/src/models/payload.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "workspace/crates/core-lib/src/models/payload.rs",
+          "id": "workspace/crates/core-lib/src/models/payload.rs::UserPayload::class",
+          "kind": "Class",
+          "language": "Rust",
+          "line_end": 4,
+          "line_start": 1,
+          "name": "UserPayload",
+          "signature": "pub struct UserPayload {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "workspace/crates/legacy/src/api.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "use crate::store::LegacyStore;",
+          "file": "workspace/crates/legacy/src/api.rs",
+          "from": "workspace/crates/legacy/src/api.rs::module::module",
+          "kind": "Imports",
+          "line": 3,
+          "properties_accessed": [
+            "path"
+          ],
+          "to": "workspace/crates/legacy/src/store.rs::LegacyStore::class"
+        },
+        {
+          "alias": "LegacyStore",
+          "context": "property access",
+          "file": "workspace/crates/legacy/src/api.rs",
+          "from": "workspace/crates/legacy/src/api.rs::module::module",
+          "kind": "AccessesProperty",
+          "line": 6,
+          "properties_accessed": [
+            "path"
+          ],
+          "to": "workspace/crates/legacy/src/store.rs::LegacyStore::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "workspace/crates/legacy/src/api.rs",
+          "id": "workspace/crates/legacy/src/api.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "workspace/crates/legacy/src/api.rs",
+          "id": "workspace/crates/legacy/src/api.rs::describe::function",
+          "kind": "Function",
+          "language": "Rust",
+          "line_end": 7,
+          "line_start": 5,
+          "name": "describe",
+          "signature": "pub fn describe(store: LegacyStore) -> String {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "workspace/crates/legacy/src/lib.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "workspace/crates/legacy/src/lib.rs",
+          "id": "workspace/crates/legacy/src/lib.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "workspace/crates/legacy/src/store.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "workspace/crates/legacy/src/store.rs",
+          "id": "workspace/crates/legacy/src/store.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "workspace/crates/legacy/src/store.rs",
+          "id": "workspace/crates/legacy/src/store.rs::LegacyStore::class",
+          "kind": "Class",
+          "language": "Rust",
+          "line_end": 3,
+          "line_start": 1,
+          "name": "LegacyStore",
+          "signature": "pub struct LegacyStore {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "workspace/crates/renamed-lib/src/lib.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "workspace/crates/renamed-lib/src/lib.rs",
+          "id": "workspace/crates/renamed-lib/src/lib.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "workspace/crates/renamed-lib/src/lib.rs",
+          "id": "workspace/crates/renamed-lib/src/lib.rs::Kernel::class",
+          "kind": "Class",
+          "language": "Rust",
+          "line_end": 3,
+          "line_start": 1,
+          "name": "Kernel",
+          "signature": "pub struct Kernel {"
+        }
+      ]
     }
   ],
   "language_stats": {
-    "Rust": 10
+    "Rust": 20
   },
   "root": "<root>",
   "schema_version": 1,
   "stats": {
-    "alias_chains": 0,
-    "diagnostics": 8,
-    "files_indexed": 10,
-    "relationships": 7,
-    "symbols": 24
+    "alias_chains": 3,
+    "diagnostics": 0,
+    "files_indexed": 20,
+    "relationships": 25,
+    "symbols": 43
   }
 }

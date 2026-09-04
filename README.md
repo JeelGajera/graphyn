@@ -174,7 +174,7 @@ Supported now:
 | TypeScript / JavaScript | `.ts` `.tsx` `.js` `.jsx` `.mts` `.cts` `.mjs` `.cjs` | `tsconfig` paths, barrel re-exports, decorator DI |
 | Framework files | `.vue` `.svelte` `.astro` | script blocks within the component |
 | Python | `.py` `.pyi` | relative imports, `__init__` re-export chains, Pydantic / Django / dataclass fields |
-| Rust | `.rs` | module tree, `use` groups and aliases, trait impls, `#[derive]` |
+| Rust | `.rs` | Cargo workspaces and per-crate module trees, `use` groups and aliases, trait impls, `#[derive]` |
 | Go | `.go` | package imports via `go.mod`, structural interface satisfaction |
 | C | `.c` `.h` | `#include` resolution, `typedef` aliases |
 | C++ | `.cpp` `.cc` `.cxx` `.hpp` `.hxx` `.hh` | `using` aliases, base classes, namespace-qualified names |
@@ -201,6 +201,11 @@ Being explicit about these is more useful than a feature list:
 - **Rust macro bodies are token trees.** Field access inside `format!` and
   friends is recovered by scanning tokens; more elaborate macro-generated code
   is not expanded.
+- **Fully-qualified paths used inline are not resolved.** A type written out in
+  place — `graphyn_core::ir::RepoIR` in a signature, with no `use` bringing it
+  into scope — records no edge. Resolution binds names through a file's import
+  table, and a path like that never enters it. Bring the type into scope with a
+  `use` and it resolves normally.
 
 Planned:
 - Java / Kotlin

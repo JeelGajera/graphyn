@@ -23,8 +23,8 @@ use graphyn_core::symbol_id::{
 use crate::module_tree::{ModuleTree, Resolved};
 use crate::scope_analyzer::is_builtin_type;
 
-pub fn resolve_repo_ir(_root: &Path, repo_ir: &mut RepoIR) {
-    let tree = ModuleTree::build(&repo_ir.files);
+pub fn resolve_repo_ir(root: &Path, repo_ir: &mut RepoIR) {
+    let tree = ModuleTree::build(root, &repo_ir.files);
 
     for file in &mut repo_ir.files {
         let path = file.file.clone();

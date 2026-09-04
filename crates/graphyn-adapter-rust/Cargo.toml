@@ -16,6 +16,8 @@ tree-sitter = "0.22"
 tree-sitter-rust = "0.21"
 graphyn-core = { path = "../graphyn-core", version = "0.2.0", features = ["ast"] }
 rayon = "1"
+toml = "0.8"
+glob = "0.3"
 
 [dev-dependencies]
 walkdir = "2"
