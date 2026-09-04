@@ -9,5 +9,8 @@
 
 pub mod dispatch;
 pub mod lang;
+pub mod spec;
+pub mod structural;
 
 pub use dispatch::{analyze_files, supported_languages, DispatchError};
+pub use spec::{LanguageSpec, LanguageSupport, Tier};

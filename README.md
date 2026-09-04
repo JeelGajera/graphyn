@@ -169,15 +169,15 @@ The folder includes ready-to-use examples for:
 
 Supported now:
 
-| Language | Extensions | Resolves |
-| --- | --- | --- |
-| TypeScript / JavaScript | `.ts` `.tsx` `.js` `.jsx` `.mts` `.cts` `.mjs` `.cjs` | `tsconfig` paths, barrel re-exports, decorator DI |
-| Framework files | `.vue` `.svelte` `.astro` | script blocks within the component |
-| Python | `.py` `.pyi` | relative imports, `__init__` re-export chains, Pydantic / Django / dataclass fields |
-| Rust | `.rs` | Cargo workspaces and per-crate module trees, `use` groups and aliases, trait impls, `#[derive]` |
-| Go | `.go` | package imports via `go.mod`, structural interface satisfaction |
-| C | `.c` `.h` | `#include` resolution, `typedef` aliases |
-| C++ | `.cpp` `.cc` `.cxx` `.hpp` `.hxx` `.hh` | `using` aliases, base classes, namespace-qualified names |
+| Language | Tier | Extensions | Resolves |
+| --- | --- | --- | --- |
+| TypeScript / JavaScript | 1 | `.ts` `.tsx` `.js` `.jsx` `.mts` `.cts` `.mjs` `.cjs` | `tsconfig` paths, barrel re-exports, decorator DI |
+| Framework files | 1 | `.vue` `.svelte` `.astro` | script blocks within the component |
+| Python | 1 | `.py` `.pyi` | relative imports, `__init__` re-export chains, Pydantic / Django / dataclass fields |
+| Rust | 1 | `.rs` | Cargo workspaces and per-crate module trees, `use` groups and aliases, trait impls, `#[derive]` |
+| Go | 1 | `.go` | package imports via `go.mod`, structural interface satisfaction |
+| C | 1 | `.c` `.h` | `#include` resolution, `typedef` aliases |
+| C++ | 1 | `.cpp` `.cc` `.cxx` `.hpp` `.hxx` `.hh` | `using` aliases, base classes, namespace-qualified names |
 
 Every adapter resolves import aliases and attributes member access to the type
 a value was declared as, so `payload.user_id` is recorded against `UserPayload`
@@ -207,10 +207,25 @@ Being explicit about these is more useful than a feature list:
   table, and a path like that never enters it. Bring the type into scope with a
   `use` and it resolves normally.
 
-Planned:
-- Java / Kotlin
-- Ruby
-- PHP
+| Java | 2 | `.java` | symbols and intra-file references only — build with `--features java` |
+
+### Tiers
+
+**Tier 1 — resolved.** Imports, aliases and declared types are resolved, so
+member access is attributed to the type a value was declared as. Safe to gate
+CI on.
+
+**Tier 2 — structural.** Symbols and intra-file references, extracted from the
+grammar's own `tags.scm`. No cross-file import resolution, no aliases, no
+declared types. Genuinely useful for locating symbols and for intra-file blast
+radius — and explicitly not something to gate on. A tags query reports that a
+call to `foo` happened; it does not say which `foo`, and guessing by name
+across a repository is the bug Graphyn exists to avoid.
+
+`graphyn status` reports the tier of every language your build carries.
+
+Planned as Tier 2:
+- Kotlin, Ruby, PHP, C#, Swift, Scala
 
 ## Slim builds
 

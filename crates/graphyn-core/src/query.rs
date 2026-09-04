@@ -27,14 +27,21 @@ pub const ALL_KINDS: [RelationshipKind; 8] = [
     RelationshipKind::Instantiates,
 ];
 
-/// Kinds no adapter currently emits.
+/// Kinds nothing currently emits.
 ///
 /// A filter that can only ever match nothing is a trap in a tool meant to
-/// gate changes: a rule scoped to `calls` would never fire and would read as
-/// a pass. Naming them here lets the CLI say so rather than silently
+/// gate changes: a rule scoped to such a kind would never fire and would read
+/// as a pass. Naming them here lets the CLI say so rather than silently
 /// returning an empty result.
-pub const UNEMITTED_KINDS: [RelationshipKind; 2] =
-    [RelationshipKind::Calls, RelationshipKind::Instantiates];
+///
+/// `Calls` left this list when structural (Tier 2) analysis began emitting it
+/// from a grammar's own tags query. No Tier 1 language emits it yet, so in a
+/// default build a `calls` filter still matches nothing — which is why this
+/// list is a stopgap. The honest version of this check asks the graph in hand
+/// which kinds it actually contains, rather than consulting a constant that
+/// has to be maintained by hand; that belongs with the confidence model, whose
+/// whole subject is how much a given graph knows.
+pub const UNEMITTED_KINDS: [RelationshipKind; 1] = [RelationshipKind::Instantiates];
 
 /// The name a kind is known by on the command line and in JSON.
 pub fn kind_name(kind: &RelationshipKind) -> &'static str {

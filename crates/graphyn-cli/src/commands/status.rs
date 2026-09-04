@@ -29,6 +29,28 @@ pub fn run(path: &str) -> Result<(), Box<dyn std::error::Error>> {
         ),
     );
 
+    // ── language support ─────────────────────────────────────
+    //
+    // Tier is reported next to the language because a Tier 2 result and a
+    // Tier 1 result look identical in the output and mean very different
+    // things. "No usages found" from a structural language is a statement
+    // about one file, not about the repository.
+    output::section("Language Support");
+    let mut any_structural = false;
+    for support in graphyn_lang::supported_languages() {
+        if support.tier == graphyn_lang::Tier::Structural {
+            any_structural = true;
+        }
+        output::stat(
+            &format!("  {}", support.name),
+            &format!("tier {} ({})", support.tier.number(), support.tier.as_str()),
+        );
+    }
+    if any_structural {
+        output::dim_line("  Tier 2 sees symbols and intra-file references only — no imports,");
+        output::dim_line("  aliases or declared types. Gates must not draw conclusions from it.");
+    }
+
     // ── symbol breakdown ─────────────────────────────────────
     let mut kind_counts: std::collections::BTreeMap<String, usize> =
         std::collections::BTreeMap::new();

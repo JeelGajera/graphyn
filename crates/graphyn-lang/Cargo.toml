@@ -14,6 +14,8 @@ keywords.workspace = true
 [features]
 # The languages 0.2.0 shipped, so a default build behaves as it always has.
 default = ["typescript", "python", "rust", "go", "c"]
+# Everything, including Tier 2 languages.
+full = ["default", "java"]
 
 # Each language pulls in its own grammars and nothing else, so a slim build
 # leaves the rest out of the binary entirely. `supported_languages()` is built
@@ -23,6 +25,10 @@ python = ["dep:tree-sitter-python"]
 rust = ["dep:tree-sitter-rust", "dep:toml", "dep:glob"]
 go = ["dep:tree-sitter-go"]
 c = ["dep:tree-sitter-c", "dep:tree-sitter-cpp"]
+# Tier 2: analysed through the structural analyzer using the grammar's own
+# tags.scm. Not in `default` — a Tier 2 language is advisory, and a default
+# build should carry the languages Graphyn can actually resolve.
+java = ["dep:tree-sitter-java"]
 
 [dependencies]
 tree-sitter = "0.22"
@@ -36,6 +42,7 @@ tree-sitter-rust = { version = "0.21", optional = true }
 tree-sitter-go = { version = "0.21", optional = true }
 tree-sitter-c = { version = "0.21", optional = true }
 tree-sitter-cpp = { version = "0.21", optional = true }
+tree-sitter-java = { version = "0.21", optional = true }
 
 # TypeScript-only: tsconfig parsing and its path-alias walk.
 walkdir = { version = "2", optional = true }

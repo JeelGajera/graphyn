@@ -22,6 +22,8 @@
 pub mod c;
 #[cfg(feature = "go")]
 pub mod go;
+#[cfg(feature = "java")]
+pub mod java;
 #[cfg(feature = "python")]
 pub mod python;
 #[cfg(feature = "rust")]

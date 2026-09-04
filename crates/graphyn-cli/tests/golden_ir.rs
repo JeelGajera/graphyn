@@ -38,6 +38,15 @@ const CORPUS: &[&str] = &[
     "scan",
 ];
 
+/// Fixtures for Tier 2 languages, which are deliberately not in the corpus.
+///
+/// Their analysis depends on an optional feature, so the same fixture produces
+/// a populated report in one build and an empty one in another. A golden that
+/// depends on how the binary was configured is not a golden. Tier 2 behaviour
+/// is covered directly in `graphyn-lang/tests/java_structural.rs`, where the
+/// feature is a precondition rather than a variable.
+const STRUCTURAL_FIXTURES: &[&str] = &["adapter-java"];
+
 fn repo_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..")
 }
@@ -224,6 +233,7 @@ fn every_fixture_project_is_covered() {
         .filter(|e| e.path().is_dir())
         .map(|e| e.file_name().to_string_lossy().into_owned())
         .filter(|n| !n.starts_with('.'))
+        .filter(|n| !STRUCTURAL_FIXTURES.contains(&n.as_str()))
         .collect();
     on_disk.sort();
 

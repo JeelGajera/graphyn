@@ -26,6 +26,8 @@ pub enum DispatchError {
     Go(String),
     #[cfg(feature = "c")]
     C(String),
+    /// A Tier 2 language, analysed structurally.
+    Structural(String),
 }
 
 impl std::fmt::Display for DispatchError {
@@ -41,6 +43,7 @@ impl std::fmt::Display for DispatchError {
             Self::Go(e) => write!(f, "Go adapter error: {e}"),
             #[cfg(feature = "c")]
             Self::C(e) => write!(f, "C/C++ adapter error: {e}"),
+            Self::Structural(e) => write!(f, "structural analysis error: {e}"),
         }
     }
 }
@@ -80,9 +83,10 @@ fn adapter_group(language: &Language) -> Option<Language> {
         Language::Go => Some(Language::Go),
         #[cfg(feature = "c")]
         Language::C | Language::Cpp => Some(Language::C),
-        // Java has no module yet; a language whose feature is off is skipped
-        // the same way, so a slim build ignores files it cannot analyse rather
-        // than failing on them.
+        #[cfg(feature = "java")]
+        Language::Java => Some(Language::Java),
+        // A language whose feature is off is skipped, so a slim build ignores
+        // files it cannot analyse rather than failing on them.
         _ => None,
     }
 }
@@ -146,9 +150,20 @@ fn run_adapter(
     root: &Path,
     files: &[PathBuf],
 ) -> Result<Vec<FileIR>, DispatchError> {
-    // Each arm is gated by its language's feature. `adapter_group` already
-    // refuses to route to a language this build does not carry, so an arm that
-    // is compiled out is unreachable rather than silently skipped.
+    // A Tier 2 language needs no arm here: one generic implementation covers
+    // every one of them, driven by the grammar's own tags query. That is the
+    // whole point of the tier — adding a structural language is a dependency,
+    // a feature flag and a spec, not a pipeline.
+    if let Some(spec) = crate::spec::for_language(language) {
+        if spec.tier() == crate::spec::Tier::Structural {
+            return crate::structural::analyze(spec, root, files)
+                .map_err(DispatchError::Structural);
+        }
+    }
+
+    // Each remaining arm is gated by its language's feature. `adapter_group`
+    // already refuses to route to a language this build does not carry, so an
+    // arm that is compiled out is unreachable rather than silently skipped.
     Ok(match language {
         #[cfg(feature = "typescript")]
         Language::TypeScript => {
@@ -190,22 +205,17 @@ fn run_adapter(
 /// Built from the enabled features rather than hardcoded, so a slim build
 /// reports what it can actually do. The list was always accurate before only
 /// because there was exactly one possible build.
-pub fn supported_languages() -> Vec<&'static str> {
-    [
-        #[cfg(feature = "typescript")]
-        "TypeScript",
-        #[cfg(feature = "typescript")]
-        "JavaScript",
-        #[cfg(feature = "python")]
-        "Python",
-        #[cfg(feature = "rust")]
-        "Rust",
-        #[cfg(feature = "go")]
-        "Go",
-        #[cfg(feature = "c")]
-        "C",
-        #[cfg(feature = "c")]
-        "C++",
-    ]
-    .to_vec()
+pub fn supported_languages() -> Vec<crate::spec::LanguageSupport> {
+    crate::spec::specs()
+        .into_iter()
+        .map(|s| crate::spec::LanguageSupport {
+            name: s.name(),
+            tier: s.tier(),
+        })
+        .collect()
+}
+
+/// Just the names, for callers that only need a list.
+pub fn supported_language_names() -> Vec<&'static str> {
+    crate::spec::specs().into_iter().map(|s| s.name()).collect()
 }
