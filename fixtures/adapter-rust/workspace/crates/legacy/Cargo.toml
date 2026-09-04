@@ -1,0 +1,6 @@
+# Excluded from the workspace. Still its own package, so its `crate::` paths
+# must resolve against its own root rather than the workspace's.
+[package]
+name = "legacy"
+version = "0.1.0"
+edition = "2021"

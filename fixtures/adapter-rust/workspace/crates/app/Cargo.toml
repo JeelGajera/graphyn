@@ -1,0 +1,10 @@
+[package]
+name = "app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+core-lib = { path = "../core-lib" }
+renamed-lib = { path = "../renamed-lib" }
+# A dependency used under a different name than the package it is.
+aliased_core = { package = "core-lib", path = "../core-lib" }

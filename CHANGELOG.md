@@ -38,6 +38,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known limits
 
+- **Fully-qualified paths used inline are not resolved.** A type written as
+  `graphyn_core::ir::RepoIR` in a signature, with no `use` bringing it into
+  scope, records no edge — resolution binds names through the file's import
+  table, and such a path never enters it. On this repository that accounts for
+  21 of the 45 files mentioning `RepoIR`, and for the `Display` and `Error`
+  references reported against `impl std::fmt::Display for …`. Pre-existing, and
+  unrelated to crate-root discovery; documented here because the workspace fix
+  is what made it visible.
+
 - `RelationshipKind::Calls` and `Instantiates` are declared but emitted by no
   adapter, so a filter naming them matches nothing. Rather than returning a
   silent empty result — which in a tool used to judge whether a change is safe
@@ -45,6 +54,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is unimplemented. Call and instantiation edges are planned for 1.0.0.
 
 ### Fixed
+
+- **Rust resolution assumed a single crate rooted at `<repo>/src/`.** In a
+  Cargo workspace nothing resolved: `crates/graphyn-core/src/ir.rs` was read as
+  the module `crate::crates::graphyn-core::src::ir`, so every `crate::` path
+  failed and every `use graphyn_core::…` was classified as a third-party crate.
+  Graphyn could not analyze itself — `query usages RepoIR` found nothing and
+  `blast-radius RepoIR` reported a type referenced across the workspace as safe
+  to modify. It now finds 36 usages and 42 dependents.
+
+  The same assumption broke *nested* crates that are not workspace members,
+  including this repository's own Rust fixtures, which were folded into one
+  imaginary crate alongside the real code.
+
+  Crate roots are now discovered per package — `[workspace] members` with globs
+  and `exclude` honoured, `[lib]`/`[[bin]]`/`[[test]]`/`[[bench]]`/`[[example]]`
+  paths read, and Cargo's conventional locations used as a fallback. Module
+  paths are namespaced by the crate that owns them, so `crate::ir` inside
+  `graphyn-core` and `graphyn_core::ir` written anywhere else resolve to one
+  place, and intra-crate and inter-crate resolution become the same lookup
+  rather than two mechanisms that have to agree. Package names normalise
+  (`graphyn-core` → `graphyn_core`), `[lib] name` overrides are honoured, and
+  dependency renames (`foo = { package = "bar" }`) are followed.
+
+  A tree with no `Cargo.toml` still resolves: a `src/lib.rs` is a crate root
+  whether or not a manifest sits beside it. Requiring one would have silently
+  reclassified such paths as third-party rather than reporting them unresolved,
+  and a wrong answer with no diagnostic is the worst available outcome.
 
 - **Serialized output was not reproducible.** `RepoIR.language_stats` was a
   `HashMap`, and the dispatch layer built it as an ordered `BTreeMap` only to

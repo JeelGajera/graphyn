@@ -1,0 +1,7 @@
+# A Cargo workspace, which is what resolution used to fall over on.
+# `members` uses a glob and `exclude` removes one directory, because both are
+# ordinary and both have to be honoured to find the right set of packages.
+[workspace]
+members = ["crates/*"]
+exclude = ["crates/legacy"]
+resolver = "2"

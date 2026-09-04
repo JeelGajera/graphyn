@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 use graphyn_core::ir::RepoIR;
 use rayon::prelude::*;
 
+pub mod crate_set;
 pub mod extractor;
 pub mod import_resolver;
 pub mod macro_analyzer;

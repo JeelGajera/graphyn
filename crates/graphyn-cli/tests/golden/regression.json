@@ -206,40 +206,60 @@
       ]
     },
     {
-      "diagnostics": [
-        {
-          "category": "Resolution",
-          "file": "rust/src/consumer.rs",
-          "level": "Warning",
-          "line": 1,
-          "message": "unable to resolve import 'crate::alpha::Alpha'"
-        },
-        {
-          "category": "Resolution",
-          "file": "rust/src/consumer.rs",
-          "level": "Warning",
-          "line": 2,
-          "message": "unable to resolve import 'crate::beta::Beta'"
-        },
-        {
-          "category": "Resolution",
-          "file": "rust/src/consumer.rs",
-          "level": "Warning",
-          "line": 4,
-          "message": "unable to resolve type 'Alpha' referenced in rust/src/consumer.rs"
-        },
-        {
-          "category": "Resolution",
-          "file": "rust/src/consumer.rs",
-          "level": "Warning",
-          "line": 5,
-          "message": "unable to resolve type 'Beta' referenced in rust/src/consumer.rs"
-        }
-      ],
+      "diagnostics": [],
       "file": "rust/src/consumer.rs",
       "language": "Rust",
       "re_exports": [],
-      "relationships": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "use crate::alpha::Alpha;",
+          "file": "rust/src/consumer.rs",
+          "from": "rust/src/consumer.rs::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [
+            "a_field"
+          ],
+          "to": "rust/src/alpha.rs::Alpha::class"
+        },
+        {
+          "alias": null,
+          "context": "use crate::beta::Beta;",
+          "file": "rust/src/consumer.rs",
+          "from": "rust/src/consumer.rs::module::module",
+          "kind": "Imports",
+          "line": 2,
+          "properties_accessed": [
+            "b_field"
+          ],
+          "to": "rust/src/beta.rs::Beta::class"
+        },
+        {
+          "alias": "Alpha",
+          "context": "property access",
+          "file": "rust/src/consumer.rs",
+          "from": "rust/src/consumer.rs::module::module",
+          "kind": "AccessesProperty",
+          "line": 4,
+          "properties_accessed": [
+            "a_field"
+          ],
+          "to": "rust/src/alpha.rs::Alpha::class"
+        },
+        {
+          "alias": "Beta",
+          "context": "property access",
+          "file": "rust/src/consumer.rs",
+          "from": "rust/src/consumer.rs::module::module",
+          "kind": "AccessesProperty",
+          "line": 5,
+          "properties_accessed": [
+            "b_field"
+          ],
+          "to": "rust/src/beta.rs::Beta::class"
+        }
+      ],
       "symbols": [
         {
           "file": "rust/src/consumer.rs",
@@ -572,9 +592,9 @@
   "schema_version": 1,
   "stats": {
     "alias_chains": 0,
-    "diagnostics": 4,
+    "diagnostics": 0,
     "files_indexed": 10,
-    "relationships": 12,
+    "relationships": 16,
     "symbols": 30
   }
 }

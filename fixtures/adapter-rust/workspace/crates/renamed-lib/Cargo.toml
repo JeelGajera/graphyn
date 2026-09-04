@@ -1,0 +1,10 @@
+# The package is `renamed-lib` but its library is `kernel`, so `use kernel::…`
+# is what source says and the package name never appears in a use path.
+[package]
+name = "renamed-lib"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "kernel"
+path = "src/lib.rs"

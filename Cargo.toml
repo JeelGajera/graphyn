@@ -11,6 +11,10 @@ members = [
   "crates/graphyn-mcp",
   "crates/graphyn-cli",
 ]
+# Test fixtures are analyzed by Graphyn, not built by Cargo. Several are real
+# Cargo packages so that workspace resolution can be exercised against the
+# real thing; excluding them keeps them out of this workspace.
+exclude = ["fixtures"]
 resolver = "2"
 
 [workspace.package]
