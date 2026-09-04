@@ -107,6 +107,12 @@ enum QueryCommands {
         /// Path to the repository root
         #[arg(long, default_value = ".")]
         path: String,
+
+        /// Only follow these relationship kinds (repeatable).
+        /// One of: imports, calls, extends, implements, uses-type,
+        /// accesses-property, re-exports, instantiates.
+        #[arg(long = "kind", value_name = "KIND")]
+        kind: Vec<String>,
     },
 
     /// Find every usage of a symbol, including under aliases
@@ -122,6 +128,12 @@ enum QueryCommands {
         /// Path to the repository root
         #[arg(long, default_value = ".")]
         path: String,
+
+        /// Only follow these relationship kinds (repeatable).
+        /// One of: imports, calls, extends, implements, uses-type,
+        /// accesses-property, re-exports, instantiates.
+        #[arg(long = "kind", value_name = "KIND")]
+        kind: Vec<String>,
     },
 
     /// Find all dependencies of a symbol
@@ -141,6 +153,12 @@ enum QueryCommands {
         /// Path to the repository root
         #[arg(long, default_value = ".")]
         path: String,
+
+        /// Only follow these relationship kinds (repeatable).
+        /// One of: imports, calls, extends, implements, uses-type,
+        /// accesses-property, re-exports, instantiates.
+        #[arg(long = "kind", value_name = "KIND")]
+        kind: Vec<String>,
     },
 }
 
@@ -168,16 +186,21 @@ fn main() {
                 file,
                 depth,
                 path,
-            } => commands::query::run_blast_radius(&symbol, file.as_deref(), depth, &path),
-            QueryCommands::Usages { symbol, file, path } => {
-                commands::query::run_usages(&symbol, file.as_deref(), &path)
-            }
+                kind,
+            } => commands::query::run_blast_radius(&symbol, file.as_deref(), depth, &path, &kind),
+            QueryCommands::Usages {
+                symbol,
+                file,
+                path,
+                kind,
+            } => commands::query::run_usages(&symbol, file.as_deref(), &path, &kind),
             QueryCommands::Deps {
                 symbol,
                 file,
                 depth,
                 path,
-            } => commands::query::run_deps(&symbol, file.as_deref(), depth, &path),
+                kind,
+            } => commands::query::run_deps(&symbol, file.as_deref(), depth, &path, &kind),
         },
 
         Commands::Watch {

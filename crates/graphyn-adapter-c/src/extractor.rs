@@ -25,15 +25,26 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
     let mut diagnostics = parsed.diagnostics.clone();
 
     let stats = walk(root, &mut |node| match node.kind() {
-        "struct_specifier" | "union_specifier" | "class_specifier" => {
-            record_record_type(node, source, file, &language, &mut symbols, &mut relationships)
-        }
+        "struct_specifier" | "union_specifier" | "class_specifier" => record_record_type(
+            node,
+            source,
+            file,
+            &language,
+            &mut symbols,
+            &mut relationships,
+        ),
         "enum_specifier" => {
             // Same rule as records: only a definition has a body.
             if node.child_by_field_name("body").is_some() {
                 if let Some(name) = named(node, source) {
                     symbols.push(symbol(
-                        file, &language, name, name, SymbolKind::Enum, node, source,
+                        file,
+                        &language,
+                        name,
+                        name,
+                        SymbolKind::Enum,
+                        node,
+                        source,
                     ));
                 }
             }
@@ -302,7 +313,10 @@ fn include(node: Node<'_>, source: &[u8], file: &str) -> Option<Relationship> {
         kind: RelationshipKind::Imports,
         alias: None,
         properties_accessed: Vec::new(),
-        context: node_text(node, source).unwrap_or_default().trim().to_string(),
+        context: node_text(node, source)
+            .unwrap_or_default()
+            .trim()
+            .to_string(),
         file: file.to_string(),
         line: start_line(node),
     })

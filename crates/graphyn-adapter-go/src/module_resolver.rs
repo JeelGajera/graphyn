@@ -115,8 +115,7 @@ impl ModuleSet {
     /// True if `import_path` resolves inside one of the discovered modules.
     pub fn is_local_import(&self, import_path: &str) -> bool {
         self.by_dir.values().any(|m| {
-            import_path == m.module_path
-                || import_path.starts_with(&format!("{}/", m.module_path))
+            import_path == m.module_path || import_path.starts_with(&format!("{}/", m.module_path))
         })
     }
 }
@@ -185,7 +184,8 @@ mod tests {
         );
 
         assert_eq!(
-            set.import_path_for("services/api/handlers/user.go").unwrap(),
+            set.import_path_for("services/api/handlers/user.go")
+                .unwrap(),
             "github.com/test/api/handlers"
         );
         assert_eq!(

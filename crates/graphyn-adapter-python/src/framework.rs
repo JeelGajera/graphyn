@@ -11,14 +11,14 @@
 
 /// Base classes that mark a class as a data model with meaningful fields.
 const MODEL_BASES: &[&str] = &[
-    "BaseModel",   // Pydantic
+    "BaseModel", // Pydantic
     "BaseSettings",
-    "Model",       // Django
+    "Model", // Django
     "AbstractUser",
     "AbstractBaseUser",
-    "Serializer",  // Django REST Framework
+    "Serializer", // Django REST Framework
     "ModelSerializer",
-    "Schema",      // Marshmallow / Ninja
+    "Schema", // Marshmallow / Ninja
     "TypedDict",
     "NamedTuple",
 ];
@@ -27,7 +27,13 @@ const MODEL_BASES: &[&str] = &[
 const INTERFACE_BASES: &[&str] = &["Protocol", "ABC", "ABCMeta", "Generic"];
 
 /// Decorators that generate behaviour from a class's annotations.
-const MODEL_DECORATORS: &[&str] = &["dataclass", "attrs", "define", "frozen", "pydantic_dataclass"];
+const MODEL_DECORATORS: &[&str] = &[
+    "dataclass",
+    "attrs",
+    "define",
+    "frozen",
+    "pydantic_dataclass",
+];
 
 /// What a class's bases and decorators say about its role.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -42,7 +48,10 @@ pub enum ClassRole {
 
 /// Classify a class from its base-class names and decorator names.
 pub fn classify(bases: &[String], decorators: &[String]) -> ClassRole {
-    if bases.iter().any(|b| INTERFACE_BASES.contains(&last_segment(b))) {
+    if bases
+        .iter()
+        .any(|b| INTERFACE_BASES.contains(&last_segment(b)))
+    {
         return ClassRole::Interface;
     }
     if bases.iter().any(|b| MODEL_BASES.contains(&last_segment(b))) {
@@ -68,10 +77,7 @@ mod tests {
 
     #[test]
     fn pydantic_and_django_models_are_recognised() {
-        assert_eq!(
-            classify(&["BaseModel".into()], &[]),
-            ClassRole::Model
-        );
+        assert_eq!(classify(&["BaseModel".into()], &[]), ClassRole::Model);
         assert_eq!(
             classify(&["models.Model".into()], &[]),
             ClassRole::Model,

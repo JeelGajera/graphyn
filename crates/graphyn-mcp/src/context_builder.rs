@@ -252,7 +252,6 @@ fn symbol_header(graph: &GraphynGraph, symbol: &str, file: Option<&str>) -> Stri
     format!("Symbol: {}", symbol)
 }
 
-
 fn collect_property_summary(edges: &[QueryEdge]) -> Vec<(String, usize)> {
     let mut counts: BTreeMap<String, usize> = BTreeMap::new();
     for edge in edges {

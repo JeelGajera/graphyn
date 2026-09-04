@@ -160,7 +160,11 @@ mod tests {
                 }
             }
         });
-        assert_eq!(names, vec!["A", "B", "C"], "sibling order must be preserved");
+        assert_eq!(
+            names,
+            vec!["A", "B", "C"],
+            "sibling order must be preserved"
+        );
     }
 
     #[test]
@@ -178,7 +182,11 @@ mod tests {
         // Deeply nested parentheses: one AST level per pair. A recursive walker
         // overflows here on a worker thread; this must return normally.
         let depth = MAX_TREE_DEPTH * 4;
-        let source = format!("fn f() {{ let x = {}1{}; }}", "(".repeat(depth), ")".repeat(depth));
+        let source = format!(
+            "fn f() {{ let x = {}1{}; }}",
+            "(".repeat(depth),
+            ")".repeat(depth)
+        );
         let tree = parse_rust(&source);
         let stats = walk(tree.root_node(), &mut |_| {});
         assert!(
@@ -202,7 +210,11 @@ mod tests {
                 }
             }
         });
-        assert_eq!(seen, vec!["A"], "walking one item must not reach its sibling");
+        assert_eq!(
+            seen,
+            vec!["A"],
+            "walking one item must not reach its sibling"
+        );
     }
 
     #[test]

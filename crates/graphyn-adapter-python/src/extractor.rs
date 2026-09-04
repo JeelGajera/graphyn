@@ -4,8 +4,8 @@ use graphyn_core::ir::{
     RelationshipKind, Symbol, SymbolKind,
 };
 use graphyn_core::symbol_id::{
-    make_symbol_id, module_symbol, module_symbol_id, unresolved_import_id, unresolved_local_type_id,
-    IMPORT_ALL,
+    make_symbol_id, module_symbol, module_symbol_id, unresolved_import_id,
+    unresolved_local_type_id, IMPORT_ALL,
 };
 use tree_sitter::Node;
 
@@ -24,7 +24,9 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
     let mut diagnostics = parsed.diagnostics.clone();
 
     let stats = walk(root, &mut |node| match node.kind() {
-        "class_definition" => class_definition(node, source, file, &mut symbols, &mut relationships),
+        "class_definition" => {
+            class_definition(node, source, file, &mut symbols, &mut relationships)
+        }
         "function_definition" => {
             if let Some(sym) = function_definition(node, source, file) {
                 symbols.push(sym);

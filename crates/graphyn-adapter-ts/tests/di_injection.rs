@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use graphyn_adapter_ts::analyze_files;
 use graphyn_adapter_ts::language::is_supported_source_file;
 use graphyn_core::graph::GraphynGraph;
-use graphyn_core::query::blast_radius;
+use graphyn_core::query::{blast_radius, RelationshipKindMask};
 use graphyn_core::scan::{walk_source_files_with_config, ScanConfig};
 
 #[allow(dead_code)]
@@ -80,8 +80,14 @@ fn test_blast_radius_of_user_repository_includes_payment_service() {
     let repo_ir = analyze_repo(&root).expect("analysis should succeed for DI fixture");
     let graph = build_graph(&repo_ir);
 
-    let edges = blast_radius(&graph, "UserRepository", None, Some(2))
-        .expect("blast radius query should resolve UserRepository");
+    let edges = blast_radius(
+        &graph,
+        "UserRepository",
+        None,
+        Some(2),
+        RelationshipKindMask::all(),
+    )
+    .expect("blast radius query should resolve UserRepository");
     assert!(
         edges.iter().any(|edge| edge.from.contains("PaymentService")),
         "PaymentService should appear in UserRepository blast radius from constructor injection usage"

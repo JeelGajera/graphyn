@@ -36,10 +36,14 @@ fn test_python_alias_import_fixture_is_resolved_with_property_access() {
     let rel = mapper
         .relationships
         .iter()
-        .find(|r| r.kind == RelationshipKind::Imports && r.alias.as_deref() == Some("ResponseModel"))
+        .find(|r| {
+            r.kind == RelationshipKind::Imports && r.alias.as_deref() == Some("ResponseModel")
+        })
         .expect("aliased import exists");
 
-    assert!(rel.to.ends_with("models/user_payload.py::UserPayload::class"));
+    assert!(rel
+        .to
+        .ends_with("models/user_payload.py::UserPayload::class"));
     assert!(rel.properties_accessed.contains(&"user_id".to_string()));
     assert!(rel.properties_accessed.contains(&"timestamp".to_string()));
     assert!(rel.properties_accessed.contains(&"status".to_string()));

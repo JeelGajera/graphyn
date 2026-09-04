@@ -6,8 +6,8 @@ use graphyn_core::ir::{
     RelationshipKind, Symbol, SymbolKind,
 };
 use graphyn_core::symbol_id::{
-    make_symbol_id, module_symbol, module_symbol_id, unresolved_import_id, unresolved_local_type_id,
-    IMPORT_ALL,
+    make_symbol_id, module_symbol, module_symbol_id, unresolved_import_id,
+    unresolved_local_type_id, IMPORT_ALL,
 };
 use tree_sitter::Node;
 
@@ -214,12 +214,7 @@ fn impl_block(
 }
 
 /// Traits brought in by `#[derive(..)]`, as implementation edges.
-fn derive_edges(
-    node: Node<'_>,
-    source: &[u8],
-    file: &str,
-    kind: SymbolKind,
-) -> Vec<Relationship> {
+fn derive_edges(node: Node<'_>, source: &[u8], file: &str, kind: SymbolKind) -> Vec<Relationship> {
     let Some(name) = node
         .child_by_field_name("name")
         .and_then(|n| node_text(n, source))
@@ -399,7 +394,10 @@ fn property_access_edges(root: Node<'_>, source: &[u8], file: &str) -> Vec<Relat
             to: unresolved_local_type_id(&type_name),
             kind: RelationshipKind::AccessesProperty,
             alias: Some(type_name),
-            properties_accessed: access.properties.into_iter().collect::<BTreeSet<_>>()
+            properties_accessed: access
+                .properties
+                .into_iter()
+                .collect::<BTreeSet<_>>()
                 .into_iter()
                 .collect(),
             context: "property access".to_string(),

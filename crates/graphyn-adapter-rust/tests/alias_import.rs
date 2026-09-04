@@ -10,8 +10,7 @@ fn fixture_root(name: &str) -> PathBuf {
 fn all_files(root: &Path) -> Vec<PathBuf> {
     let mut out = Vec::new();
     for e in walkdir::WalkDir::new(root).into_iter().flatten() {
-        if e.path().is_file()
-            && matches!(e.path().extension().and_then(|x| x.to_str()), Some("rs"))
+        if e.path().is_file() && matches!(e.path().extension().and_then(|x| x.to_str()), Some("rs"))
         {
             out.push(e.path().to_path_buf());
         }
@@ -31,7 +30,9 @@ fn test_rust_alias_import_is_caught_with_property_access() {
     let rel = mapper
         .relationships
         .iter()
-        .find(|r| r.kind == RelationshipKind::Imports && r.alias.as_deref() == Some("ResponseModel"))
+        .find(|r| {
+            r.kind == RelationshipKind::Imports && r.alias.as_deref() == Some("ResponseModel")
+        })
         .expect("aliased import exists");
     assert!(rel.to.contains("UserPayload"));
     assert!(!rel.properties_accessed.is_empty());

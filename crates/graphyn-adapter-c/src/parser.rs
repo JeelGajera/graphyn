@@ -20,8 +20,20 @@ const CPP_EXTENSIONS: &[&str] = &["cpp", "cc", "cxx", "c++", "hpp", "hxx", "hh",
 
 /// Syntax that cannot appear in C, used to classify `.h` files.
 const CPP_MARKERS: &[&str] = &[
-    "class ", "namespace ", "template<", "template <", "public:", "private:", "protected:",
-    "virtual ", "operator", "::", "std::", "nullptr", "constexpr", "#include <string>",
+    "class ",
+    "namespace ",
+    "template<",
+    "template <",
+    "public:",
+    "private:",
+    "protected:",
+    "virtual ",
+    "operator",
+    "::",
+    "std::",
+    "nullptr",
+    "constexpr",
+    "#include <string>",
     "extern \"C\"",
 ];
 

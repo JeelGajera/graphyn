@@ -17,8 +17,7 @@ use graphyn_core::ir::{
     SymbolKind,
 };
 use graphyn_core::symbol_id::{
-    external_package_id, make_symbol_id, parse_unresolved_import_id,
-    parse_unresolved_local_type_id,
+    external_package_id, make_symbol_id, parse_unresolved_import_id, parse_unresolved_local_type_id,
 };
 
 use crate::module_resolver::ModuleSet;
@@ -149,7 +148,8 @@ pub fn resolve_repo_ir(root: &Path, repo_ir: &mut RepoIR) {
         let mut resolved_props: HashMap<String, BTreeSet<String>> = HashMap::new();
 
         for (index, rel) in file.relationships.iter_mut().enumerate() {
-            let Some(type_name) = parse_unresolved_local_type_id(&rel.to).map(str::to_string) else {
+            let Some(type_name) = parse_unresolved_local_type_id(&rel.to).map(str::to_string)
+            else {
                 continue;
             };
 

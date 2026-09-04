@@ -10,6 +10,7 @@ use graphyn_core::graph::GraphynGraph;
 use graphyn_core::query;
 
 use crate::context_builder;
+use crate::tools::kinds::{mask_from_names, unemitted_warning, KINDS_DOC};
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct BlastRadiusParams {
@@ -19,19 +20,32 @@ pub struct BlastRadiusParams {
     pub file: Option<String>,
     /// How many hops to traverse. Default 3. Max 10.
     pub depth: Option<i32>,
+    #[schemars(description = KINDS_DOC)]
+    pub kinds: Option<Vec<String>>,
 }
 
 pub fn execute(graph: &GraphynGraph, params: BlastRadiusParams) -> Result<String, String> {
     let depth = params.depth.unwrap_or(3).clamp(1, 10) as usize;
 
-    let edges = query::blast_radius(graph, &params.symbol, params.file.as_deref(), Some(depth))
-        .map_err(|e| format!("{e}"))?;
+    let mask = mask_from_names(&params.kinds)?;
+    let edges = query::blast_radius(
+        graph,
+        &params.symbol,
+        params.file.as_deref(),
+        Some(depth),
+        mask,
+    )
+    .map_err(|e| format!("{e}"))?;
 
-    Ok(context_builder::format_blast_radius(
+    let body = context_builder::format_blast_radius(
         graph,
         &params.symbol,
         params.file.as_deref(),
         depth,
         &edges,
-    ))
+    );
+    Ok(match unemitted_warning(&mask) {
+        Some(warning) => format!("{warning}\n\n{body}"),
+        None => body,
+    })
 }

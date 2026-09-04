@@ -2,9 +2,78 @@ use std::collections::BTreeMap;
 
 use graphyn_core::graph::GraphynGraph;
 use graphyn_core::ir::SymbolKind;
-use graphyn_core::query::{self, QueryEdge};
+use graphyn_core::query::{self, QueryEdge, RelationshipKindMask};
 
 use crate::output;
+
+/// Resolve the `--kind` values a user passed into a traversal mask.
+///
+/// An unrecognised name is rejected rather than ignored. Quietly dropping it
+/// would answer a narrower question than the one asked while presenting the
+/// result as the answer to theirs.
+pub fn mask_from_args(kinds: &[String]) -> Result<RelationshipKindMask, String> {
+    if kinds.is_empty() {
+        return Ok(RelationshipKindMask::all());
+    }
+    let mut mask = RelationshipKindMask::none();
+    for name in kinds {
+        let kind = query::parse_kind(name).ok_or_else(|| {
+            let known: Vec<&str> = query::ALL_KINDS.iter().map(query::kind_name).collect();
+            format!(
+                "unknown --kind '{name}'\n  known kinds: {}",
+                known.join(", ")
+            )
+        })?;
+        mask = mask.with(kind);
+    }
+    Ok(mask)
+}
+
+/// Warn when a filter can only ever match nothing.
+///
+/// `Calls` and `Instantiates` are declared on `RelationshipKind` but no
+/// adapter emits them. Returning a silent empty result for `--kind calls`
+/// would read as "nothing calls this", which is the one answer Graphyn must
+/// never give without warrant.
+fn warn_about_unemitted(mask: &RelationshipKindMask) {
+    if mask.is_all() {
+        return;
+    }
+    let requested = mask.kinds();
+    let dead: Vec<&str> = requested
+        .iter()
+        .filter(|k| query::UNEMITTED_KINDS.contains(k))
+        .map(query::kind_name)
+        .collect();
+    if dead.is_empty() {
+        return;
+    }
+
+    if dead.len() == requested.len() {
+        output::warning(&format!(
+            "every kind you asked for ({}) is unimplemented",
+            dead.join(", ")
+        ));
+        output::dim_line("  No adapter emits it, so this result is empty regardless of your code.");
+        output::dim_line("  Do not read it as evidence that nothing depends on the symbol.");
+    } else {
+        output::warning(&format!(
+            "{} is unimplemented and contributed nothing",
+            dead.join(", ")
+        ));
+    }
+    output::blank();
+}
+
+/// Show the active filter, so a short result is never mistaken for a small
+/// blast radius.
+fn report_filter(mask: &RelationshipKindMask) {
+    if mask.is_all() {
+        return;
+    }
+    let names: Vec<&str> = mask.kinds().iter().map(query::kind_name).collect();
+    output::stat("Kinds", &names.join(", "));
+}
 
 // ── blast-radius ─────────────────────────────────────────────
 
@@ -13,7 +82,9 @@ pub fn run_blast_radius(
     file: Option<&str>,
     depth: usize,
     path: &str,
+    kinds: &[String],
 ) -> Result<(), Box<dyn std::error::Error>> {
+    let mask = mask_from_args(kinds)?;
     let root = super::normalize_path(
         &std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?,
     );
@@ -22,15 +93,25 @@ pub fn run_blast_radius(
     output::banner("blast-radius");
 
     // look up the canonical symbol to display metadata
-    let edges = query::blast_radius(&graph, symbol, file, Some(depth))
+    let edges = query::blast_radius(&graph, symbol, file, Some(depth), mask)
         .map_err(|e| format_query_error(e, symbol))?;
 
     print_symbol_header(&graph, symbol, file);
     output::stat("Depth", &depth.to_string());
+    report_filter(&mask);
     output::blank();
+    warn_about_unemitted(&mask);
 
     if edges.is_empty() {
-        output::success("No dependents found — safe to modify.");
+        // Never claim safety on a filtered query: the caller narrowed the
+        // question, and an empty answer to a narrow question says nothing
+        // about the rest of the graph.
+        if mask.is_all() {
+            output::success("No dependents found — safe to modify.");
+        } else {
+            output::success("No dependents found under the selected kinds.");
+            output::dim_line("  Other relationship kinds were not searched.");
+        }
         output::blank();
         return Ok(());
     }
@@ -89,7 +170,9 @@ pub fn run_usages(
     symbol: &str,
     file: Option<&str>,
     path: &str,
+    kinds: &[String],
 ) -> Result<(), Box<dyn std::error::Error>> {
+    let mask = mask_from_args(kinds)?;
     let root = super::normalize_path(
         &std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?,
     );
@@ -97,13 +180,20 @@ pub fn run_usages(
 
     output::banner("usages");
     print_symbol_header(&graph, symbol, file);
+    report_filter(&mask);
     output::blank();
+    warn_about_unemitted(&mask);
 
-    let edges = query::symbol_usages(&graph, symbol, file, true)
+    let edges = query::symbol_usages(&graph, symbol, file, true, mask)
         .map_err(|e| format_query_error(e, symbol))?;
 
     if edges.is_empty() {
-        output::success("No usages found.");
+        if mask.is_all() {
+            output::success("No usages found.");
+        } else {
+            output::success("No usages found under the selected kinds.");
+            output::dim_line("  Other relationship kinds were not searched.");
+        }
         output::blank();
         return Ok(());
     }
@@ -123,7 +213,9 @@ pub fn run_deps(
     file: Option<&str>,
     depth: usize,
     path: &str,
+    kinds: &[String],
 ) -> Result<(), Box<dyn std::error::Error>> {
+    let mask = mask_from_args(kinds)?;
     let root = super::normalize_path(
         &std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?,
     );
@@ -132,13 +224,20 @@ pub fn run_deps(
     output::banner("dependencies");
     print_symbol_header(&graph, symbol, file);
     output::stat("Depth", &depth.to_string());
+    report_filter(&mask);
     output::blank();
+    warn_about_unemitted(&mask);
 
-    let edges = query::dependencies(&graph, symbol, file, Some(depth))
+    let edges = query::dependencies(&graph, symbol, file, Some(depth), mask)
         .map_err(|e| format_query_error(e, symbol))?;
 
     if edges.is_empty() {
-        output::success("No dependencies found — this symbol is self-contained.");
+        if mask.is_all() {
+            output::success("No dependencies found — this symbol is self-contained.");
+        } else {
+            output::success("No dependencies found under the selected kinds.");
+            output::dim_line("  Other relationship kinds were not searched.");
+        }
         output::blank();
         return Ok(());
     }
@@ -199,7 +298,10 @@ fn print_edge(index: usize, edge: &QueryEdge, graph: &GraphynGraph) {
     let num = output::dim(&format!("{index:>3}."));
     let location = format!("{}:{}", output::file_path(&edge.file), edge.line,);
 
-    println!("  {num} {location}");
+    println!(
+        "  {num} {location} {}",
+        output::dim(&format!("[{}]", query::kind_name(&edge.kind)))
+    );
 
     // alias info
     if let Some(alias) = &edge.alias {
@@ -298,7 +400,6 @@ fn print_dep_edge(index: usize, edge: &QueryEdge, graph: &GraphynGraph) {
 
     println!();
 }
-
 
 fn collect_property_summary(edges: &[QueryEdge]) -> Vec<(String, usize)> {
     let mut counts: BTreeMap<String, usize> = BTreeMap::new();

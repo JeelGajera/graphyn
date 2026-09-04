@@ -144,7 +144,8 @@ pub fn resolve_repo_ir(_root: &std::path::Path, repo_ir: &mut RepoIR) {
 
         let file = &mut repo_ir.files[index];
         for (position, rel) in file.relationships.iter_mut().enumerate() {
-            let Some(type_name) = parse_unresolved_local_type_id(&rel.to).map(str::to_string) else {
+            let Some(type_name) = parse_unresolved_local_type_id(&rel.to).map(str::to_string)
+            else {
                 continue;
             };
 
@@ -307,6 +308,9 @@ mod tests {
             Some((true, "../include/a.h"))
         );
         let system = unresolved_include_id("stdio.h", false);
-        assert_eq!(parse_unresolved_include_id(&system), Some((false, "stdio.h")));
+        assert_eq!(
+            parse_unresolved_include_id(&system),
+            Some((false, "stdio.h"))
+        );
     }
 }

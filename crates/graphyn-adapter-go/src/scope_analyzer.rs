@@ -17,9 +17,28 @@ use tree_sitter::Node;
 
 /// Predeclared identifiers and ubiquitous standard-library types.
 const GO_BUILTIN_TYPES: &[&str] = &[
-    "bool", "string", "int", "int8", "int16", "int32", "int64", "uint", "uint8", "uint16",
-    "uint32", "uint64", "uintptr", "byte", "rune", "float32", "float64", "complex64", "complex128",
-    "error", "any", "interface{}",
+    "bool",
+    "string",
+    "int",
+    "int8",
+    "int16",
+    "int32",
+    "int64",
+    "uint",
+    "uint8",
+    "uint16",
+    "uint32",
+    "uint64",
+    "uintptr",
+    "byte",
+    "rune",
+    "float32",
+    "float64",
+    "complex64",
+    "complex128",
+    "error",
+    "any",
+    "interface{}",
 ];
 
 pub fn is_builtin_type(name: &str) -> bool {
@@ -74,11 +93,7 @@ pub fn analyze(root: Node<'_>, source: &[u8]) -> ScopeAnalysis {
 /// — a constructor returning `*MemoryStore` depends on it just as much as a
 /// parameter would, and the type may live in a different file of the same
 /// package.
-fn collect_type_references(
-    root: Node<'_>,
-    source: &[u8],
-    referenced: &mut BTreeMap<String, u32>,
-) {
+fn collect_type_references(root: Node<'_>, source: &[u8], referenced: &mut BTreeMap<String, u32>) {
     let mut record = |node: Node<'_>, source: &[u8]| {
         if let Some(name) = type_name_of(node, source) {
             let line = node.start_position().row as u32 + 1;
@@ -100,7 +115,10 @@ fn collect_type_references(
             }
         }
         // Return types, including the parenthesised multi-value form.
-        "function_declaration" | "method_declaration" | "method_elem" | "method_spec"
+        "function_declaration"
+        | "method_declaration"
+        | "method_elem"
+        | "method_spec"
         | "func_literal" => {
             let Some(result) = node.child_by_field_name("result") else {
                 return;
@@ -281,12 +299,7 @@ fn type_name_of(ty: Node<'_>, source: &[u8]) -> Option<String> {
 }
 
 /// Record members reached through bound values, ignoring package selectors.
-fn collect_accesses(
-    func: Node<'_>,
-    source: &[u8],
-    bindings: &Bindings,
-    out: &mut TypeAccesses,
-) {
+fn collect_accesses(func: Node<'_>, source: &[u8], bindings: &Bindings, out: &mut TypeAccesses) {
     let Some(body) = func.child_by_field_name("body") else {
         return;
     };

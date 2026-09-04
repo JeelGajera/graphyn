@@ -43,7 +43,9 @@ fn impl_methods_are_qualified_by_their_owning_type() {
     // Qualifying the id keeps two same-named methods on different types from
     // collapsing onto one graph node.
     assert!(
-        methods.iter().any(|id| id.ends_with("Reporter::summarize::method")),
+        methods
+            .iter()
+            .any(|id| id.ends_with("Reporter::summarize::method")),
         "method ids should carry their impl type, got {methods:?}"
     );
 }

@@ -4,7 +4,7 @@ use graphyn_adapter_ts::analyze_files;
 use graphyn_adapter_ts::language::is_supported_source_file;
 use graphyn_core::graph::GraphynGraph;
 use graphyn_core::ir::RelationshipKind;
-use graphyn_core::query::dependencies;
+use graphyn_core::query::{dependencies, RelationshipKindMask};
 use graphyn_core::scan::{walk_source_files_with_config, ScanConfig};
 
 #[allow(dead_code)]
@@ -72,8 +72,14 @@ fn test_dependencies_for_process_payment_include_injected_services() {
     let repo_ir = analyze_repo(&root).expect("analysis should succeed for DI fixture");
     let graph = build_graph(&repo_ir);
 
-    let deps = dependencies(&graph, "processPayment", None, Some(2))
-        .expect("dependencies query should resolve processPayment method");
+    let deps = dependencies(
+        &graph,
+        "processPayment",
+        None,
+        Some(2),
+        RelationshipKindMask::all(),
+    )
+    .expect("dependencies query should resolve processPayment method");
     assert!(
         deps.iter()
             .any(|d| d.to.ends_with("user.repository.ts::UserRepository::class")),

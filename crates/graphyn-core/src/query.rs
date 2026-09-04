@@ -6,15 +6,141 @@ use petgraph::Direction;
 use crate::error::GraphynError;
 use crate::graph::GraphynGraph;
 use crate::index::find_symbol_id;
-use crate::ir::SymbolId;
+use crate::ir::{RelationshipKind, SymbolId};
 
 const DEFAULT_DEPTH: usize = 3;
 const MAX_DEPTH: usize = 10;
+
+/// Every kind of relationship, in a fixed order.
+///
+/// The order is the enum's own declaration order and is what `--kind help` and
+/// any listing render, so it must not depend on how a `match` happens to be
+/// written.
+pub const ALL_KINDS: [RelationshipKind; 8] = [
+    RelationshipKind::Imports,
+    RelationshipKind::Calls,
+    RelationshipKind::Extends,
+    RelationshipKind::Implements,
+    RelationshipKind::UsesType,
+    RelationshipKind::AccessesProperty,
+    RelationshipKind::ReExports,
+    RelationshipKind::Instantiates,
+];
+
+/// Kinds no adapter currently emits.
+///
+/// A filter that can only ever match nothing is a trap in a tool meant to
+/// gate changes: a rule scoped to `calls` would never fire and would read as
+/// a pass. Naming them here lets the CLI say so rather than silently
+/// returning an empty result.
+pub const UNEMITTED_KINDS: [RelationshipKind; 2] =
+    [RelationshipKind::Calls, RelationshipKind::Instantiates];
+
+/// The name a kind is known by on the command line and in JSON.
+pub fn kind_name(kind: &RelationshipKind) -> &'static str {
+    match kind {
+        RelationshipKind::Imports => "imports",
+        RelationshipKind::Calls => "calls",
+        RelationshipKind::Extends => "extends",
+        RelationshipKind::Implements => "implements",
+        RelationshipKind::UsesType => "uses-type",
+        RelationshipKind::AccessesProperty => "accesses-property",
+        RelationshipKind::ReExports => "re-exports",
+        RelationshipKind::Instantiates => "instantiates",
+    }
+}
+
+/// Parse a kind from its command-line name.
+pub fn parse_kind(name: &str) -> Option<RelationshipKind> {
+    ALL_KINDS
+        .iter()
+        .find(|k| kind_name(k) == name)
+        .map(|k| (*k).clone())
+}
+
+/// Which relationship kinds a traversal should follow.
+///
+/// `RelationshipMeta` has always carried the kind of every edge, and
+/// `traverse` has always discarded it, so a query could not tell a test's
+/// reference from an import from a trait implementation. Every gate and
+/// finding in the later phases needs that distinction, and the data was
+/// already there.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct RelationshipKindMask(u16);
+
+impl Default for RelationshipKindMask {
+    fn default() -> Self {
+        Self::all()
+    }
+}
+
+impl RelationshipKindMask {
+    /// Follow every kind — what traversal did before it could filter.
+    pub fn all() -> Self {
+        Self(u16::MAX)
+    }
+
+    pub fn none() -> Self {
+        Self(0)
+    }
+
+    pub fn from_kinds(kinds: &[RelationshipKind]) -> Self {
+        kinds
+            .iter()
+            .fold(Self::none(), |mask, kind| mask.with(kind.clone()))
+    }
+
+    pub fn with(self, kind: RelationshipKind) -> Self {
+        Self(self.0 | (1 << Self::bit(&kind)))
+    }
+
+    pub fn contains(&self, kind: &RelationshipKind) -> bool {
+        self.0 & (1 << Self::bit(kind)) != 0
+    }
+
+    /// True when the mask admits everything, so callers can skip reporting a
+    /// filter the user did not ask for.
+    pub fn is_all(&self) -> bool {
+        ALL_KINDS.iter().all(|k| self.contains(k))
+    }
+
+    pub fn is_empty(&self) -> bool {
+        ALL_KINDS.iter().all(|k| !self.contains(k))
+    }
+
+    /// The kinds in this mask, in [`ALL_KINDS`] order.
+    pub fn kinds(&self) -> Vec<RelationshipKind> {
+        ALL_KINDS
+            .iter()
+            .filter(|k| self.contains(k))
+            .cloned()
+            .collect()
+    }
+
+    fn bit(kind: &RelationshipKind) -> u16 {
+        match kind {
+            RelationshipKind::Imports => 0,
+            RelationshipKind::Calls => 1,
+            RelationshipKind::Extends => 2,
+            RelationshipKind::Implements => 3,
+            RelationshipKind::UsesType => 4,
+            RelationshipKind::AccessesProperty => 5,
+            RelationshipKind::ReExports => 6,
+            RelationshipKind::Instantiates => 7,
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QueryEdge {
     pub from: SymbolId,
     pub to: SymbolId,
+    /// What kind of reference this edge records.
+    ///
+    /// Carried on `RelationshipMeta` since 0.2.0 and dropped at the query
+    /// boundary until now, which left every consumer treating a property
+    /// access and a trait implementation as the same fact.
+    pub kind: RelationshipKind,
     pub file: String,
     pub line: u32,
     pub alias: Option<String>,
@@ -72,6 +198,7 @@ pub fn blast_radius(
     symbol: &str,
     file: Option<&str>,
     depth: Option<usize>,
+    kinds: RelationshipKindMask,
 ) -> Result<Vec<QueryEdge>, GraphynError> {
     let effective_depth = depth.unwrap_or(DEFAULT_DEPTH);
     if effective_depth > MAX_DEPTH {
@@ -82,7 +209,7 @@ pub fn blast_radius(
     }
 
     let root = find_symbol_id(graph, symbol, file)?;
-    traverse(graph, &root, effective_depth, Direction::Incoming)
+    traverse(graph, &root, effective_depth, Direction::Incoming, kinds)
 }
 
 pub fn dependencies(
@@ -90,6 +217,7 @@ pub fn dependencies(
     symbol: &str,
     file: Option<&str>,
     depth: Option<usize>,
+    kinds: RelationshipKindMask,
 ) -> Result<Vec<QueryEdge>, GraphynError> {
     let effective_depth = depth.unwrap_or(DEFAULT_DEPTH);
     if effective_depth > MAX_DEPTH {
@@ -100,7 +228,7 @@ pub fn dependencies(
     }
 
     let root = find_symbol_id(graph, symbol, file)?;
-    traverse(graph, &root, effective_depth, Direction::Outgoing)
+    traverse(graph, &root, effective_depth, Direction::Outgoing, kinds)
 }
 
 pub fn symbol_usages(
@@ -108,9 +236,10 @@ pub fn symbol_usages(
     symbol: &str,
     file: Option<&str>,
     include_aliases: bool,
+    kinds: RelationshipKindMask,
 ) -> Result<Vec<QueryEdge>, GraphynError> {
     let root = find_symbol_id(graph, symbol, file)?;
-    let mut results = traverse(graph, &root, 1, Direction::Incoming)?;
+    let mut results = traverse(graph, &root, 1, Direction::Incoming, kinds)?;
 
     if include_aliases {
         if let Some(aliases) = graph.alias_chains.get(&root) {
@@ -138,11 +267,19 @@ pub fn symbol_usages(
     dedupe_edges(results)
 }
 
+/// Walk outward from `root`, following only edges whose kind is in `kinds`.
+///
+/// Filtering happens on the edge itself rather than on the collected result,
+/// so an excluded kind also stops the walk continuing through it. Reaching a
+/// symbol only via a kind the caller excluded means it is not reachable under
+/// that question: asking "what imports this?" should not return something that
+/// merely inherits from an importer.
 fn traverse(
     graph: &GraphynGraph,
     root: &SymbolId,
     max_depth: usize,
     direction: Direction,
+    kinds: RelationshipKindMask,
 ) -> Result<Vec<QueryEdge>, GraphynError> {
     let Some(root_node) = graph.node_index.get(root).map(|v| *v) else {
         return Err(GraphynError::SymbolNotFound(root.clone()));
@@ -161,6 +298,9 @@ fn traverse(
         }
 
         for edge in graph.graph.edges_directed(node, direction) {
+            if !kinds.contains(&edge.weight().kind) {
+                continue;
+            }
             let neighbor = if direction == Direction::Incoming {
                 edge.source()
             } else {
@@ -182,6 +322,7 @@ fn traverse(
             results.push(QueryEdge {
                 from: from_id,
                 to: to_id,
+                kind: meta.kind.clone(),
                 file: meta.file.clone(),
                 line: meta.line,
                 alias: meta.alias.clone(),
@@ -208,6 +349,7 @@ fn dedupe_edges(mut edges: Vec<QueryEdge>) -> Result<Vec<QueryEdge>, GraphynErro
             edge.file.clone(),
             edge.line,
             edge.alias.clone(),
+            kind_name(&edge.kind),
         ))
     });
 

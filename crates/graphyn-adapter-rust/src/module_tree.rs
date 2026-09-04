@@ -71,7 +71,10 @@ impl ModuleTree {
                 })
                 .collect();
 
-            if let Some(root) = module.strip_prefix("crate::").and_then(|m| m.split("::").next()) {
+            if let Some(root) = module
+                .strip_prefix("crate::")
+                .and_then(|m| m.split("::").next())
+            {
                 tree.crate_roots.insert(root.to_string(), ());
             }
 
@@ -253,7 +256,10 @@ mod tests {
             "crate::mappers::deep::sibling"
         );
 
-        assert_eq!(tree.absolutize("src/a/b.rs", "self::inner"), "crate::a::b::inner");
+        assert_eq!(
+            tree.absolutize("src/a/b.rs", "self::inner"),
+            "crate::a::b::inner"
+        );
         assert_eq!(tree.absolutize("src/a/b.rs", "crate::x"), "crate::x");
     }
 }

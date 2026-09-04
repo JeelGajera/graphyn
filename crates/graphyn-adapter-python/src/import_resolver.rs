@@ -70,7 +70,11 @@ pub fn resolve_repo_ir(_root: &Path, repo_ir: &mut RepoIR) {
     // ── resolve per file ─────────────────────────────────────
     for file in &mut repo_ir.files {
         let path = file.file.clone();
-        let own_symbols = index.symbols_by_file.get(&path).cloned().unwrap_or_default();
+        let own_symbols = index
+            .symbols_by_file
+            .get(&path)
+            .cloned()
+            .unwrap_or_default();
 
         let mut local_names: HashMap<String, String> = HashMap::new();
         let mut drop = BTreeSet::new();
@@ -155,7 +159,8 @@ pub fn resolve_repo_ir(_root: &Path, repo_ir: &mut RepoIR) {
         let mut resolved_props: HashMap<String, BTreeSet<String>> = HashMap::new();
 
         for (position, rel) in file.relationships.iter_mut().enumerate() {
-            let Some(type_name) = parse_unresolved_local_type_id(&rel.to).map(str::to_string) else {
+            let Some(type_name) = parse_unresolved_local_type_id(&rel.to).map(str::to_string)
+            else {
                 continue;
             };
 
@@ -315,7 +320,7 @@ fn absolutize(from_file: &str, module_spec: &str) -> String {
         .split('/')
         .collect();
     parts.pop(); // the module itself
-    // `pkg/__init__.py` already names its package, so it does not climb again.
+                 // `pkg/__init__.py` already names its package, so it does not climb again.
     if from_file.ends_with("/__init__.py") {
         // parts now points at the package directory's parent + package name
         // which is exactly the current package: nothing more to drop.

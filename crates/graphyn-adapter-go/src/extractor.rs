@@ -4,8 +4,8 @@ use graphyn_core::ir::{
     RelationshipKind, Symbol, SymbolKind,
 };
 use graphyn_core::symbol_id::{
-    make_symbol_id, module_symbol, module_symbol_id, unresolved_import_id, unresolved_local_type_id,
-    IMPORT_ALL,
+    make_symbol_id, module_symbol, module_symbol_id, unresolved_import_id,
+    unresolved_local_type_id, IMPORT_ALL,
 };
 use tree_sitter::Node;
 
@@ -147,12 +147,7 @@ fn type_declaration(node: Node<'_>, source: &[u8], file: &str, symbols: &mut Vec
     }
 }
 
-fn interface_methods(
-    body: Node<'_>,
-    source: &[u8],
-    file: &str,
-    interface: &str,
-) -> Vec<Symbol> {
+fn interface_methods(body: Node<'_>, source: &[u8], file: &str, interface: &str) -> Vec<Symbol> {
     let mut out = Vec::new();
     let mut cursor = body.walk();
     for member in body.children(&mut cursor) {

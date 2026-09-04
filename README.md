@@ -69,9 +69,9 @@ graphyn watch ./my-repo
 - `graphyn analyze <path>`: parse and build graph into `.graphyn/db`
 - `graphyn analyze <path> --json`: emit the analysis as JSON on stdout
 - `graphyn watch <path>`: keep graph in sync on file changes
-- `graphyn query blast-radius <symbol> [--file <path>] [--depth <n>]`
-- `graphyn query usages <symbol> [--file <path>]`
-- `graphyn query deps <symbol> [--file <path>] [--depth <n>]`
+- `graphyn query blast-radius <symbol> [--file <path>] [--depth <n>] [--kind <kind>]`
+- `graphyn query usages <symbol> [--file <path>] [--kind <kind>]`
+- `graphyn query deps <symbol> [--file <path>] [--depth <n>] [--kind <kind>]`
 - `graphyn status`: graph stats and coverage
 - `graphyn serve --stdio`: start MCP server
 
@@ -106,6 +106,30 @@ Example:
   "exclude": "tests/**"
 }
 ```
+
+## Filtering by relationship kind
+
+Every query can be narrowed to particular kinds of reference:
+
+```bash
+# only what imports it, not what merely inherits from an importer
+graphyn query blast-radius UserPayload --kind imports
+
+# repeatable
+graphyn query usages UserPayload --kind imports --kind re-exports
+```
+
+Kinds: `imports`, `extends`, `implements`, `uses-type`, `accesses-property`,
+`re-exports`.
+
+Filtering applies to the traversal, not to the result, so an excluded kind
+also stops the walk continuing through it. A filtered query reports the filter
+it used, and an empty filtered result is never described as safe — only part
+of the graph was searched.
+
+`calls` and `instantiates` are accepted names but no adapter emits them yet, so
+they match nothing; the tool says so rather than returning a silent empty
+result.
 
 ## Machine-readable output
 
