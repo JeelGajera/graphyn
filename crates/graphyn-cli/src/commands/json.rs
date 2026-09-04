@@ -51,7 +51,11 @@ pub struct ReportStats {
     pub symbols: usize,
     pub relationships: usize,
     pub files_indexed: usize,
+    /// Symbols that have at least one alias.
     pub alias_chains: usize,
+    /// Aliases in total. Added alongside `alias_chains` rather than replacing
+    /// it: adding a field is not a contract change, redefining one is.
+    pub aliases: usize,
     pub diagnostics: usize,
 }
 
@@ -65,6 +69,7 @@ impl<'a> AnalysisReport<'a> {
                 relationships: stats.relationships,
                 files_indexed: repo_ir.files.len(),
                 alias_chains: stats.alias_chains,
+                aliases: stats.aliases,
                 diagnostics: repo_ir.files.iter().map(|f| f.diagnostics.len()).sum(),
             },
             language_stats: &repo_ir.language_stats,

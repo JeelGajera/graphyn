@@ -118,6 +118,7 @@
   "schema_version": 1,
   "stats": {
     "alias_chains": 0,
+    "aliases": 0,
     "diagnostics": 0,
     "files_indexed": 4,
     "relationships": 1,

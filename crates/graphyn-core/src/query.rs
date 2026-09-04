@@ -193,6 +193,30 @@ pub fn is_renamed(graph: &GraphynGraph, edge: &QueryEdge) -> bool {
     }
 }
 
+/// True when every reference that touches `property` reaches its type under a
+/// different name.
+///
+/// Such a property is invisible to a text search for the declaring type, which
+/// is the case worth flagging. One that is also read under the type's own name
+/// somewhere is not.
+///
+/// Two things this got wrong before. It tested `alias.is_some()`, the same
+/// mistake `partition_by_alias` was fixed for — adapters record the local name
+/// on a reference whether or not it differs, so an ordinary same-name access
+/// was labelled aliased. And `all` over an empty iterator is true, so a
+/// property no edge actually touches was labelled aliased as well.
+pub fn is_aliased_only_property(graph: &GraphynGraph, edges: &[QueryEdge], property: &str) -> bool {
+    let mut touching = edges
+        .iter()
+        .filter(|e| e.properties_accessed.iter().any(|p| p == property))
+        .peekable();
+
+    if touching.peek().is_none() {
+        return false;
+    }
+    touching.all(|e| is_renamed(graph, e))
+}
+
 pub fn blast_radius(
     graph: &GraphynGraph,
     symbol: &str,
@@ -340,26 +364,46 @@ fn traverse(
     dedupe_edges(results)
 }
 
+/// Collapse rows that describe the same fact, then order them.
+///
+/// One reference produces several edges when the source location is
+/// attributed at more than one level — a class-level edge and a method-level
+/// edge to the same target at the same line — and the old key included
+/// `from`, so all of them survived as separate rows. A 64-file project
+/// reported 196 "dependents" for 38 referencing files, and the aliased
+/// findings that are the whole point of the tool sat below 160 rows of
+/// duplicates.
+///
+/// The identity of a reference is what a reader can act on: which symbol,
+/// where, under what name, by what kind of reference. `from` is not part of
+/// that — the location already says where — so it no longer splits rows.
+/// `kind` is, because an `extends` and a field read at one line are two
+/// different facts about the code.
+///
+/// Sorting happens before collapsing rather than after, so which row survives
+/// is decided by the ordering rather than by traversal order. The lowest hop
+/// wins, which is the shortest path to the symbol and the one worth showing.
 fn dedupe_edges(mut edges: Vec<QueryEdge>) -> Result<Vec<QueryEdge>, GraphynError> {
+    edges.sort_by(|a, b| {
+        a.hop
+            .cmp(&b.hop)
+            .then(a.file.cmp(&b.file))
+            .then(a.line.cmp(&b.line))
+            .then(a.to.cmp(&b.to))
+            .then(kind_name(&a.kind).cmp(kind_name(&b.kind)))
+            .then(a.alias.cmp(&b.alias))
+            .then(a.from.cmp(&b.from))
+    });
+
     let mut seen = BTreeSet::new();
     edges.retain(|edge| {
         seen.insert((
-            edge.from.clone(),
             edge.to.clone(),
             edge.file.clone(),
             edge.line,
             edge.alias.clone(),
             kind_name(&edge.kind),
         ))
-    });
-
-    edges.sort_by(|a, b| {
-        a.hop
-            .cmp(&b.hop)
-            .then(a.file.cmp(&b.file))
-            .then(a.line.cmp(&b.line))
-            .then(a.from.cmp(&b.from))
-            .then(a.to.cmp(&b.to))
     });
 
     Ok(edges)

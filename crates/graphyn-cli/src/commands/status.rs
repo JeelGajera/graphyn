@@ -20,7 +20,14 @@ pub fn run(path: &str) -> Result<(), Box<dyn std::error::Error>> {
     output::stat_highlight("Symbols", &graph.symbols.len().to_string());
     output::stat_highlight("Relationships", &graph.graph.edge_count().to_string());
     output::stat_highlight("Files indexed", &graph.file_index.len().to_string());
-    output::stat_highlight("Alias chains", &graph.alias_chains.len().to_string());
+    output::stat_highlight(
+        "Aliases",
+        &format!(
+            "{} (across {} symbol(s))",
+            graph.alias_count(),
+            graph.aliased_symbol_count()
+        ),
+    );
 
     // ── symbol breakdown ─────────────────────────────────────
     let mut kind_counts: std::collections::BTreeMap<String, usize> =

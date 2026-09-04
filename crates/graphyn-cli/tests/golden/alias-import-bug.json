@@ -159,6 +159,7 @@
   "schema_version": 1,
   "stats": {
     "alias_chains": 1,
+    "aliases": 1,
     "diagnostics": 0,
     "files_indexed": 2,
     "relationships": 3,

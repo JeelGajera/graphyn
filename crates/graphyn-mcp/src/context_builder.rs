@@ -5,7 +5,7 @@
 
 use graphyn_core::graph::GraphynGraph;
 use graphyn_core::ir::{Language, SymbolKind};
-use graphyn_core::query::QueryEdge;
+use graphyn_core::query::{self, QueryEdge};
 
 use std::collections::BTreeMap;
 
@@ -57,7 +57,7 @@ pub fn format_blast_radius(
     if !props.is_empty() {
         out.push_str("\nProperties at risk if changed:\n");
         for (prop, count) in &props {
-            let aliased_note = if is_aliased_only_property(edges, prop) {
+            let aliased_note = if query::is_aliased_only_property(graph, edges, prop) {
                 " (aliased import only)"
             } else {
                 ""
@@ -81,10 +81,17 @@ fn format_blast_edge(graph: &GraphynGraph, edge: &QueryEdge) -> String {
         .unwrap_or("??");
     out.push_str(&format!("  • {}:{} [{}]\n", edge.file, edge.line, lang));
 
-    if let Some(alias) = &edge.alias {
-        out.push_str(&format!("    → imports as {} ← ALIAS\n", alias));
+    // "renamed to X" and "imported by X" are opposite facts, and both were
+    // printed as "imports as X". An agent reading this cannot recover which
+    // was meant, on the one line the tool exists to get right.
+    if query::is_renamed(graph, edge) {
+        if let Some(alias) = &edge.alias {
+            out.push_str(&format!("    → renamed to {} ← ALIAS\n", alias));
+        }
     } else if let Some(sym) = graph.symbols.get(&edge.from) {
-        out.push_str(&format!("    → imports as {}\n", sym.name));
+        if sym.kind != SymbolKind::Module {
+            out.push_str(&format!("    → referenced by {}\n", sym.name));
+        }
     }
 
     if !edge.properties_accessed.is_empty() {
@@ -196,8 +203,12 @@ pub fn format_symbol_usages(
 
     for edge in edges {
         out.push_str(&format!("  • {}:{}\n", edge.file, edge.line));
-        if let Some(alias) = &edge.alias {
-            out.push_str(&format!("    → imports as {} ← ALIAS\n", alias));
+        // Only a genuine rename is worth an ALIAS marker: adapters record
+        // the local name whether or not it differs from the symbol's own.
+        if query::is_renamed(graph, edge) {
+            if let Some(alias) = &edge.alias {
+                out.push_str(&format!("    → renamed to {} ← ALIAS\n", alias));
+            }
         }
         if !edge.properties_accessed.is_empty() {
             let props: Vec<String> = edge
@@ -262,13 +273,6 @@ fn collect_property_summary(edges: &[QueryEdge]) -> Vec<(String, usize)> {
     let mut sorted: Vec<_> = counts.into_iter().collect();
     sorted.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(&b.0)));
     sorted
-}
-
-fn is_aliased_only_property(edges: &[QueryEdge], property: &str) -> bool {
-    edges
-        .iter()
-        .filter(|e| e.properties_accessed.contains(&property.to_string()))
-        .all(|e| e.alias.is_some())
 }
 
 fn format_kind(kind: &SymbolKind) -> &'static str {

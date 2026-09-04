@@ -146,7 +146,7 @@ pub fn run_blast_radius(
     if !props.is_empty() {
         output::section("Properties at Risk");
         for (prop, count) in &props {
-            let aliased_note = if is_aliased_only_property(&edges, prop) {
+            let aliased_note = if query::is_aliased_only_property(&graph, &edges, prop) {
                 output::dim(" (aliased only)")
             } else {
                 String::new()
@@ -303,18 +303,27 @@ fn print_edge(index: usize, edge: &QueryEdge, graph: &GraphynGraph) {
         output::dim(&format!("[{}]", query::kind_name(&edge.kind)))
     );
 
-    // alias info
-    if let Some(alias) = &edge.alias {
-        println!(
-            "       {} imports as {}",
-            output::dim("→"),
-            output::alias_tag(alias),
-        );
-    } else {
-        // show the from-symbol name if we can resolve it
-        if let Some(sym) = graph.symbols.get(&edge.from) {
+    // How this reference names the symbol.
+    //
+    // Both branches used to print "imports as X" — for "renamed to X" and for
+    // "imported by X", which are opposite meanings. In the tool whose whole
+    // pitch is alias awareness, that made the one line a reader most needs to
+    // trust unreadable.
+    if query::is_renamed(graph, edge) {
+        if let Some(alias) = &edge.alias {
             println!(
-                "       {} imports as {}",
+                "       {} renamed to {}",
+                output::dim("→"),
+                output::alias_tag(alias),
+            );
+        }
+    } else if let Some(sym) = graph.symbols.get(&edge.from) {
+        // A module-scope referrer carries no information the location line
+        // does not already give, and printing "referenced by module" was the
+        // bulk of what the old branch emitted.
+        if sym.kind != SymbolKind::Module {
+            println!(
+                "       {} referenced by {}",
                 output::dim("→"),
                 output::symbol_name(&sym.name),
             );
@@ -411,13 +420,6 @@ fn collect_property_summary(edges: &[QueryEdge]) -> Vec<(String, usize)> {
     let mut sorted: Vec<_> = counts.into_iter().collect();
     sorted.sort_by(|a, b| b.1.cmp(&a.1).then(a.0.cmp(&b.0)));
     sorted
-}
-
-fn is_aliased_only_property(edges: &[QueryEdge], property: &str) -> bool {
-    edges
-        .iter()
-        .filter(|e| e.properties_accessed.contains(&property.to_string()))
-        .all(|e| e.alias.is_some())
 }
 
 fn format_kind(kind: &SymbolKind) -> &'static str {

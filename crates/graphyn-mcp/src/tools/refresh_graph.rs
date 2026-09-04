@@ -71,7 +71,7 @@ pub fn execute(
     let result = RefreshResult {
         symbols: graph.symbols.len(),
         relationships: graph.graph.edge_count(),
-        alias_chains: graph.alias_chains.len(),
+        alias_chains: graph.alias_count(),
         files_indexed: repo_ir.files.len(),
         diagnostics,
     };
