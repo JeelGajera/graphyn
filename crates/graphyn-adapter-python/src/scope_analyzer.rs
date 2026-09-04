@@ -13,10 +13,42 @@ use tree_sitter::Node;
 
 /// Builtins and typing constructs that never resolve to a repository symbol.
 const PY_BUILTIN_TYPES: &[&str] = &[
-    "int", "float", "str", "bool", "bytes", "complex", "list", "dict", "set", "frozenset",
-    "tuple", "object", "type", "None", "Any", "Optional", "Union", "List", "Dict", "Set", "Tuple",
-    "Callable", "Iterable", "Iterator", "Sequence", "Mapping", "Awaitable", "Coroutine", "Self",
-    "Literal", "Final", "ClassVar", "Annotated", "TypeVar", "Generic", "Protocol",
+    "int",
+    "float",
+    "str",
+    "bool",
+    "bytes",
+    "complex",
+    "list",
+    "dict",
+    "set",
+    "frozenset",
+    "tuple",
+    "object",
+    "type",
+    "None",
+    "Any",
+    "Optional",
+    "Union",
+    "List",
+    "Dict",
+    "Set",
+    "Tuple",
+    "Callable",
+    "Iterable",
+    "Iterator",
+    "Sequence",
+    "Mapping",
+    "Awaitable",
+    "Coroutine",
+    "Self",
+    "Literal",
+    "Final",
+    "ClassVar",
+    "Annotated",
+    "TypeVar",
+    "Generic",
+    "Protocol",
 ];
 
 pub fn is_builtin_type(name: &str) -> bool {
@@ -63,10 +95,7 @@ fn bindings_for_function(func: Node<'_>, source: &[u8]) -> Bindings {
         let mut cursor = params.walk();
         for param in params.children(&mut cursor) {
             // `name: Type` and `name: Type = default`
-            if !matches!(
-                param.kind(),
-                "typed_parameter" | "typed_default_parameter"
-            ) {
+            if !matches!(param.kind(), "typed_parameter" | "typed_default_parameter") {
                 continue;
             }
             let Some(type_name) = param
@@ -184,12 +213,7 @@ fn constructed_type_name(value: Node<'_>, source: &[u8]) -> Option<String> {
     name.chars().next()?.is_uppercase().then_some(name)
 }
 
-fn collect_accesses(
-    func: Node<'_>,
-    source: &[u8],
-    bindings: &Bindings,
-    out: &mut TypeAccesses,
-) {
+fn collect_accesses(func: Node<'_>, source: &[u8], bindings: &Bindings, out: &mut TypeAccesses) {
     let Some(body) = func.child_by_field_name("body") else {
         return;
     };

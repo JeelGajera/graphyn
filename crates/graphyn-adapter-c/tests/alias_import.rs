@@ -35,7 +35,9 @@ fn test_c_and_cpp_alias_import_is_caught() {
         let rel = mapper
             .relationships
             .iter()
-            .find(|r| r.kind == RelationshipKind::Imports && r.alias.as_deref() == Some("ResponseModel"))
+            .find(|r| {
+                r.kind == RelationshipKind::Imports && r.alias.as_deref() == Some("ResponseModel")
+            })
             .expect("aliased import exists");
         assert!(rel.to.contains("UserPayload"));
         assert!(!rel.properties_accessed.is_empty());

@@ -61,11 +61,19 @@ fn qualified_references_reach_the_specific_type() {
     // The package edge says *that* we depend on `models`; the qualified
     // references say *which* types, which is what blast radius needs.
     assert!(
-        has_edge(handler, RelationshipKind::UsesType, "models/user.go::UserPayload::class"),
+        has_edge(
+            handler,
+            RelationshipKind::UsesType,
+            "models/user.go::UserPayload::class"
+        ),
         "`*m.UserPayload` should produce an edge to the type"
     );
     assert!(
-        has_edge(handler, RelationshipKind::UsesType, "models/order.go::Order::class"),
+        has_edge(
+            handler,
+            RelationshipKind::UsesType,
+            "models/order.go::Order::class"
+        ),
         "`*m.Order` should produce an edge to the type"
     );
 }

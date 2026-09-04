@@ -36,9 +36,7 @@ fn properties_for(repo: &RepoIR, target_suffix: &str) -> Vec<String> {
         .files
         .iter()
         .flat_map(|f| f.relationships.iter())
-        .filter(|r| {
-            r.kind == RelationshipKind::AccessesProperty && r.to.ends_with(target_suffix)
-        })
+        .filter(|r| r.kind == RelationshipKind::AccessesProperty && r.to.ends_with(target_suffix))
         .flat_map(|r| r.properties_accessed.iter().cloned())
         .collect();
     out.sort();
@@ -270,9 +268,8 @@ fn analysis_is_reproducible_across_runs() {
         let first = analyze(language);
         let second = analyze(language);
 
-        let order = |repo: &RepoIR| -> Vec<String> {
-            repo.files.iter().map(|f| f.file.clone()).collect()
-        };
+        let order =
+            |repo: &RepoIR| -> Vec<String> { repo.files.iter().map(|f| f.file.clone()).collect() };
         assert_eq!(
             order(&first),
             order(&second),

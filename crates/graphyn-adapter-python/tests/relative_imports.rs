@@ -44,7 +44,11 @@ fn class_and_function_imports_from_the_same_module_both_resolve() {
     let routes = file(&repo, "api/routes.py");
 
     assert!(
-        has_edge(routes, RelationshipKind::Imports, "models/user.py::UserFilter::class"),
+        has_edge(
+            routes,
+            RelationshipKind::Imports,
+            "models/user.py::UserFilter::class"
+        ),
         "have: {:?}",
         targets(routes, RelationshipKind::Imports)
     );

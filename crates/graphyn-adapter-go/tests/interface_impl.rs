@@ -16,7 +16,11 @@ fn a_type_satisfying_an_interface_gets_an_implements_edge() {
         .find(|r| r.kind == RelationshipKind::Implements)
         .expect("structural conformance should be detected");
 
-    assert!(edge.from.ends_with("MemoryStore::class"), "got {}", edge.from);
+    assert!(
+        edge.from.ends_with("MemoryStore::class"),
+        "got {}",
+        edge.from
+    );
     assert!(edge.to.ends_with("Reader::interface"), "got {}", edge.to);
 }
 

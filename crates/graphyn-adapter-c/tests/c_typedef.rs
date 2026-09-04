@@ -11,11 +11,15 @@ fn a_typedef_alias_resolves_to_the_underlying_struct() {
     let alias = mapper
         .relationships
         .iter()
-        .find(|r| r.kind == RelationshipKind::Imports && r.alias.as_deref() == Some("ResponseModel"))
+        .find(|r| {
+            r.kind == RelationshipKind::Imports && r.alias.as_deref() == Some("ResponseModel")
+        })
         .expect("`typedef struct UserPayload ResponseModel;` should be recorded");
 
     assert!(
-        alias.to.ends_with("include/user_payload.h::UserPayload::class"),
+        alias
+            .to
+            .ends_with("include/user_payload.h::UserPayload::class"),
         "got {}",
         alias.to
     );

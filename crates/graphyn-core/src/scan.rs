@@ -1,6 +1,6 @@
+use crate::ir::Language;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
-use crate::ir::Language;
 
 #[derive(Debug, Clone, Default)]
 pub struct ScanConfig {
@@ -349,7 +349,12 @@ pub fn looks_generated(source: &str, path: &Path) -> bool {
         "@generated",
     ];
 
-    let banner: String = source.lines().take(8).collect::<Vec<_>>().join("\n").to_lowercase();
+    let banner: String = source
+        .lines()
+        .take(8)
+        .collect::<Vec<_>>()
+        .join("\n")
+        .to_lowercase();
     if MARKERS.iter().any(|m| banner.contains(m)) {
         return true;
     }
@@ -492,20 +497,8 @@ const DEFAULT_EXCLUDE_SUFFIXES: &[&str] = &[
     ".min.js", ".min.mjs", // Minified JS
     ".min.css", // Minified CSS
     ".map",     // Source maps
-    ".pyc",
-    ".pyo",
-    ".o",
-    ".a",
-    ".so",
-    ".dll",
-    ".obj",
-    ".lib",
-    ".exe",
-    ".pb.c",
-    ".pb.h",
-    "_gen.c",
-    "_gen.h",
-    ".pb.rs",
+    ".pyc", ".pyo", ".o", ".a", ".so", ".dll", ".obj", ".lib", ".exe", ".pb.c", ".pb.h", "_gen.c",
+    "_gen.h", ".pb.rs",
 ];
 
 pub fn should_include_relative_path(
@@ -747,8 +740,14 @@ mod default_exclude_tests {
             exclude_patterns: vec!["src/ok/**".to_string()],
             respect_gitignore: false,
         });
-        assert!(!files.iter().any(|f| f.contains("src/ok/")), "got {files:?}");
-        assert!(files.iter().any(|f| f.contains("src/env/")), "got {files:?}");
+        assert!(
+            !files.iter().any(|f| f.contains("src/ok/")),
+            "got {files:?}"
+        );
+        assert!(
+            files.iter().any(|f| f.contains("src/env/")),
+            "got {files:?}"
+        );
     }
 
     #[test]

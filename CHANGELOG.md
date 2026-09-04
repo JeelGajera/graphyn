@@ -15,12 +15,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   present from the first release that emits JSON at all, because retrofitting
   one forces every existing consumer to handle its absence.
 
+- `--kind` on `query blast-radius`, `usages` and `deps`, restricting a
+  traversal to named relationship kinds (`imports`, `extends`, `implements`,
+  `uses-type`, `accesses-property`, `re-exports`). Repeatable. MCP query tools
+  take the same filter as a `kinds` argument, and every returned edge now
+  reports its kind.
+
+  Filtering happens on the edge rather than on the collected result, so an
+  excluded kind also stops the walk continuing through it: asking what imports
+  a symbol will not return something that merely inherits from an importer.
+
+  An unrecognised name is rejected rather than ignored, and a filtered empty
+  result is never reported as "safe to modify" — the tool searched a slice of
+  the graph, so the claim would be unearned.
+
 - Golden snapshots of the analysis over the whole fixture corpus, and a CI
   step asserting that two analyses of identical input agree byte for byte.
   Per-adapter tests each assert one property of one language, which catches the
   regression someone thought to look for and misses a refactor that quietly
   changes the graph everywhere. Regenerate with `UPDATE_GOLDEN=1 cargo test -p
   graphyn-cli --test golden_ir` and review the diff.
+
+### Known limits
+
+- `RelationshipKind::Calls` and `Instantiates` are declared but emitted by no
+  adapter, so a filter naming them matches nothing. Rather than returning a
+  silent empty result — which in a tool used to judge whether a change is safe
+  reads as "nothing calls this" — both the CLI and the MCP tools say the kind
+  is unimplemented. Call and instantiation edges are planned for 1.0.0.
 
 ### Fixed
 

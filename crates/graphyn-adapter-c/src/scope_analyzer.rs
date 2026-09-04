@@ -12,11 +12,49 @@ use tree_sitter::Node;
 
 /// Built-in and ubiquitous standard-library types.
 const C_BUILTIN_TYPES: &[&str] = &[
-    "void", "char", "short", "int", "long", "float", "double", "signed", "unsigned", "bool",
-    "size_t", "ssize_t", "ptrdiff_t", "intptr_t", "uintptr_t", "int8_t", "int16_t", "int32_t",
-    "int64_t", "uint8_t", "uint16_t", "uint32_t", "uint64_t", "wchar_t", "char16_t", "char32_t",
-    "FILE", "auto", "string", "wstring", "vector", "map", "unordered_map", "set", "unique_ptr",
-    "shared_ptr", "weak_ptr", "optional", "variant", "pair", "tuple", "ostream", "istream",
+    "void",
+    "char",
+    "short",
+    "int",
+    "long",
+    "float",
+    "double",
+    "signed",
+    "unsigned",
+    "bool",
+    "size_t",
+    "ssize_t",
+    "ptrdiff_t",
+    "intptr_t",
+    "uintptr_t",
+    "int8_t",
+    "int16_t",
+    "int32_t",
+    "int64_t",
+    "uint8_t",
+    "uint16_t",
+    "uint32_t",
+    "uint64_t",
+    "wchar_t",
+    "char16_t",
+    "char32_t",
+    "FILE",
+    "auto",
+    "string",
+    "wstring",
+    "vector",
+    "map",
+    "unordered_map",
+    "set",
+    "unique_ptr",
+    "shared_ptr",
+    "weak_ptr",
+    "optional",
+    "variant",
+    "pair",
+    "tuple",
+    "ostream",
+    "istream",
 ];
 
 pub fn is_builtin_type(name: &str) -> bool {
@@ -92,7 +130,12 @@ fn bind_declaration(node: Node<'_>, source: &[u8], bindings: &mut Bindings) {
 
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
-        if child.id() == node.child_by_field_name("type").map(|t| t.id()).unwrap_or(0) {
+        if child.id()
+            == node
+                .child_by_field_name("type")
+                .map(|t| t.id())
+                .unwrap_or(0)
+        {
             continue;
         }
         if let Some(name) = declarator_name(child, source) {
@@ -134,7 +177,12 @@ pub fn type_name_of(ty: Node<'_>, source: &[u8]) -> Option<String> {
         "qualified_identifier" => ty
             .child_by_field_name("name")
             .and_then(|n| type_name_of(n, source))
-            .or_else(|| node_text(ty, source)?.rsplit("::").next().map(str::to_string)),
+            .or_else(|| {
+                node_text(ty, source)?
+                    .rsplit("::")
+                    .next()
+                    .map(str::to_string)
+            }),
         // `std::vector<Foo>` — the container owns the members.
         "template_type" => ty
             .child_by_field_name("name")
@@ -186,12 +234,7 @@ fn alias_name(node: Node<'_>, source: &[u8]) -> Option<String> {
     }
 }
 
-fn collect_accesses(
-    func: Node<'_>,
-    source: &[u8],
-    bindings: &Bindings,
-    out: &mut TypeAccesses,
-) {
+fn collect_accesses(func: Node<'_>, source: &[u8], bindings: &Bindings, out: &mut TypeAccesses) {
     let Some(body) = func.child_by_field_name("body") else {
         return;
     };

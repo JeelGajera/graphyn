@@ -35,5 +35,8 @@ fn unresolvable_types_are_reported_rather_than_dropped_silently() {
         .map(|d| d.message.as_str())
         .collect();
 
-    assert!(warnings.is_empty(), "unexpected resolution gaps: {warnings:?}");
+    assert!(
+        warnings.is_empty(),
+        "unexpected resolution gaps: {warnings:?}"
+    );
 }

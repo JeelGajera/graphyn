@@ -142,7 +142,6 @@ fn bindings_for_function(func: Node<'_>, source: &[u8]) -> Bindings {
     bindings
 }
 
-
 /// Names introduced by `<T, U: Bound>` on a function or its enclosing `impl`.
 ///
 /// These are placeholders for types chosen by the caller, not types that exist
@@ -277,10 +276,12 @@ fn collect_accesses_in_body(
     };
 
     let mut record = |type_name: &str, field_name: &str, line: u32| {
-        let entry = out.entry(type_name.to_string()).or_insert_with(|| TypeAccess {
-            properties: BTreeSet::new(),
-            first_line: line,
-        });
+        let entry = out
+            .entry(type_name.to_string())
+            .or_insert_with(|| TypeAccess {
+                properties: BTreeSet::new(),
+                first_line: line,
+            });
         entry.properties.insert(field_name.to_string());
         entry.first_line = entry.first_line.min(line);
     };

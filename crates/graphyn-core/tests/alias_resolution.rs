@@ -1,6 +1,6 @@
 use graphyn_core::graph::GraphynGraph;
 use graphyn_core::ir::{Language, Relationship, RelationshipKind, Symbol, SymbolKind};
-use graphyn_core::query::{blast_radius, symbol_usages};
+use graphyn_core::query::{blast_radius, symbol_usages, RelationshipKindMask};
 use graphyn_core::resolver::{AliasResolver, AliasScope};
 
 fn symbol(id: &str, name: &str, file: &str, kind: SymbolKind) -> Symbol {
@@ -67,7 +67,14 @@ fn test_aliased_import_is_tracked_with_property_accesses() {
     assert_eq!(aliases[0].alias_name, "ResponseModel");
     assert_eq!(aliases[0].scope, AliasScope::ImportAlias);
 
-    let blast = blast_radius(&graph, "UserPayload", None, Some(2)).expect("blast radius succeeds");
+    let blast = blast_radius(
+        &graph,
+        "UserPayload",
+        None,
+        Some(2),
+        RelationshipKindMask::all(),
+    )
+    .expect("blast radius succeeds");
     assert_eq!(blast.len(), 1);
     assert_eq!(
         blast[0].file,
@@ -79,7 +86,14 @@ fn test_aliased_import_is_tracked_with_property_accesses() {
         vec!["userId", "timestamp", "status"]
     );
 
-    let usages = symbol_usages(&graph, "UserPayload", None, true).expect("usages succeeds");
+    let usages = symbol_usages(
+        &graph,
+        "UserPayload",
+        None,
+        true,
+        RelationshipKindMask::all(),
+    )
+    .expect("usages succeeds");
     assert_eq!(usages.len(), 1);
     assert_eq!(usages[0].alias.as_deref(), Some("ResponseModel"));
 }
@@ -219,6 +233,7 @@ fn edge(to: &str, alias: Option<&str>) -> QueryEdge {
     QueryEdge {
         from: "src/consumer.ts::module::module".to_string(),
         to: to.to_string(),
+        kind: RelationshipKind::Imports,
         file: "src/consumer.ts".to_string(),
         line: 1,
         alias: alias.map(str::to_string),
@@ -250,7 +265,10 @@ fn an_alias_matching_the_symbol_name_is_not_a_rename() {
     // rename flagged ordinary references as HIGH RISK and buried the genuine
     // renames among them.
     let graph = graph_with_user_payload();
-    let same = edge("src/models/user.ts::UserPayload::class", Some("UserPayload"));
+    let same = edge(
+        "src/models/user.ts::UserPayload::class",
+        Some("UserPayload"),
+    );
     assert!(!is_renamed(&graph, &same));
 }
 

@@ -37,9 +37,7 @@ pub fn detect_implementations(repo_ir: &mut RepoIR) {
                 SymbolKind::Class => {
                     concrete
                         .entry((package.clone(), symbol.name.clone()))
-                        .or_insert_with(|| {
-                            (symbol.id.clone(), BTreeSet::new(), file.file.clone())
-                        });
+                        .or_insert_with(|| (symbol.id.clone(), BTreeSet::new(), file.file.clone()));
                 }
                 _ => {}
             }

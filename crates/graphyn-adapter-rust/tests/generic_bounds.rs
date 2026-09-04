@@ -28,7 +28,10 @@ fn generic_type_parameters_are_not_mistaken_for_repository_types() {
     // anywhere. It must not resolve to something unrelated, and must not
     // produce an edge into the graph.
     assert!(
-        !reporting.relationships.iter().any(|r| r.to.ends_with("::T::class")),
+        !reporting
+            .relationships
+            .iter()
+            .any(|r| r.to.ends_with("::T::class")),
         "a type parameter must not resolve to a concrete symbol"
     );
 }

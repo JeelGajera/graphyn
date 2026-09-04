@@ -11,7 +11,11 @@ fn a_constructor_taking_an_interface_records_the_dependency() {
     // `func NewUserHandler(reader store.Reader) *UserHandler` — the handler
     // depends on the interface, which is the whole point of injecting it.
     assert!(
-        has_edge(handler, RelationshipKind::UsesType, "store/store.go::Reader::interface"),
+        has_edge(
+            handler,
+            RelationshipKind::UsesType,
+            "store/store.go::Reader::interface"
+        ),
         "constructor-injected interfaces are dependencies, have: {:?}",
         handler
             .relationships

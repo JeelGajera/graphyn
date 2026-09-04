@@ -129,21 +129,31 @@ fn run_adapter(
     files: &[PathBuf],
 ) -> Result<Vec<FileIR>, DispatchError> {
     Ok(match language {
-        Language::TypeScript => graphyn_adapter_ts::analyze_files(root, files)
-            .map_err(|e| DispatchError::Ts(e.to_string()))?
-            .files,
-        Language::Python => graphyn_adapter_python::analyze_files(root, files)
-            .map_err(|e| DispatchError::Python(e.to_string()))?
-            .files,
-        Language::Rust => graphyn_adapter_rust::analyze_files(root, files)
-            .map_err(|e| DispatchError::Rust(e.to_string()))?
-            .files,
-        Language::Go => graphyn_adapter_go::analyze_files(root, files)
-            .map_err(|e| DispatchError::Go(e.to_string()))?
-            .files,
-        Language::C => graphyn_adapter_c::analyze_files(root, files)
-            .map_err(|e| DispatchError::C(e.to_string()))?
-            .files,
+        Language::TypeScript => {
+            graphyn_adapter_ts::analyze_files(root, files)
+                .map_err(|e| DispatchError::Ts(e.to_string()))?
+                .files
+        }
+        Language::Python => {
+            graphyn_adapter_python::analyze_files(root, files)
+                .map_err(|e| DispatchError::Python(e.to_string()))?
+                .files
+        }
+        Language::Rust => {
+            graphyn_adapter_rust::analyze_files(root, files)
+                .map_err(|e| DispatchError::Rust(e.to_string()))?
+                .files
+        }
+        Language::Go => {
+            graphyn_adapter_go::analyze_files(root, files)
+                .map_err(|e| DispatchError::Go(e.to_string()))?
+                .files
+        }
+        Language::C => {
+            graphyn_adapter_c::analyze_files(root, files)
+                .map_err(|e| DispatchError::C(e.to_string()))?
+                .files
+        }
         // `adapter_group` never yields anything else.
         _ => Vec::new(),
     })

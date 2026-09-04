@@ -12,7 +12,11 @@ fn imports_inside_a_type_checking_guard_are_still_dependencies() {
     // genuine compile-time dependency: changing the imported symbol breaks the
     // annotations that reference it.
     assert!(
-        has_edge(routes, RelationshipKind::Imports, "models/order.py::Order::class"),
+        has_edge(
+            routes,
+            RelationshipKind::Imports,
+            "models/order.py::Order::class"
+        ),
         "guarded imports must still be recorded, have: {:?}",
         targets(routes, RelationshipKind::Imports)
     );

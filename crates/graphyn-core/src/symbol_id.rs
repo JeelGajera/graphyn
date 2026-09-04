@@ -108,7 +108,9 @@ pub const IMPORT_ALL: &str = "*";
 
 /// Recover `(module, symbol)` from an unresolved-import placeholder.
 pub fn parse_unresolved_import_id(raw: &str) -> Option<(&str, &str)> {
-    let rest = raw.strip_prefix(UNRESOLVED_IMPORT_PREFIX)?.strip_prefix('|')?;
+    let rest = raw
+        .strip_prefix(UNRESOLVED_IMPORT_PREFIX)?
+        .strip_prefix('|')?;
     // The module may itself be empty (a bare relative import), so split from the
     // right: the symbol never contains a separator.
     let cut = rest.rfind('|')?;

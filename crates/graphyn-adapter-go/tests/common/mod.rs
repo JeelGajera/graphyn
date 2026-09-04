@@ -45,7 +45,10 @@ pub fn file<'a>(repo: &'a RepoIR, suffix: &str) -> &'a FileIR {
 }
 
 pub fn edges(file: &FileIR, kind: RelationshipKind) -> Vec<&graphyn_core::ir::Relationship> {
-    file.relationships.iter().filter(|r| r.kind == kind).collect()
+    file.relationships
+        .iter()
+        .filter(|r| r.kind == kind)
+        .collect()
 }
 
 pub fn has_edge(file: &FileIR, kind: RelationshipKind, target_suffix: &str) -> bool {

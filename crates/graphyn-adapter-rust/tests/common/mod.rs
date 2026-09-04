@@ -15,8 +15,7 @@ pub fn fixture_root(name: &str) -> PathBuf {
 pub fn rust_files(root: &Path) -> Vec<PathBuf> {
     let mut out = Vec::new();
     for entry in walkdir::WalkDir::new(root).into_iter().flatten() {
-        if entry.path().is_file()
-            && entry.path().extension().and_then(|e| e.to_str()) == Some("rs")
+        if entry.path().is_file() && entry.path().extension().and_then(|e| e.to_str()) == Some("rs")
         {
             out.push(entry.path().to_path_buf());
         }

@@ -31,7 +31,11 @@ fn a_name_is_not_found_in_a_module_that_does_not_declare_it() {
 
     // The re-export it *does* declare resolves.
     assert!(
-        has_edge(models, RelationshipKind::Imports, "models/user.rs::UserPayload::class"),
+        has_edge(
+            models,
+            RelationshipKind::Imports,
+            "models/user.rs::UserPayload::class"
+        ),
         "`pub use user::UserPayload` should resolve to the defining module"
     );
 }
