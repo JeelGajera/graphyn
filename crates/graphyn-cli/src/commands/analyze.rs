@@ -1,13 +1,13 @@
 use std::path::Path;
 use std::time::Instant;
 
-use graphyn_adapter_dispatch::analyze_files;
 use graphyn_core::graph::GraphynGraph;
 use graphyn_core::ir::RepoIR;
 use graphyn_core::resolver::AliasResolver;
 use graphyn_core::scan::{
     is_any_supported_source_file, parse_csv_patterns, walk_source_files_reporting, ScanConfig,
 };
+use graphyn_lang::analyze_files;
 use graphyn_store::RocksGraphStore;
 
 use crate::commands::json::AnalysisReport;

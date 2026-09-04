@@ -38,21 +38,21 @@ jobs:
       # `cargo publish` natively waits for the index to update before completing.
       #
       # Order follows the dependency graph:
-      #   core → store → the five adapters → dispatch → mcp → cli
+      #   core → lang → store → mcp → cli
       # A crate published before its dependencies fails with "no matching
       # package found", after earlier crates have already gone out and their
       # versions can no longer be reused.
+      #
+      # This was ten crates and six of them were language adapters, so every
+      # new language lengthened the chain and widened the window in which a
+      # release could fail partway through. Adding a language no longer touches
+      # this file at all.
       - name: Publish all crates safely to crates.io
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
         run: |
           cargo publish -p graphyn-core
+          cargo publish -p graphyn-lang
           cargo publish -p graphyn-store
-          cargo publish -p graphyn-adapter-ts
-          cargo publish -p graphyn-adapter-python
-          cargo publish -p graphyn-adapter-rust
-          cargo publish -p graphyn-adapter-go
-          cargo publish -p graphyn-adapter-c
-          cargo publish -p graphyn-adapter-dispatch
           cargo publish -p graphyn-mcp
           cargo publish -p graphyn-cli

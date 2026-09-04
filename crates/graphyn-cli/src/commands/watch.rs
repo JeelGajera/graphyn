@@ -3,12 +3,12 @@ use std::path::Path;
 use std::sync::mpsc;
 use std::time::{Duration, Instant};
 
-use graphyn_adapter_dispatch::analyze_files;
 use graphyn_core::scan::{
     detect_language_from_extension, is_any_supported_source_file, load_root_gitignore_rules,
     parse_csv_patterns, should_include_relative_path, walk_source_files_with_config, GitignoreRule,
     ScanConfig,
 };
+use graphyn_lang::analyze_files;
 use graphyn_store::RocksGraphStore;
 use notify::{RecursiveMode, Watcher};
 

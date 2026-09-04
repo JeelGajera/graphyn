@@ -11,6 +11,17 @@ authors.workspace = true
 categories.workspace = true
 keywords.workspace = true
 
+[features]
+# Forwarded to graphyn-lang so a slim build stays slim all the way to the
+# binary. Without this the CLI could pull every grammar back in through its
+# dependency on the MCP server.
+default = ["typescript", "python", "rust", "go", "c"]
+typescript = ["graphyn-lang/typescript"]
+python = ["graphyn-lang/python"]
+rust = ["graphyn-lang/rust"]
+go = ["graphyn-lang/go"]
+c = ["graphyn-lang/c"]
+
 [dependencies]
 rmcp = { version = "1", features = ["server", "transport-io"] }
 tokio = { version = "1", features = ["full"] }
@@ -18,5 +29,5 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 schemars = "1"
 graphyn-core = { path = "../graphyn-core", version = "0.2.0" }
-graphyn-adapter-dispatch = { path = "../graphyn-adapter-dispatch", version = "0.2.0" }
+graphyn-lang = { path = "../graphyn-lang", version = "0.2.0", default-features = false }
 graphyn-store = { path = "../graphyn-store", version = "0.2.0" }

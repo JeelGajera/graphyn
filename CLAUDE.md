@@ -90,11 +90,19 @@ regression, not a quirk.
 | Crate | Role |
 |---|---|
 | `graphyn-core` | Graph engine, IR (`RepoIR`), symbol IDs, AST helpers, relationship model |
-| `graphyn-adapter-dispatch` | Routes files to the owning adapter, runs groups in parallel, merges into one `RepoIR` |
-| `graphyn-adapter-{ts,python,rust,go,c}` | Per-language parsing and resolution |
+| `graphyn-lang` | Every language: `lang/<name>/` per language, `dispatch` routes and merges |
 | `graphyn-store` | RocksDB persistence (`.graphyn/db`) |
 | `graphyn-mcp` | MCP server (`serve --stdio`) |
 | `graphyn-cli` | The `graphyn` binary |
+
+Adding a language is a module under `crates/graphyn-lang/src/lang/` and a
+Cargo feature — not a crate, a manifest, and an entry in the publish job.
+Features are forwarded through `graphyn-mcp` to `graphyn-cli`, so a slim build
+stays slim all the way to the binary; check a new language builds alone:
+
+```bash
+cargo clippy -p graphyn-lang --no-default-features --features <lang> --all-targets -- -D warnings
+```
 
 Parsing is tree-sitter and is essentially a solved, vendored problem. **Quality
 lives in resolution** — imports, aliases, and binding declared types for
