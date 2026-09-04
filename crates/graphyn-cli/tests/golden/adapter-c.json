@@ -456,6 +456,7 @@
   "schema_version": 1,
   "stats": {
     "alias_chains": 4,
+    "aliases": 4,
     "diagnostics": 0,
     "files_indexed": 8,
     "relationships": 16,

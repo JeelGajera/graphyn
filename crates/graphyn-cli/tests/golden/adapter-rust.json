@@ -904,6 +904,7 @@
   "schema_version": 1,
   "stats": {
     "alias_chains": 3,
+    "aliases": 3,
     "diagnostics": 0,
     "files_indexed": 20,
     "relationships": 25,

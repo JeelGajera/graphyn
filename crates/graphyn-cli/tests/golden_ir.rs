@@ -162,6 +162,7 @@ fn stats_delta(expected: &str, actual: &str) -> String {
         "relationships",
         "files_indexed",
         "alias_chains",
+        "aliases",
         "diagnostics",
     ] {
         let b = before["stats"][key].as_i64().unwrap_or(0);

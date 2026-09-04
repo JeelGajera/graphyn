@@ -2698,6 +2698,7 @@
   "schema_version": 1,
   "stats": {
     "alias_chains": 8,
+    "aliases": 10,
     "diagnostics": 10,
     "files_indexed": 53,
     "relationships": 55,

@@ -132,6 +132,7 @@ pub fn run(
                 symbols: 0,
                 relationships: 0,
                 alias_chains: 0,
+                aliases: 0,
             };
             println!("{}", AnalysisReport::new(&empty, &stats).to_json()?);
         }
@@ -165,7 +166,10 @@ pub fn run(
     );
     progress.step(
         "Resolved aliases",
-        &format!("{} chain(s)", stats.alias_chains),
+        &format!(
+            "{} alias(es) across {} symbol(s)",
+            stats.aliases, stats.alias_chains
+        ),
     );
 
     // ── 3. Persist ───────────────────────────────────────────
@@ -189,7 +193,13 @@ pub fn run(
     progress.stat_highlight("Symbols", &stats.symbols.to_string());
     progress.stat_highlight("Relationships", &stats.relationships.to_string());
     progress.stat_highlight("Files indexed", &file_count.to_string());
-    progress.stat_highlight("Alias chains", &stats.alias_chains.to_string());
+    progress.stat_highlight(
+        "Aliases",
+        &format!(
+            "{} (across {} symbol(s))",
+            stats.aliases, stats.alias_chains
+        ),
+    );
     progress.stat(
         "Respect .gitignore",
         if scan_config.respect_gitignore {
@@ -300,7 +310,10 @@ pub fn run(
 pub struct AnalyzeStats {
     pub symbols: usize,
     pub relationships: usize,
+    /// Symbols that have at least one alias.
     pub alias_chains: usize,
+    /// Aliases in total — the number a reader takes "renames" to mean.
+    pub aliases: usize,
 }
 
 pub fn build_graph(repo_ir: &RepoIR) -> (GraphynGraph, AnalyzeStats) {
@@ -328,7 +341,8 @@ pub fn build_graph(repo_ir: &RepoIR) -> (GraphynGraph, AnalyzeStats) {
     let stats = AnalyzeStats {
         symbols: graph.symbols.len(),
         relationships: graph.graph.edge_count(),
-        alias_chains: graph.alias_chains.len(),
+        alias_chains: graph.aliased_symbol_count(),
+        aliases: graph.alias_count(),
     };
 
     (graph, stats)

@@ -55,6 +55,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`is_aliased_only_property` tested the wrong predicate.** It checked
+  `alias.is_some()` while `partition_by_alias` had already been corrected to
+  call `is_renamed` — one call site missed by commit `498333e`, duplicated
+  verbatim in the CLI and the MCP server. Adapters record the local name on a
+  reference whether or not it differs from the symbol's own, so an ordinary
+  `import { UserPayload }` had every field it touched labelled "(aliased import
+  only)". The predicate now lives in `graphyn-core` next to `is_renamed`, with
+  both copies deleted.
+
+  It also returned true for a property no edge touches, because `all` over an
+  empty iterator is true — a claim about references that do not exist.
+
+- **"imports as X" was printed for two opposite meanings.** The aliased branch
+  rendered "renamed to X" and the fallback rendered "imported by X" using the
+  identical phrase, so a reader could not tell which was meant — in the tool
+  whose entire pitch is alias awareness. A genuine rename now reads "renamed
+  to X"; a module-scope referrer, which was most of what the fallback emitted
+  as "imports as module", prints nothing, since the location line already says
+  where the reference is. Fixed in all three places it had been copied to.
+
+- **One reference was reported as several dependents.** A source location
+  attributed at both class and method level produces two edges differing only
+  in `from`, and `from` was part of the deduplication key, so both survived. A
+  64-file project reported 196 "dependents" for 38 referencing files, with the
+  aliased findings below 160 rows of duplicates. `from` no longer splits rows;
+  `kind` still does, because an `extends` and a field read at one line are two
+  different facts. Sorting now happens before collapsing, so which row survives
+  is decided by the ordering — lowest hop wins — rather than by traversal
+  order.
+
+- **The alias count counted symbols, not aliases.** `alias_chains` is keyed by
+  symbol, so its length is the number of symbols that have aliases. Reported as
+  "Alias chains", it read as a count of renames: a type imported under a
+  different name by twelve files reported `1`. Both numbers are now reported —
+  "Aliases 21 (across 19 symbols)" — and JSON gains an `aliases` field
+  alongside `alias_chains` rather than redefining it, since adding a field is
+  not a contract change and redefining one is.
+
 - **Rust resolution assumed a single crate rooted at `<repo>/src/`.** In a
   Cargo workspace nothing resolved: `crates/graphyn-core/src/ir.rs` was read as
   the module `crate::crates::graphyn-core::src::ir`, so every `crate::` path

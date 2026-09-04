@@ -44,6 +44,22 @@ impl GraphynGraph {
         }
     }
 
+    /// How many symbols have at least one alias.
+    pub fn aliased_symbol_count(&self) -> usize {
+        self.alias_chains.len()
+    }
+
+    /// How many aliases exist in total.
+    ///
+    /// `alias_chains` is keyed by symbol, so its length counts symbols that
+    /// have aliases, not aliases. Reported as "Alias chains", that read as a
+    /// count of renames and was wrong whenever one symbol was renamed more
+    /// than once: a type imported under a different name by twelve files
+    /// reported `1`.
+    pub fn alias_count(&self) -> usize {
+        self.alias_chains.iter().map(|e| e.value().len()).sum()
+    }
+
     pub fn add_symbol(&mut self, symbol: Symbol) {
         if self.node_index.contains_key(&symbol.id) {
             self.replace_symbol(symbol);
