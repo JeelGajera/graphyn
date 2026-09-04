@@ -1,0 +1,126 @@
+{
+  "files": [
+    {
+      "diagnostics": [],
+      "file": "js_frontend/app.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "js_frontend/app.ts",
+          "id": "js_frontend/app.ts::app::variable",
+          "kind": "Variable",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "app",
+          "signature": "app = 1"
+        },
+        {
+          "file": "js_frontend/app.ts",
+          "id": "js_frontend/app.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "python_service/service.py",
+      "language": "Python",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "from requests import get",
+          "file": "python_service/service.py",
+          "from": "python_service/service.py::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "ext::requests::package"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "python_service/service.py",
+          "id": "python_service/service.py::module::module",
+          "kind": "Module",
+          "language": "Python",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "rust_core/lib.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "rust_core/lib.rs",
+          "id": "rust_core/lib.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "rust_core/lib.rs",
+          "id": "rust_core/lib.rs::core::function",
+          "kind": "Function",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "core",
+          "signature": "pub fn core() {}"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "go_api/handler.go",
+      "language": "Go",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "go_api/handler.go",
+          "id": "go_api/handler.go::module::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        }
+      ]
+    }
+  ],
+  "language_stats": {
+    "Go": 1,
+    "Python": 1,
+    "Rust": 1,
+    "TypeScript": 1
+  },
+  "root": "<root>",
+  "schema_version": 1,
+  "stats": {
+    "alias_chains": 0,
+    "diagnostics": 0,
+    "files_indexed": 4,
+    "relationships": 1,
+    "symbols": 7
+  }
+}

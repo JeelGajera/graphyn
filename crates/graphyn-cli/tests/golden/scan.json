@@ -1,0 +1,220 @@
+{
+  "files": [
+    {
+      "diagnostics": [],
+      "file": "default_excludes/src/env/index.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "default_excludes/src/env/index.ts",
+          "id": "default_excludes/src/env/index.ts::C_env::class",
+          "kind": "Class",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "C_env",
+          "signature": "class C_env { x: string = ''; }"
+        },
+        {
+          "file": "default_excludes/src/env/index.ts",
+          "id": "default_excludes/src/env/index.ts::x::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "x",
+          "signature": "x: string = ''"
+        },
+        {
+          "file": "default_excludes/src/env/index.ts",
+          "id": "default_excludes/src/env/index.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "default_excludes/src/gen/index.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "default_excludes/src/gen/index.ts",
+          "id": "default_excludes/src/gen/index.ts::C_gen::class",
+          "kind": "Class",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "C_gen",
+          "signature": "class C_gen { x: string = ''; }"
+        },
+        {
+          "file": "default_excludes/src/gen/index.ts",
+          "id": "default_excludes/src/gen/index.ts::x::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "x",
+          "signature": "x: string = ''"
+        },
+        {
+          "file": "default_excludes/src/gen/index.ts",
+          "id": "default_excludes/src/gen/index.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "default_excludes/src/ok/index.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "default_excludes/src/ok/index.ts",
+          "id": "default_excludes/src/ok/index.ts::C_ok::class",
+          "kind": "Class",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "C_ok",
+          "signature": "class C_ok { x: string = ''; }"
+        },
+        {
+          "file": "default_excludes/src/ok/index.ts",
+          "id": "default_excludes/src/ok/index.ts::x::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "x",
+          "signature": "x: string = ''"
+        },
+        {
+          "file": "default_excludes/src/ok/index.ts",
+          "id": "default_excludes/src/ok/index.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "monorepo/projects/api/administration/src/AdminService.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "monorepo/projects/api/administration/src/AdminService.ts",
+          "id": "monorepo/projects/api/administration/src/AdminService.ts::adminService::variable",
+          "kind": "Variable",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "adminService",
+          "signature": "adminService = 'admin'"
+        },
+        {
+          "file": "monorepo/projects/api/administration/src/AdminService.ts",
+          "id": "monorepo/projects/api/administration/src/AdminService.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "monorepo/projects/frontend/web-portal/src/App.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "monorepo/projects/frontend/web-portal/src/App.ts",
+          "id": "monorepo/projects/frontend/web-portal/src/App.ts::app::variable",
+          "kind": "Variable",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "app",
+          "signature": "app = 'app'"
+        },
+        {
+          "file": "monorepo/projects/frontend/web-portal/src/App.ts",
+          "id": "monorepo/projects/frontend/web-portal/src/App.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "monorepo/projects/frontend/web-portal/src/Component.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "monorepo/projects/frontend/web-portal/src/Component.ts",
+          "id": "monorepo/projects/frontend/web-portal/src/Component.ts::component::variable",
+          "kind": "Variable",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "component",
+          "signature": "component = 'component'"
+        },
+        {
+          "file": "monorepo/projects/frontend/web-portal/src/Component.ts",
+          "id": "monorepo/projects/frontend/web-portal/src/Component.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    }
+  ],
+  "language_stats": {
+    "TypeScript": 6
+  },
+  "root": "<root>",
+  "schema_version": 1,
+  "stats": {
+    "alias_chains": 0,
+    "diagnostics": 0,
+    "files_indexed": 6,
+    "relationships": 0,
+    "symbols": 15
+  }
+}

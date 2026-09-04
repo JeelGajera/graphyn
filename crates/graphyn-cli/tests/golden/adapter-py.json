@@ -1,0 +1,592 @@
+{
+  "files": [
+    {
+      "diagnostics": [],
+      "file": "alias_import_bug/mappers/deep/view_model_mapper.py",
+      "language": "Python",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": "ResponseModel",
+          "context": "from ...models.user_payload import UserPayload as ResponseModel",
+          "file": "alias_import_bug/mappers/deep/view_model_mapper.py",
+          "from": "alias_import_bug/mappers/deep/view_model_mapper.py::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [
+            "status",
+            "timestamp",
+            "user_id"
+          ],
+          "to": "alias_import_bug/models/user_payload.py::UserPayload::class"
+        },
+        {
+          "alias": "ResponseModel",
+          "context": "attribute access",
+          "file": "alias_import_bug/mappers/deep/view_model_mapper.py",
+          "from": "alias_import_bug/mappers/deep/view_model_mapper.py::module::module",
+          "kind": "AccessesProperty",
+          "line": 6,
+          "properties_accessed": [
+            "status",
+            "timestamp",
+            "user_id"
+          ],
+          "to": "alias_import_bug/models/user_payload.py::UserPayload::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "alias_import_bug/mappers/deep/view_model_mapper.py",
+          "id": "alias_import_bug/mappers/deep/view_model_mapper.py::module::module",
+          "kind": "Module",
+          "language": "Python",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "alias_import_bug/mappers/deep/view_model_mapper.py",
+          "id": "alias_import_bug/mappers/deep/view_model_mapper.py::ViewModelMapper::class",
+          "kind": "Class",
+          "language": "Python",
+          "line_end": 9,
+          "line_start": 3,
+          "name": "ViewModelMapper",
+          "signature": "class ViewModelMapper:"
+        },
+        {
+          "file": "alias_import_bug/mappers/deep/view_model_mapper.py",
+          "id": "alias_import_bug/mappers/deep/view_model_mapper.py::ViewModelMapper::map::method",
+          "kind": "Method",
+          "language": "Python",
+          "line_end": 9,
+          "line_start": 4,
+          "name": "map",
+          "signature": "def map(self, data: ResponseModel) -> dict:"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "alias_import_bug/models/user_payload.py",
+      "language": "Python",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "alias_import_bug/models/user_payload.py",
+          "id": "alias_import_bug/models/user_payload.py::module::module",
+          "kind": "Module",
+          "language": "Python",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "alias_import_bug/models/user_payload.py",
+          "id": "alias_import_bug/models/user_payload.py::UserPayload::class",
+          "kind": "Class",
+          "language": "Python",
+          "line_end": 5,
+          "line_start": 1,
+          "name": "UserPayload",
+          "signature": "class UserPayload:"
+        },
+        {
+          "file": "alias_import_bug/models/user_payload.py",
+          "id": "alias_import_bug/models/user_payload.py::UserPayload::user_id::property",
+          "kind": "Property",
+          "language": "Python",
+          "line_end": 2,
+          "line_start": 2,
+          "name": "user_id",
+          "signature": "user_id: str"
+        },
+        {
+          "file": "alias_import_bug/models/user_payload.py",
+          "id": "alias_import_bug/models/user_payload.py::UserPayload::timestamp::property",
+          "kind": "Property",
+          "language": "Python",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "timestamp",
+          "signature": "timestamp: str"
+        },
+        {
+          "file": "alias_import_bug/models/user_payload.py",
+          "id": "alias_import_bug/models/user_payload.py::UserPayload::status::property",
+          "kind": "Property",
+          "language": "Python",
+          "line_end": 4,
+          "line_start": 4,
+          "name": "status",
+          "signature": "status: str"
+        },
+        {
+          "file": "alias_import_bug/models/user_payload.py",
+          "id": "alias_import_bug/models/user_payload.py::UserPayload::email::property",
+          "kind": "Property",
+          "language": "Python",
+          "line_end": 5,
+          "line_start": 5,
+          "name": "email",
+          "signature": "email: str"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "language_features/api/routes.py",
+      "language": "Python",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "from typing import TYPE_CHECKING",
+          "file": "language_features/api/routes.py",
+          "from": "language_features/api/routes.py::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "ext::typing::package"
+        },
+        {
+          "alias": null,
+          "context": "from fastapi import Depends",
+          "file": "language_features/api/routes.py",
+          "from": "language_features/api/routes.py::module::module",
+          "kind": "Imports",
+          "line": 3,
+          "properties_accessed": [],
+          "to": "ext::fastapi::package"
+        },
+        {
+          "alias": null,
+          "context": "from ..models import UserPayload",
+          "file": "language_features/api/routes.py",
+          "from": "language_features/api/routes.py::module::module",
+          "kind": "Imports",
+          "line": 5,
+          "properties_accessed": [
+            "email",
+            "user_id"
+          ],
+          "to": "language_features/models/user.py::UserPayload::class"
+        },
+        {
+          "alias": null,
+          "context": "from ..models.user import UserFilter, normalize_email",
+          "file": "language_features/api/routes.py",
+          "from": "language_features/api/routes.py::module::module",
+          "kind": "Imports",
+          "line": 6,
+          "properties_accessed": [
+            "term"
+          ],
+          "to": "language_features/models/user.py::UserFilter::class"
+        },
+        {
+          "alias": null,
+          "context": "from ..models.user import UserFilter, normalize_email",
+          "file": "language_features/api/routes.py",
+          "from": "language_features/api/routes.py::module::module",
+          "kind": "Imports",
+          "line": 6,
+          "properties_accessed": [],
+          "to": "language_features/models/user.py::normalize_email::function"
+        },
+        {
+          "alias": null,
+          "context": "from ..models.order import Order",
+          "file": "language_features/api/routes.py",
+          "from": "language_features/api/routes.py::module::module",
+          "kind": "Imports",
+          "line": 9,
+          "properties_accessed": [],
+          "to": "language_features/models/order.py::Order::class"
+        },
+        {
+          "alias": "UserFilter",
+          "context": "attribute access",
+          "file": "language_features/api/routes.py",
+          "from": "language_features/api/routes.py::module::module",
+          "kind": "AccessesProperty",
+          "line": 13,
+          "properties_accessed": [
+            "term"
+          ],
+          "to": "language_features/models/user.py::UserFilter::class"
+        },
+        {
+          "alias": "UserPayload",
+          "context": "attribute access",
+          "file": "language_features/api/routes.py",
+          "from": "language_features/api/routes.py::module::module",
+          "kind": "AccessesProperty",
+          "line": 13,
+          "properties_accessed": [
+            "email",
+            "user_id"
+          ],
+          "to": "language_features/models/user.py::UserPayload::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "language_features/api/routes.py",
+          "id": "language_features/api/routes.py::module::module",
+          "kind": "Module",
+          "language": "Python",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "language_features/api/routes.py",
+          "id": "language_features/api/routes.py::describe::function",
+          "kind": "Function",
+          "language": "Python",
+          "line_end": 13,
+          "line_start": 12,
+          "name": "describe",
+          "signature": "def describe(payload: UserPayload, filters: UserFilter) -> str:"
+        },
+        {
+          "file": "language_features/api/routes.py",
+          "id": "language_features/api/routes.py::make_route::function",
+          "kind": "Function",
+          "language": "Python",
+          "line_end": 17,
+          "line_start": 16,
+          "name": "make_route",
+          "signature": "def make_route(dependency=Depends(normalize_email)):"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "language_features/legacy/star.py",
+      "language": "Python",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "from ..models.user import *",
+          "file": "language_features/legacy/star.py",
+          "from": "language_features/legacy/star.py::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "language_features/models/user.py::module::module"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "language_features/legacy/star.py",
+          "id": "language_features/legacy/star.py::module::module",
+          "kind": "Module",
+          "language": "Python",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "language_features/legacy/star.py",
+          "id": "language_features/legacy/star.py::run::function",
+          "kind": "Function",
+          "language": "Python",
+          "line_end": 5,
+          "line_start": 4,
+          "name": "run",
+          "signature": "def run(value):"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "language_features/models/__init__.py",
+      "language": "Python",
+      "re_exports": [
+        {
+          "exported_name": "UserPayload",
+          "source_module": "."
+        },
+        {
+          "exported_name": "Order",
+          "source_module": "."
+        }
+      ],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "from .user import UserPayload",
+          "file": "language_features/models/__init__.py",
+          "from": "language_features/models/__init__.py::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "language_features/models/user.py::UserPayload::class"
+        },
+        {
+          "alias": null,
+          "context": "from .order import Order",
+          "file": "language_features/models/__init__.py",
+          "from": "language_features/models/__init__.py::module::module",
+          "kind": "Imports",
+          "line": 2,
+          "properties_accessed": [],
+          "to": "language_features/models/order.py::Order::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "language_features/models/__init__.py",
+          "id": "language_features/models/__init__.py::module::module",
+          "kind": "Module",
+          "language": "Python",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "language_features/models/order.py",
+      "language": "Python",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "from django.db import models",
+          "file": "language_features/models/order.py",
+          "from": "language_features/models/order.py::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "ext::django::package"
+        },
+        {
+          "alias": "models.Model",
+          "context": "class Order(models.Model)",
+          "file": "language_features/models/order.py",
+          "from": "language_features/models/order.py::Order::class",
+          "kind": "Extends",
+          "line": 4,
+          "properties_accessed": [],
+          "to": "ext::django::package"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "language_features/models/order.py",
+          "id": "language_features/models/order.py::module::module",
+          "kind": "Module",
+          "language": "Python",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "language_features/models/order.py",
+          "id": "language_features/models/order.py::Order::class",
+          "kind": "Class",
+          "language": "Python",
+          "line_end": 6,
+          "line_start": 4,
+          "name": "Order",
+          "signature": "class Order(models.Model):"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "language_features/models/user.py",
+      "language": "Python",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "from dataclasses import dataclass",
+          "file": "language_features/models/user.py",
+          "from": "language_features/models/user.py::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "ext::dataclasses::package"
+        },
+        {
+          "alias": null,
+          "context": "from typing import Protocol",
+          "file": "language_features/models/user.py",
+          "from": "language_features/models/user.py::module::module",
+          "kind": "Imports",
+          "line": 2,
+          "properties_accessed": [],
+          "to": "ext::typing::package"
+        },
+        {
+          "alias": null,
+          "context": "from pydantic import BaseModel",
+          "file": "language_features/models/user.py",
+          "from": "language_features/models/user.py::module::module",
+          "kind": "Imports",
+          "line": 4,
+          "properties_accessed": [],
+          "to": "ext::pydantic::package"
+        },
+        {
+          "alias": "BaseModel",
+          "context": "class UserPayload(BaseModel)",
+          "file": "language_features/models/user.py",
+          "from": "language_features/models/user.py::UserPayload::class",
+          "kind": "Extends",
+          "line": 7,
+          "properties_accessed": [],
+          "to": "ext::pydantic::package"
+        },
+        {
+          "alias": "Protocol",
+          "context": "class Identifiable(Protocol)",
+          "file": "language_features/models/user.py",
+          "from": "language_features/models/user.py::Identifiable::interface",
+          "kind": "Extends",
+          "line": 19,
+          "properties_accessed": [],
+          "to": "ext::typing::package"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "language_features/models/user.py",
+          "id": "language_features/models/user.py::module::module",
+          "kind": "Module",
+          "language": "Python",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "language_features/models/user.py",
+          "id": "language_features/models/user.py::UserPayload::class",
+          "kind": "Class",
+          "language": "Python",
+          "line_end": 10,
+          "line_start": 7,
+          "name": "UserPayload",
+          "signature": "class UserPayload(BaseModel):"
+        },
+        {
+          "file": "language_features/models/user.py",
+          "id": "language_features/models/user.py::UserPayload::user_id::property",
+          "kind": "Property",
+          "language": "Python",
+          "line_end": 8,
+          "line_start": 8,
+          "name": "user_id",
+          "signature": "user_id: str"
+        },
+        {
+          "file": "language_features/models/user.py",
+          "id": "language_features/models/user.py::UserPayload::email::property",
+          "kind": "Property",
+          "language": "Python",
+          "line_end": 9,
+          "line_start": 9,
+          "name": "email",
+          "signature": "email: str"
+        },
+        {
+          "file": "language_features/models/user.py",
+          "id": "language_features/models/user.py::UserPayload::timestamp::property",
+          "kind": "Property",
+          "language": "Python",
+          "line_end": 10,
+          "line_start": 10,
+          "name": "timestamp",
+          "signature": "timestamp: str"
+        },
+        {
+          "file": "language_features/models/user.py",
+          "id": "language_features/models/user.py::UserFilter::class",
+          "kind": "Class",
+          "language": "Python",
+          "line_end": 16,
+          "line_start": 14,
+          "name": "UserFilter",
+          "signature": "class UserFilter:"
+        },
+        {
+          "file": "language_features/models/user.py",
+          "id": "language_features/models/user.py::UserFilter::term::property",
+          "kind": "Property",
+          "language": "Python",
+          "line_end": 15,
+          "line_start": 15,
+          "name": "term",
+          "signature": "term: str"
+        },
+        {
+          "file": "language_features/models/user.py",
+          "id": "language_features/models/user.py::UserFilter::limit::property",
+          "kind": "Property",
+          "language": "Python",
+          "line_end": 16,
+          "line_start": 16,
+          "name": "limit",
+          "signature": "limit: int"
+        },
+        {
+          "file": "language_features/models/user.py",
+          "id": "language_features/models/user.py::Identifiable::interface",
+          "kind": "Interface",
+          "language": "Python",
+          "line_end": 20,
+          "line_start": 19,
+          "name": "Identifiable",
+          "signature": "class Identifiable(Protocol):"
+        },
+        {
+          "file": "language_features/models/user.py",
+          "id": "language_features/models/user.py::Identifiable::identity::method",
+          "kind": "Method",
+          "language": "Python",
+          "line_end": 20,
+          "line_start": 20,
+          "name": "identity",
+          "signature": "def identity(self) -> str: ..."
+        },
+        {
+          "file": "language_features/models/user.py",
+          "id": "language_features/models/user.py::normalize_email::function",
+          "kind": "Function",
+          "language": "Python",
+          "line_end": 24,
+          "line_start": 23,
+          "name": "normalize_email",
+          "signature": "def normalize_email(value: str) -> str:"
+        }
+      ]
+    }
+  ],
+  "language_stats": {
+    "Python": 7
+  },
+  "root": "<root>",
+  "schema_version": 1,
+  "stats": {
+    "alias_chains": 1,
+    "diagnostics": 0,
+    "files_indexed": 7,
+    "relationships": 20,
+    "symbols": 33
+  }
+}

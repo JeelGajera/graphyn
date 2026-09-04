@@ -1,0 +1,468 @@
+{
+  "files": [
+    {
+      "diagnostics": [],
+      "file": "alias_import_bug/src/lib.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "alias_import_bug/src/lib.rs",
+          "id": "alias_import_bug/src/lib.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        }
+      ]
+    },
+    {
+      "diagnostics": [
+        {
+          "category": "Resolution",
+          "file": "alias_import_bug/src/mappers/view_model_mapper.rs",
+          "level": "Warning",
+          "line": 1,
+          "message": "unable to resolve import 'crate::models::user_payload::UserPayload'"
+        },
+        {
+          "category": "Resolution",
+          "file": "alias_import_bug/src/mappers/view_model_mapper.rs",
+          "level": "Warning",
+          "line": 7,
+          "message": "unable to resolve type 'ResponseModel' referenced in alias_import_bug/src/mappers/view_model_mapper.rs"
+        }
+      ],
+      "file": "alias_import_bug/src/mappers/view_model_mapper.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "alias_import_bug/src/mappers/view_model_mapper.rs",
+          "id": "alias_import_bug/src/mappers/view_model_mapper.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "alias_import_bug/src/mappers/view_model_mapper.rs",
+          "id": "alias_import_bug/src/mappers/view_model_mapper.rs::ViewModelMapper::class",
+          "kind": "Class",
+          "language": "Rust",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "ViewModelMapper",
+          "signature": "pub struct ViewModelMapper;"
+        },
+        {
+          "file": "alias_import_bug/src/mappers/view_model_mapper.rs",
+          "id": "alias_import_bug/src/mappers/view_model_mapper.rs::ViewModelMapper::map::method",
+          "kind": "Method",
+          "language": "Rust",
+          "line_end": 10,
+          "line_start": 6,
+          "name": "map",
+          "signature": "impl ViewModelMapper :: pub fn map(&self, data: &ResponseModel) {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "alias_import_bug/src/models/mod.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "alias_import_bug/src/models/mod.rs",
+          "id": "alias_import_bug/src/models/mod.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "alias_import_bug/src/models/user_payload.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "alias_import_bug/src/models/user_payload.rs",
+          "id": "alias_import_bug/src/models/user_payload.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "alias_import_bug/src/models/user_payload.rs",
+          "id": "alias_import_bug/src/models/user_payload.rs::UserPayload::class",
+          "kind": "Class",
+          "language": "Rust",
+          "line_end": 5,
+          "line_start": 1,
+          "name": "UserPayload",
+          "signature": "pub struct UserPayload {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "language_features/src/lib.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "language_features/src/lib.rs",
+          "id": "language_features/src/lib.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "language_features/src/models/mod.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "pub use user::UserPayload;",
+          "file": "language_features/src/models/mod.rs",
+          "from": "language_features/src/models/mod.rs::module::module",
+          "kind": "Imports",
+          "line": 4,
+          "properties_accessed": [],
+          "to": "language_features/src/models/user.rs::UserPayload::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "language_features/src/models/mod.rs",
+          "id": "language_features/src/models/mod.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "language_features/src/models/order.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "language_features/src/models/order.rs",
+          "id": "language_features/src/models/order.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "language_features/src/models/order.rs",
+          "id": "language_features/src/models/order.rs::Order::class",
+          "kind": "Class",
+          "language": "Rust",
+          "line_end": 4,
+          "line_start": 1,
+          "name": "Order",
+          "signature": "pub struct Order {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "language_features/src/models/user.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "use serde::{Deserialize, Serialize};",
+          "file": "language_features/src/models/user.rs",
+          "from": "language_features/src/models/user.rs::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "ext::serde::package"
+        },
+        {
+          "alias": null,
+          "context": "use serde::{Deserialize, Serialize};",
+          "file": "language_features/src/models/user.rs",
+          "from": "language_features/src/models/user.rs::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "ext::serde::package"
+        },
+        {
+          "alias": "Deserialize",
+          "context": "#[derive(Deserialize)]",
+          "file": "language_features/src/models/user.rs",
+          "from": "language_features/src/models/user.rs::UserPayload::class",
+          "kind": "Implements",
+          "line": 3,
+          "properties_accessed": [],
+          "to": "ext::serde::package"
+        },
+        {
+          "alias": "Serialize",
+          "context": "#[derive(Serialize)]",
+          "file": "language_features/src/models/user.rs",
+          "from": "language_features/src/models/user.rs::UserPayload::class",
+          "kind": "Implements",
+          "line": 3,
+          "properties_accessed": [],
+          "to": "ext::serde::package"
+        },
+        {
+          "alias": "Identify",
+          "context": "impl Identify for UserPayload {",
+          "file": "language_features/src/models/user.rs",
+          "from": "language_features/src/models/user.rs::UserPayload::class",
+          "kind": "Implements",
+          "line": 14,
+          "properties_accessed": [],
+          "to": "language_features/src/models/user.rs::Identify::interface"
+        },
+        {
+          "alias": "UserPayload",
+          "context": "property access",
+          "file": "language_features/src/models/user.rs",
+          "from": "language_features/src/models/user.rs::module::module",
+          "kind": "AccessesProperty",
+          "line": 16,
+          "properties_accessed": [
+            "user_id"
+          ],
+          "to": "language_features/src/models/user.rs::UserPayload::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "language_features/src/models/user.rs",
+          "id": "language_features/src/models/user.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "language_features/src/models/user.rs",
+          "id": "language_features/src/models/user.rs::UserPayload::class",
+          "kind": "Class",
+          "language": "Rust",
+          "line_end": 8,
+          "line_start": 4,
+          "name": "UserPayload",
+          "signature": "pub struct UserPayload {"
+        },
+        {
+          "file": "language_features/src/models/user.rs",
+          "id": "language_features/src/models/user.rs::Identify::interface",
+          "kind": "Interface",
+          "language": "Rust",
+          "line_end": 12,
+          "line_start": 10,
+          "name": "Identify",
+          "signature": "pub trait Identify {"
+        },
+        {
+          "file": "language_features/src/models/user.rs",
+          "id": "language_features/src/models/user.rs::UserPayload::identity::method",
+          "kind": "Method",
+          "language": "Rust",
+          "line_end": 17,
+          "line_start": 15,
+          "name": "identity",
+          "signature": "impl UserPayload :: fn identity(&self) -> String {"
+        },
+        {
+          "file": "language_features/src/models/user.rs",
+          "id": "language_features/src/models/user.rs::Status::enum",
+          "kind": "Enum",
+          "language": "Rust",
+          "line_end": 23,
+          "line_start": 20,
+          "name": "Status",
+          "signature": "pub enum Status {"
+        },
+        {
+          "file": "language_features/src/models/user.rs",
+          "id": "language_features/src/models/user.rs::Status::Active::enum_variant",
+          "kind": "EnumVariant",
+          "language": "Rust",
+          "line_end": 21,
+          "line_start": 21,
+          "name": "Active",
+          "signature": "Active"
+        },
+        {
+          "file": "language_features/src/models/user.rs",
+          "id": "language_features/src/models/user.rs::Status::Suspended::enum_variant",
+          "kind": "EnumVariant",
+          "language": "Rust",
+          "line_end": 22,
+          "line_start": 22,
+          "name": "Suspended",
+          "signature": "Suspended"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "language_features/src/services/mod.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "language_features/src/services/mod.rs",
+          "id": "language_features/src/services/mod.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        }
+      ]
+    },
+    {
+      "diagnostics": [
+        {
+          "category": "Resolution",
+          "file": "language_features/src/services/reporting.rs",
+          "level": "Warning",
+          "line": 1,
+          "message": "unable to resolve import 'crate::models::order::Order'"
+        },
+        {
+          "category": "Resolution",
+          "file": "language_features/src/services/reporting.rs",
+          "level": "Warning",
+          "line": 2,
+          "message": "unable to resolve import 'crate::models::user::Identify'"
+        },
+        {
+          "category": "Resolution",
+          "file": "language_features/src/services/reporting.rs",
+          "level": "Warning",
+          "line": 2,
+          "message": "unable to resolve import 'crate::models::user::UserPayload'"
+        },
+        {
+          "category": "Resolution",
+          "file": "language_features/src/services/reporting.rs",
+          "level": "Warning",
+          "line": 3,
+          "message": "unable to resolve import 'crate::models::*'"
+        },
+        {
+          "category": "Resolution",
+          "file": "language_features/src/services/reporting.rs",
+          "level": "Warning",
+          "line": 9,
+          "message": "unable to resolve type 'Customer' referenced in language_features/src/services/reporting.rs"
+        },
+        {
+          "category": "Resolution",
+          "file": "language_features/src/services/reporting.rs",
+          "level": "Warning",
+          "line": 9,
+          "message": "unable to resolve type 'Order' referenced in language_features/src/services/reporting.rs"
+        }
+      ],
+      "file": "language_features/src/services/reporting.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "language_features/src/services/reporting.rs",
+          "id": "language_features/src/services/reporting.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "language_features/src/services/reporting.rs",
+          "id": "language_features/src/services/reporting.rs::Reporter::class",
+          "kind": "Class",
+          "language": "Rust",
+          "line_end": 5,
+          "line_start": 5,
+          "name": "Reporter",
+          "signature": "pub struct Reporter;"
+        },
+        {
+          "file": "language_features/src/services/reporting.rs",
+          "id": "language_features/src/services/reporting.rs::Reporter::summarize::method",
+          "kind": "Method",
+          "language": "Rust",
+          "line_end": 10,
+          "line_start": 8,
+          "name": "summarize",
+          "signature": "impl Reporter :: pub fn summarize(&self, customer: &Customer, order: &Order) -> String {"
+        },
+        {
+          "file": "language_features/src/services/reporting.rs",
+          "id": "language_features/src/services/reporting.rs::Reporter::label::method",
+          "kind": "Method",
+          "language": "Rust",
+          "line_end": 14,
+          "line_start": 12,
+          "name": "label",
+          "signature": "impl Reporter :: pub fn label<T: Identify>(&self, subject: &T) -> String {"
+        }
+      ]
+    }
+  ],
+  "language_stats": {
+    "Rust": 10
+  },
+  "root": "<root>",
+  "schema_version": 1,
+  "stats": {
+    "alias_chains": 0,
+    "diagnostics": 8,
+    "files_indexed": 10,
+    "relationships": 7,
+    "symbols": 24
+  }
+}

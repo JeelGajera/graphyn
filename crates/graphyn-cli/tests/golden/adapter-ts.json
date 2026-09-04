@@ -1,0 +1,2706 @@
+{
+  "files": [
+    {
+      "diagnostics": [],
+      "file": "astro_component/src/components/Card.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "astro_component/src/components/Card.ts",
+          "id": "astro_component/src/components/Card.ts::Card::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "Card",
+          "signature": "function Card(): string { return \"<div>card</div>\"; }"
+        },
+        {
+          "file": "astro_component/src/components/Card.ts",
+          "id": "astro_component/src/components/Card.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "astro_component/src/layouts/Layout.astro",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "import type { LayoutProps } from \"../types/layout\";",
+          "file": "astro_component/src/layouts/Layout.astro",
+          "from": "astro_component/src/layouts/Layout.astro::title::variable",
+          "kind": "Imports",
+          "line": 2,
+          "properties_accessed": [],
+          "to": "astro_component/src/types/layout.ts::LayoutProps::interface"
+        },
+        {
+          "alias": "type",
+          "context": "import type { LayoutProps } from \"../types/layout\";",
+          "file": "astro_component/src/layouts/Layout.astro",
+          "from": "astro_component/src/layouts/Layout.astro::title::variable",
+          "kind": "Imports",
+          "line": 2,
+          "properties_accessed": [],
+          "to": "astro_component/src/types/layout.ts::LayoutProps::interface"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "astro_component/src/layouts/Layout.astro",
+          "id": "astro_component/src/layouts/Layout.astro::title::variable",
+          "kind": "Variable",
+          "language": "TypeScript",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "title",
+          "signature": "{ title } = Astro.props as LayoutProps"
+        },
+        {
+          "file": "astro_component/src/layouts/Layout.astro",
+          "id": "astro_component/src/layouts/Layout.astro::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [
+        {
+          "category": "Resolution",
+          "file": "astro_component/src/pages/index.astro",
+          "level": "Warning",
+          "line": 2,
+          "message": "unable to resolve symbol 'Layout' from astro_component/src/layouts/Layout.astro"
+        }
+      ],
+      "file": "astro_component/src/pages/index.astro",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "import { Layout } from \"../layouts/Layout.astro\";",
+          "file": "astro_component/src/pages/index.astro",
+          "from": "astro_component/src/pages/index.astro::data::variable",
+          "kind": "Imports",
+          "line": 2,
+          "properties_accessed": [],
+          "to": "__UNRESOLVED_IMPORT__|../layouts/Layout.astro|Layout"
+        },
+        {
+          "alias": null,
+          "context": "import { Card } from \"../components/Card\";",
+          "file": "astro_component/src/pages/index.astro",
+          "from": "astro_component/src/pages/index.astro::data::variable",
+          "kind": "Imports",
+          "line": 3,
+          "properties_accessed": [],
+          "to": "astro_component/src/components/Card.ts::Card::function"
+        },
+        {
+          "alias": null,
+          "context": "import type { PageData } from \"../types\";",
+          "file": "astro_component/src/pages/index.astro",
+          "from": "astro_component/src/pages/index.astro::data::variable",
+          "kind": "Imports",
+          "line": 4,
+          "properties_accessed": [],
+          "to": "astro_component/src/types/index.ts::PageData::interface"
+        },
+        {
+          "alias": "type",
+          "context": "import type { PageData } from \"../types\";",
+          "file": "astro_component/src/pages/index.astro",
+          "from": "astro_component/src/pages/index.astro::data::variable",
+          "kind": "Imports",
+          "line": 4,
+          "properties_accessed": [],
+          "to": "astro_component/src/types/index.ts::PageData::interface"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "astro_component/src/pages/index.astro",
+          "id": "astro_component/src/pages/index.astro::data::variable",
+          "kind": "Variable",
+          "language": "TypeScript",
+          "line_end": 6,
+          "line_start": 6,
+          "name": "data",
+          "signature": "data: PageData = { title: \"Home\" }"
+        },
+        {
+          "file": "astro_component/src/pages/index.astro",
+          "id": "astro_component/src/pages/index.astro::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "astro_component/src/types/index.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "astro_component/src/types/index.ts",
+          "id": "astro_component/src/types/index.ts::PageData::interface",
+          "kind": "Interface",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "PageData",
+          "signature": "interface PageData { title: string; }"
+        },
+        {
+          "file": "astro_component/src/types/index.ts",
+          "id": "astro_component/src/types/index.ts::title::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 2,
+          "line_start": 2,
+          "name": "title",
+          "signature": "title: string"
+        },
+        {
+          "file": "astro_component/src/types/index.ts",
+          "id": "astro_component/src/types/index.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "astro_component/src/types/layout.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "astro_component/src/types/layout.ts",
+          "id": "astro_component/src/types/layout.ts::LayoutProps::interface",
+          "kind": "Interface",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "LayoutProps",
+          "signature": "interface LayoutProps { title: string; }"
+        },
+        {
+          "file": "astro_component/src/types/layout.ts",
+          "id": "astro_component/src/types/layout.ts::title::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 2,
+          "line_start": 2,
+          "name": "title",
+          "signature": "title: string"
+        },
+        {
+          "file": "astro_component/src/types/layout.ts",
+          "id": "astro_component/src/types/layout.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "barrel_chain/src/app.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "import { renderBlockquote, renderCodeBlock } from './components';",
+          "file": "barrel_chain/src/app.ts",
+          "from": "barrel_chain/src/app.ts::render::function",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "barrel_chain/src/components/blockquote.ts::renderBlockquote::function"
+        },
+        {
+          "alias": null,
+          "context": "import { renderBlockquote, renderCodeBlock } from './components';",
+          "file": "barrel_chain/src/app.ts",
+          "from": "barrel_chain/src/app.ts::render::function",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "barrel_chain/src/components/code.ts::renderCodeBlock::function"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "barrel_chain/src/app.ts",
+          "id": "barrel_chain/src/app.ts::render::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "render",
+          "signature": "function render(): string { return renderBlockquote() + renderCodeBlock(); }"
+        },
+        {
+          "file": "barrel_chain/src/app.ts",
+          "id": "barrel_chain/src/app.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "barrel_chain/src/components/blockquote.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "barrel_chain/src/components/blockquote.ts",
+          "id": "barrel_chain/src/components/blockquote.ts::renderBlockquote::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "renderBlockquote",
+          "signature": "function renderBlockquote(): string { return '<blockquote>'; }"
+        },
+        {
+          "file": "barrel_chain/src/components/blockquote.ts",
+          "id": "barrel_chain/src/components/blockquote.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "barrel_chain/src/components/code.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "barrel_chain/src/components/code.ts",
+          "id": "barrel_chain/src/components/code.ts::renderCodeBlock::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "renderCodeBlock",
+          "signature": "function renderCodeBlock(): string { return '<pre><code>'; }"
+        },
+        {
+          "file": "barrel_chain/src/components/code.ts",
+          "id": "barrel_chain/src/components/code.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "barrel_chain/src/components/index.ts",
+      "language": "TypeScript",
+      "re_exports": [
+        {
+          "exported_name": "renderBlockquote",
+          "source_module": "./blockquote"
+        },
+        {
+          "exported_name": "renderCodeBlock",
+          "source_module": "./code"
+        }
+      ],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "export { renderBlockquote } from './blockquote';",
+          "file": "barrel_chain/src/components/index.ts",
+          "from": "barrel_chain/src/components/index.ts::module::module",
+          "kind": "ReExports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "barrel_chain/src/components/blockquote.ts::renderBlockquote::function"
+        },
+        {
+          "alias": null,
+          "context": "export { renderCodeBlock } from './code';",
+          "file": "barrel_chain/src/components/index.ts",
+          "from": "barrel_chain/src/components/index.ts::module::module",
+          "kind": "ReExports",
+          "line": 2,
+          "properties_accessed": [],
+          "to": "barrel_chain/src/components/code.ts::renderCodeBlock::function"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "barrel_chain/src/components/index.ts",
+          "id": "barrel_chain/src/components/index.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "builtin_types/src/app.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": "Config",
+          "context": "property access",
+          "file": "builtin_types/src/app.ts",
+          "from": "builtin_types/src/app.ts::Config::interface",
+          "kind": "AccessesProperty",
+          "line": 16,
+          "properties_accessed": [
+            "host"
+          ],
+          "to": "builtin_types/src/app.ts::Config::interface"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "builtin_types/src/app.ts",
+          "id": "builtin_types/src/app.ts::Config::interface",
+          "kind": "Interface",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "Config",
+          "signature": "interface Config { host: string; port: number; }"
+        },
+        {
+          "file": "builtin_types/src/app.ts",
+          "id": "builtin_types/src/app.ts::PartialConfig::type_alias",
+          "kind": "TypeAlias",
+          "language": "TypeScript",
+          "line_end": 13,
+          "line_start": 13,
+          "name": "PartialConfig",
+          "signature": "type PartialConfig = Partial<Config>;"
+        },
+        {
+          "file": "builtin_types/src/app.ts",
+          "id": "builtin_types/src/app.ts::greet::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 6,
+          "line_start": 6,
+          "name": "greet",
+          "signature": "function greet(name: string): string { return name.toUpperCase(); }"
+        },
+        {
+          "file": "builtin_types/src/app.ts",
+          "id": "builtin_types/src/app.ts::host::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 2,
+          "line_start": 2,
+          "name": "host",
+          "signature": "host: string"
+        },
+        {
+          "file": "builtin_types/src/app.ts",
+          "id": "builtin_types/src/app.ts::items::variable",
+          "kind": "Variable",
+          "language": "TypeScript",
+          "line_end": 10,
+          "line_start": 10,
+          "name": "items",
+          "signature": "items: Array<number> = [1, 2, 3]"
+        },
+        {
+          "file": "builtin_types/src/app.ts",
+          "id": "builtin_types/src/app.ts::len::variable",
+          "kind": "Variable",
+          "language": "TypeScript",
+          "line_end": 11,
+          "line_start": 11,
+          "name": "len",
+          "signature": "len = items.length"
+        },
+        {
+          "file": "builtin_types/src/app.ts",
+          "id": "builtin_types/src/app.ts::port::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "port",
+          "signature": "port: number"
+        },
+        {
+          "file": "builtin_types/src/app.ts",
+          "id": "builtin_types/src/app.ts::processConfig::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 15,
+          "line_start": 15,
+          "name": "processConfig",
+          "signature": "function processConfig(cfg: Config): string { return cfg.host; }"
+        },
+        {
+          "file": "builtin_types/src/app.ts",
+          "id": "builtin_types/src/app.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "collision/src/models/a.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "collision/src/models/a.ts",
+          "id": "collision/src/models/a.ts::Payload::interface",
+          "kind": "Interface",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "Payload",
+          "signature": "interface Payload { id: string; }"
+        },
+        {
+          "file": "collision/src/models/a.ts",
+          "id": "collision/src/models/a.ts::id::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 2,
+          "line_start": 2,
+          "name": "id",
+          "signature": "id: string"
+        },
+        {
+          "file": "collision/src/models/a.ts",
+          "id": "collision/src/models/a.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "collision/src/models/b.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "collision/src/models/b.ts",
+          "id": "collision/src/models/b.ts::Payload::interface",
+          "kind": "Interface",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "Payload",
+          "signature": "interface Payload { id: string; }"
+        },
+        {
+          "file": "collision/src/models/b.ts",
+          "id": "collision/src/models/b.ts::id::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 2,
+          "line_start": 2,
+          "name": "id",
+          "signature": "id: string"
+        },
+        {
+          "file": "collision/src/models/b.ts",
+          "id": "collision/src/models/b.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [
+        {
+          "category": "Resolution",
+          "file": "collision/src/usage.ts",
+          "level": "Warning",
+          "line": null,
+          "message": "unable to resolve property-access type 'Payload' in collision/src/usage.ts"
+        }
+      ],
+      "file": "collision/src/usage.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": "Payload",
+          "context": "property access",
+          "file": "collision/src/usage.ts",
+          "from": "collision/src/usage.ts::consume::function",
+          "kind": "AccessesProperty",
+          "line": 2,
+          "properties_accessed": [
+            "id"
+          ],
+          "to": "__UNRESOLVED_LOCAL_TYPE__|Payload"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "collision/src/usage.ts",
+          "id": "collision/src/usage.ts::consume::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "consume",
+          "signature": "function consume(data: Payload): string { return data.id; }"
+        },
+        {
+          "file": "collision/src/usage.ts",
+          "id": "collision/src/usage.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [
+        {
+          "category": "Resolution",
+          "file": "cyclic_barrel/src/a.ts",
+          "level": "Warning",
+          "line": null,
+          "message": "cyclic re-export detected for 'foo': cyclic_barrel/src/a.ts → cyclic_barrel/src/b.ts"
+        },
+        {
+          "category": "Resolution",
+          "file": "cyclic_barrel/src/a.ts",
+          "level": "Warning",
+          "line": 1,
+          "message": "unable to resolve symbol 'foo' from cyclic_barrel/src/b.ts"
+        }
+      ],
+      "file": "cyclic_barrel/src/a.ts",
+      "language": "TypeScript",
+      "re_exports": [
+        {
+          "exported_name": "foo",
+          "source_module": "./b"
+        }
+      ],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "export { foo } from './b';",
+          "file": "cyclic_barrel/src/a.ts",
+          "from": "cyclic_barrel/src/a.ts::module::module",
+          "kind": "ReExports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "__UNRESOLVED_IMPORT__|./b|foo"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "cyclic_barrel/src/a.ts",
+          "id": "cyclic_barrel/src/a.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [
+        {
+          "category": "Resolution",
+          "file": "cyclic_barrel/src/b.ts",
+          "level": "Warning",
+          "line": null,
+          "message": "cyclic re-export detected for 'foo': cyclic_barrel/src/b.ts → cyclic_barrel/src/a.ts"
+        },
+        {
+          "category": "Resolution",
+          "file": "cyclic_barrel/src/app.ts",
+          "level": "Warning",
+          "line": 1,
+          "message": "unable to resolve symbol 'foo' from cyclic_barrel/src/a.ts"
+        }
+      ],
+      "file": "cyclic_barrel/src/app.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "import { foo } from './a';",
+          "file": "cyclic_barrel/src/app.ts",
+          "from": "cyclic_barrel/src/app.ts::main::function",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "__UNRESOLVED_IMPORT__|./a|foo"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "cyclic_barrel/src/app.ts",
+          "id": "cyclic_barrel/src/app.ts::main::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "main",
+          "signature": "function main() { return foo; }"
+        },
+        {
+          "file": "cyclic_barrel/src/app.ts",
+          "id": "cyclic_barrel/src/app.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [
+        {
+          "category": "Resolution",
+          "file": "cyclic_barrel/src/b.ts",
+          "level": "Warning",
+          "line": null,
+          "message": "cyclic re-export detected for 'foo': cyclic_barrel/src/b.ts → cyclic_barrel/src/a.ts"
+        },
+        {
+          "category": "Resolution",
+          "file": "cyclic_barrel/src/b.ts",
+          "level": "Warning",
+          "line": 1,
+          "message": "unable to resolve symbol 'foo' from cyclic_barrel/src/a.ts"
+        }
+      ],
+      "file": "cyclic_barrel/src/b.ts",
+      "language": "TypeScript",
+      "re_exports": [
+        {
+          "exported_name": "foo",
+          "source_module": "./a"
+        }
+      ],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "export { foo } from './a';",
+          "file": "cyclic_barrel/src/b.ts",
+          "from": "cyclic_barrel/src/b.ts::module::module",
+          "kind": "ReExports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "__UNRESOLVED_IMPORT__|./a|foo"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "cyclic_barrel/src/b.ts",
+          "id": "cyclic_barrel/src/b.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "deep_barrel/src/app.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "import { renderBlockquote } from './lib';",
+          "file": "deep_barrel/src/app.ts",
+          "from": "deep_barrel/src/app.ts::main::function",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "deep_barrel/src/lib/renderers/blockquote.ts::renderBlockquote::function"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "deep_barrel/src/app.ts",
+          "id": "deep_barrel/src/app.ts::main::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "main",
+          "signature": "function main(): string { return renderBlockquote(); }"
+        },
+        {
+          "file": "deep_barrel/src/app.ts",
+          "id": "deep_barrel/src/app.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "deep_barrel/src/lib/index.ts",
+      "language": "TypeScript",
+      "re_exports": [
+        {
+          "exported_name": "renderBlockquote",
+          "source_module": "./renderers"
+        }
+      ],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "export { renderBlockquote } from './renderers';",
+          "file": "deep_barrel/src/lib/index.ts",
+          "from": "deep_barrel/src/lib/index.ts::module::module",
+          "kind": "ReExports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "deep_barrel/src/lib/renderers/blockquote.ts::renderBlockquote::function"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "deep_barrel/src/lib/index.ts",
+          "id": "deep_barrel/src/lib/index.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "deep_barrel/src/lib/renderers/blockquote.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "deep_barrel/src/lib/renderers/blockquote.ts",
+          "id": "deep_barrel/src/lib/renderers/blockquote.ts::renderBlockquote::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "renderBlockquote",
+          "signature": "function renderBlockquote(): string { return '<blockquote>'; }"
+        },
+        {
+          "file": "deep_barrel/src/lib/renderers/blockquote.ts",
+          "id": "deep_barrel/src/lib/renderers/blockquote.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "deep_barrel/src/lib/renderers/index.ts",
+      "language": "TypeScript",
+      "re_exports": [
+        {
+          "exported_name": "renderBlockquote",
+          "source_module": "./blockquote"
+        }
+      ],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "export { renderBlockquote } from './blockquote';",
+          "file": "deep_barrel/src/lib/renderers/index.ts",
+          "from": "deep_barrel/src/lib/renderers/index.ts::module::module",
+          "kind": "ReExports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "deep_barrel/src/lib/renderers/blockquote.ts::renderBlockquote::function"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "deep_barrel/src/lib/renderers/index.ts",
+          "id": "deep_barrel/src/lib/renderers/index.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "deep_dependency/src/a/b/mapper.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": "DeepAccount",
+          "context": "import { Account as DeepAccount } from '../../models/account';",
+          "file": "deep_dependency/src/a/b/mapper.ts",
+          "from": "deep_dependency/src/a/b/mapper.ts::mapAccount::function",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [
+            "id"
+          ],
+          "to": "deep_dependency/src/models/account.ts::Account::class"
+        },
+        {
+          "alias": "DeepAccount",
+          "context": "property access",
+          "file": "deep_dependency/src/a/b/mapper.ts",
+          "from": "deep_dependency/src/a/b/mapper.ts::mapAccount::function",
+          "kind": "AccessesProperty",
+          "line": 4,
+          "properties_accessed": [
+            "id"
+          ],
+          "to": "deep_dependency/src/models/account.ts::Account::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "deep_dependency/src/a/b/mapper.ts",
+          "id": "deep_dependency/src/a/b/mapper.ts::mapAccount::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "mapAccount",
+          "signature": "function mapAccount(input: DeepAccount): string { return input.id; }"
+        },
+        {
+          "file": "deep_dependency/src/a/b/mapper.ts",
+          "id": "deep_dependency/src/a/b/mapper.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "deep_dependency/src/models/account.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "deep_dependency/src/models/account.ts",
+          "id": "deep_dependency/src/models/account.ts::Account::class",
+          "kind": "Class",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "Account",
+          "signature": "class Account { id: string; }"
+        },
+        {
+          "file": "deep_dependency/src/models/account.ts",
+          "id": "deep_dependency/src/models/account.ts::id::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 2,
+          "line_start": 2,
+          "name": "id",
+          "signature": "id: string"
+        },
+        {
+          "file": "deep_dependency/src/models/account.ts",
+          "id": "deep_dependency/src/models/account.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "di_injection/src/email.service.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "di_injection/src/email.service.ts",
+          "id": "di_injection/src/email.service.ts::EmailService::class",
+          "kind": "Class",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "EmailService",
+          "signature": "class EmailService { async sendReceipt(to: string): Promise<void> {} async sendWelcome(to: string): Promise<void> {} }"
+        },
+        {
+          "file": "di_injection/src/email.service.ts",
+          "id": "di_injection/src/email.service.ts::sendReceipt::method",
+          "kind": "Method",
+          "language": "TypeScript",
+          "line_end": 2,
+          "line_start": 2,
+          "name": "sendReceipt",
+          "signature": "async sendReceipt(to: string): Promise<void> {}"
+        },
+        {
+          "file": "di_injection/src/email.service.ts",
+          "id": "di_injection/src/email.service.ts::sendWelcome::method",
+          "kind": "Method",
+          "language": "TypeScript",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "sendWelcome",
+          "signature": "async sendWelcome(to: string): Promise<void> {}"
+        },
+        {
+          "file": "di_injection/src/email.service.ts",
+          "id": "di_injection/src/email.service.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "di_injection/src/payment.service.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "import { UserRepository } from './user.repository';",
+          "file": "di_injection/src/payment.service.ts",
+          "from": "di_injection/src/payment.service.ts::PaymentService::class",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [
+            "findById"
+          ],
+          "to": "di_injection/src/user.repository.ts::UserRepository::class"
+        },
+        {
+          "alias": null,
+          "context": "import { EmailService } from './email.service';",
+          "file": "di_injection/src/payment.service.ts",
+          "from": "di_injection/src/payment.service.ts::PaymentService::class",
+          "kind": "Imports",
+          "line": 2,
+          "properties_accessed": [
+            "sendReceipt"
+          ],
+          "to": "di_injection/src/email.service.ts::EmailService::class"
+        },
+        {
+          "alias": "UserRepository",
+          "context": "property access",
+          "file": "di_injection/src/payment.service.ts",
+          "from": "di_injection/src/payment.service.ts::PaymentService::class",
+          "kind": "AccessesProperty",
+          "line": 11,
+          "properties_accessed": [
+            "findById"
+          ],
+          "to": "di_injection/src/user.repository.ts::UserRepository::class"
+        },
+        {
+          "alias": "UserRepository",
+          "context": "method property access: processPayment",
+          "file": "di_injection/src/payment.service.ts",
+          "from": "di_injection/src/payment.service.ts::processPayment::method",
+          "kind": "AccessesProperty",
+          "line": 11,
+          "properties_accessed": [
+            "findById"
+          ],
+          "to": "di_injection/src/user.repository.ts::UserRepository::class"
+        },
+        {
+          "alias": "EmailService",
+          "context": "property access",
+          "file": "di_injection/src/payment.service.ts",
+          "from": "di_injection/src/payment.service.ts::PaymentService::class",
+          "kind": "AccessesProperty",
+          "line": 12,
+          "properties_accessed": [
+            "sendReceipt"
+          ],
+          "to": "di_injection/src/email.service.ts::EmailService::class"
+        },
+        {
+          "alias": "EmailService",
+          "context": "method property access: processPayment",
+          "file": "di_injection/src/payment.service.ts",
+          "from": "di_injection/src/payment.service.ts::processPayment::method",
+          "kind": "AccessesProperty",
+          "line": 12,
+          "properties_accessed": [
+            "sendReceipt"
+          ],
+          "to": "di_injection/src/email.service.ts::EmailService::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "di_injection/src/payment.service.ts",
+          "id": "di_injection/src/payment.service.ts::PaymentService::class",
+          "kind": "Class",
+          "language": "TypeScript",
+          "line_end": 4,
+          "line_start": 4,
+          "name": "PaymentService",
+          "signature": "class PaymentService { constructor( private readonly userRepo: UserRepository, private readonly emailService: EmailService, ) {} async processPayment(userId: string): Promise<void> { const user = await this.userRepo.findById(userId); await this.emailService.sendReceipt('test@test.com'); } }"
+        },
+        {
+          "file": "di_injection/src/payment.service.ts",
+          "id": "di_injection/src/payment.service.ts::constructor::method",
+          "kind": "Method",
+          "language": "TypeScript",
+          "line_end": 5,
+          "line_start": 5,
+          "name": "constructor",
+          "signature": "constructor( private readonly userRepo: UserRepository, private readonly emailService: EmailService, ) {}"
+        },
+        {
+          "file": "di_injection/src/payment.service.ts",
+          "id": "di_injection/src/payment.service.ts::processPayment::method",
+          "kind": "Method",
+          "language": "TypeScript",
+          "line_end": 10,
+          "line_start": 10,
+          "name": "processPayment",
+          "signature": "async processPayment(userId: string): Promise<void> { const user = await this.userRepo.findById(userId); await this.emailService.sendReceipt('test@test.com'); }"
+        },
+        {
+          "file": "di_injection/src/payment.service.ts",
+          "id": "di_injection/src/payment.service.ts::user::variable",
+          "kind": "Variable",
+          "language": "TypeScript",
+          "line_end": 11,
+          "line_start": 11,
+          "name": "user",
+          "signature": "user = await this.userRepo.findById(userId)"
+        },
+        {
+          "file": "di_injection/src/payment.service.ts",
+          "id": "di_injection/src/payment.service.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "di_injection/src/user.repository.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "di_injection/src/user.repository.ts",
+          "id": "di_injection/src/user.repository.ts::User::type_alias",
+          "kind": "TypeAlias",
+          "language": "TypeScript",
+          "line_end": 6,
+          "line_start": 6,
+          "name": "User",
+          "signature": "type User = { id: string; email: string };"
+        },
+        {
+          "file": "di_injection/src/user.repository.ts",
+          "id": "di_injection/src/user.repository.ts::UserRepository::class",
+          "kind": "Class",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "UserRepository",
+          "signature": "class UserRepository { async findById(id: string): Promise<User | null> { return null; } async findAll(): Promise<User[]> { return []; } }"
+        },
+        {
+          "file": "di_injection/src/user.repository.ts",
+          "id": "di_injection/src/user.repository.ts::email::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 6,
+          "line_start": 6,
+          "name": "email",
+          "signature": "email: string"
+        },
+        {
+          "file": "di_injection/src/user.repository.ts",
+          "id": "di_injection/src/user.repository.ts::findAll::method",
+          "kind": "Method",
+          "language": "TypeScript",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "findAll",
+          "signature": "async findAll(): Promise<User[]> { return []; }"
+        },
+        {
+          "file": "di_injection/src/user.repository.ts",
+          "id": "di_injection/src/user.repository.ts::findById::method",
+          "kind": "Method",
+          "language": "TypeScript",
+          "line_end": 2,
+          "line_start": 2,
+          "name": "findById",
+          "signature": "async findById(id: string): Promise<User | null> { return null; }"
+        },
+        {
+          "file": "di_injection/src/user.repository.ts",
+          "id": "di_injection/src/user.repository.ts::id::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 6,
+          "line_start": 6,
+          "name": "id",
+          "signature": "id: string"
+        },
+        {
+          "file": "di_injection/src/user.repository.ts",
+          "id": "di_injection/src/user.repository.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "dist_excluded/src/app.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "dist_excluded/src/app.ts",
+          "id": "dist_excluded/src/app.ts::hello::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "hello",
+          "signature": "function hello(): string { return 'hello'; }"
+        },
+        {
+          "file": "dist_excluded/src/app.ts",
+          "id": "dist_excluded/src/app.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "esm_extensions/src/config.mjs",
+      "language": "JavaScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "esm_extensions/src/config.mjs",
+          "id": "esm_extensions/src/config.mjs::port::variable",
+          "kind": "Variable",
+          "language": "JavaScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "port",
+          "signature": "port = 3000"
+        },
+        {
+          "file": "esm_extensions/src/config.mjs",
+          "id": "esm_extensions/src/config.mjs::module::module",
+          "kind": "Module",
+          "language": "JavaScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "esm_extensions/src/handler.cts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "esm_extensions/src/handler.cts",
+          "id": "esm_extensions/src/handler.cts::handler::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "handler",
+          "signature": "function handler(): void {}"
+        },
+        {
+          "file": "esm_extensions/src/handler.cts",
+          "id": "esm_extensions/src/handler.cts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "esm_extensions/src/server.mts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "import { handler } from \"./handler\";",
+          "file": "esm_extensions/src/server.mts",
+          "from": "esm_extensions/src/server.mts::serve::function",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "esm_extensions/src/handler.cts::handler::function"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "esm_extensions/src/server.mts",
+          "id": "esm_extensions/src/server.mts::serve::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "serve",
+          "signature": "function serve(): void { handler(); }"
+        },
+        {
+          "file": "esm_extensions/src/server.mts",
+          "id": "esm_extensions/src/server.mts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "external_imports/src/app.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": "React",
+          "context": "import React from 'react';",
+          "file": "external_imports/src/app.ts",
+          "from": "external_imports/src/app.ts::main::function",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "ext::react::package"
+        },
+        {
+          "alias": null,
+          "context": "import { useState } from 'react';",
+          "file": "external_imports/src/app.ts",
+          "from": "external_imports/src/app.ts::main::function",
+          "kind": "Imports",
+          "line": 2,
+          "properties_accessed": [],
+          "to": "ext::react::package"
+        },
+        {
+          "alias": "path",
+          "context": "import path from 'path';",
+          "file": "external_imports/src/app.ts",
+          "from": "external_imports/src/app.ts::main::function",
+          "kind": "Imports",
+          "line": 3,
+          "properties_accessed": [],
+          "to": "ext::path::package"
+        },
+        {
+          "alias": null,
+          "context": "import { createStore } from '@quantajs/core';",
+          "file": "external_imports/src/app.ts",
+          "from": "external_imports/src/app.ts::main::function",
+          "kind": "Imports",
+          "line": 4,
+          "properties_accessed": [],
+          "to": "ext::@quantajs/core::package"
+        },
+        {
+          "alias": null,
+          "context": "import { localHelper } from './utils';",
+          "file": "external_imports/src/app.ts",
+          "from": "external_imports/src/app.ts::main::function",
+          "kind": "Imports",
+          "line": 5,
+          "properties_accessed": [],
+          "to": "external_imports/src/utils.ts::localHelper::function"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "external_imports/src/app.ts",
+          "id": "external_imports/src/app.ts::main::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 7,
+          "line_start": 7,
+          "name": "main",
+          "signature": "function main() { const result = localHelper(); return result; }"
+        },
+        {
+          "file": "external_imports/src/app.ts",
+          "id": "external_imports/src/app.ts::result::variable",
+          "kind": "Variable",
+          "language": "TypeScript",
+          "line_end": 8,
+          "line_start": 8,
+          "name": "result",
+          "signature": "result = localHelper()"
+        },
+        {
+          "file": "external_imports/src/app.ts",
+          "id": "external_imports/src/app.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "external_imports/src/utils.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "external_imports/src/utils.ts",
+          "id": "external_imports/src/utils.ts::localHelper::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "localHelper",
+          "signature": "function localHelper(): number { return 42; }"
+        },
+        {
+          "file": "external_imports/src/utils.ts",
+          "id": "external_imports/src/utils.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "ignore_filters/src/included.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "ignore_filters/src/included.ts",
+          "id": "ignore_filters/src/included.ts::included::variable",
+          "kind": "Variable",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "included",
+          "signature": "included = 1"
+        },
+        {
+          "file": "ignore_filters/src/included.ts",
+          "id": "ignore_filters/src/included.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "ignore_filters/src/included_dir/keep.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "ignore_filters/src/included_dir/keep.ts",
+          "id": "ignore_filters/src/included_dir/keep.ts::keep::variable",
+          "kind": "Variable",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "keep",
+          "signature": "keep = 1"
+        },
+        {
+          "file": "ignore_filters/src/included_dir/keep.ts",
+          "id": "ignore_filters/src/included_dir/keep.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "multiline_import/src/model.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "multiline_import/src/model.ts",
+          "id": "multiline_import/src/model.ts::Session::interface",
+          "kind": "Interface",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "Session",
+          "signature": "interface Session { token: string; userId: string; }"
+        },
+        {
+          "file": "multiline_import/src/model.ts",
+          "id": "multiline_import/src/model.ts::token::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 2,
+          "line_start": 2,
+          "name": "token",
+          "signature": "token: string"
+        },
+        {
+          "file": "multiline_import/src/model.ts",
+          "id": "multiline_import/src/model.ts::userId::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "userId",
+          "signature": "userId: string"
+        },
+        {
+          "file": "multiline_import/src/model.ts",
+          "id": "multiline_import/src/model.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "multiline_import/src/use.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": "AuthSession",
+          "context": "import { Session as AuthSession, } from './model';",
+          "file": "multiline_import/src/use.ts",
+          "from": "multiline_import/src/use.ts::render::function",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [
+            "token",
+            "userId"
+          ],
+          "to": "multiline_import/src/model.ts::Session::interface"
+        },
+        {
+          "alias": "AuthSession",
+          "context": "property access",
+          "file": "multiline_import/src/use.ts",
+          "from": "multiline_import/src/use.ts::render::function",
+          "kind": "AccessesProperty",
+          "line": 6,
+          "properties_accessed": [
+            "token",
+            "userId"
+          ],
+          "to": "multiline_import/src/model.ts::Session::interface"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "multiline_import/src/use.ts",
+          "id": "multiline_import/src/use.ts::render::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 5,
+          "line_start": 5,
+          "name": "render",
+          "signature": "function render(session: AuthSession): string { return session.userId + ':' + session.token; }"
+        },
+        {
+          "file": "multiline_import/src/use.ts",
+          "id": "multiline_import/src/use.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "nestjs_di/src/app.module.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "import { Module } from '@nestjs/common';",
+          "file": "nestjs_di/src/app.module.ts",
+          "from": "nestjs_di/src/app.module.ts::AppModule::class",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "ext::@nestjs/common::package"
+        },
+        {
+          "alias": null,
+          "context": "import { UserService } from './user.service';",
+          "file": "nestjs_di/src/app.module.ts",
+          "from": "nestjs_di/src/app.module.ts::AppModule::class",
+          "kind": "Imports",
+          "line": 2,
+          "properties_accessed": [],
+          "to": "nestjs_di/src/user.service.ts::UserService::class"
+        },
+        {
+          "alias": null,
+          "context": "import { UserRepository } from './user.repository';",
+          "file": "nestjs_di/src/app.module.ts",
+          "from": "nestjs_di/src/app.module.ts::AppModule::class",
+          "kind": "Imports",
+          "line": 3,
+          "properties_accessed": [],
+          "to": "nestjs_di/src/user.repository.ts::UserRepository::class"
+        },
+        {
+          "alias": null,
+          "context": "@Module providers reference",
+          "file": "nestjs_di/src/app.module.ts",
+          "from": "nestjs_di/src/app.module.ts::AppModule::class",
+          "kind": "UsesType",
+          "line": 5,
+          "properties_accessed": [],
+          "to": "nestjs_di/src/user.repository.ts::UserRepository::class"
+        },
+        {
+          "alias": null,
+          "context": "@Module providers reference",
+          "file": "nestjs_di/src/app.module.ts",
+          "from": "nestjs_di/src/app.module.ts::AppModule::class",
+          "kind": "UsesType",
+          "line": 5,
+          "properties_accessed": [],
+          "to": "nestjs_di/src/user.service.ts::UserService::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "nestjs_di/src/app.module.ts",
+          "id": "nestjs_di/src/app.module.ts::AppModule::class",
+          "kind": "Class",
+          "language": "TypeScript",
+          "line_end": 8,
+          "line_start": 8,
+          "name": "AppModule",
+          "signature": "class AppModule {}"
+        },
+        {
+          "file": "nestjs_di/src/app.module.ts",
+          "id": "nestjs_di/src/app.module.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "nestjs_di/src/user.repository.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "nestjs_di/src/user.repository.ts",
+          "id": "nestjs_di/src/user.repository.ts::UserRepository::class",
+          "kind": "Class",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "UserRepository",
+          "signature": "class UserRepository { async findById(id: string) { return { id }; } }"
+        },
+        {
+          "file": "nestjs_di/src/user.repository.ts",
+          "id": "nestjs_di/src/user.repository.ts::findById::method",
+          "kind": "Method",
+          "language": "TypeScript",
+          "line_end": 2,
+          "line_start": 2,
+          "name": "findById",
+          "signature": "async findById(id: string) { return { id }; }"
+        },
+        {
+          "file": "nestjs_di/src/user.repository.ts",
+          "id": "nestjs_di/src/user.repository.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "nestjs_di/src/user.service.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "import { Injectable } from '@nestjs/common';",
+          "file": "nestjs_di/src/user.service.ts",
+          "from": "nestjs_di/src/user.service.ts::UserService::class",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "ext::@nestjs/common::package"
+        },
+        {
+          "alias": null,
+          "context": "import { UserRepository } from './user.repository';",
+          "file": "nestjs_di/src/user.service.ts",
+          "from": "nestjs_di/src/user.service.ts::UserService::class",
+          "kind": "Imports",
+          "line": 2,
+          "properties_accessed": [
+            "findById"
+          ],
+          "to": "nestjs_di/src/user.repository.ts::UserRepository::class"
+        },
+        {
+          "alias": "UserRepository",
+          "context": "property access",
+          "file": "nestjs_di/src/user.service.ts",
+          "from": "nestjs_di/src/user.service.ts::UserService::class",
+          "kind": "AccessesProperty",
+          "line": 7,
+          "properties_accessed": [
+            "findById"
+          ],
+          "to": "nestjs_di/src/user.repository.ts::UserRepository::class"
+        },
+        {
+          "alias": "UserRepository",
+          "context": "method property access: findOne",
+          "file": "nestjs_di/src/user.service.ts",
+          "from": "nestjs_di/src/user.service.ts::findOne::method",
+          "kind": "AccessesProperty",
+          "line": 7,
+          "properties_accessed": [
+            "findById"
+          ],
+          "to": "nestjs_di/src/user.repository.ts::UserRepository::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "nestjs_di/src/user.service.ts",
+          "id": "nestjs_di/src/user.service.ts::UserService::class",
+          "kind": "Class",
+          "language": "TypeScript",
+          "line_end": 5,
+          "line_start": 5,
+          "name": "UserService",
+          "signature": "class UserService { constructor(private readonly userRepo: UserRepository) {} async findOne(id: string) { return this.userRepo.findById(id); } }"
+        },
+        {
+          "file": "nestjs_di/src/user.service.ts",
+          "id": "nestjs_di/src/user.service.ts::constructor::method",
+          "kind": "Method",
+          "language": "TypeScript",
+          "line_end": 6,
+          "line_start": 6,
+          "name": "constructor",
+          "signature": "constructor(private readonly userRepo: UserRepository) {}"
+        },
+        {
+          "file": "nestjs_di/src/user.service.ts",
+          "id": "nestjs_di/src/user.service.ts::findOne::method",
+          "kind": "Method",
+          "language": "TypeScript",
+          "line_end": 7,
+          "line_start": 7,
+          "name": "findOne",
+          "signature": "async findOne(id: string) { return this.userRepo.findById(id); }"
+        },
+        {
+          "file": "nestjs_di/src/user.service.ts",
+          "id": "nestjs_di/src/user.service.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "property_access/src/types.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "property_access/src/types.ts",
+          "id": "property_access/src/types.ts::Session::interface",
+          "kind": "Interface",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "Session",
+          "signature": "interface Session { userId: string; token: string; }"
+        },
+        {
+          "file": "property_access/src/types.ts",
+          "id": "property_access/src/types.ts::token::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "token",
+          "signature": "token: string"
+        },
+        {
+          "file": "property_access/src/types.ts",
+          "id": "property_access/src/types.ts::userId::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 2,
+          "line_start": 2,
+          "name": "userId",
+          "signature": "userId: string"
+        },
+        {
+          "file": "property_access/src/types.ts",
+          "id": "property_access/src/types.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "property_access/src/usage.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "import { Session } from './types';",
+          "file": "property_access/src/usage.ts",
+          "from": "property_access/src/usage.ts::render::function",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [
+            "token",
+            "userId"
+          ],
+          "to": "property_access/src/types.ts::Session::interface"
+        },
+        {
+          "alias": "Session",
+          "context": "property access",
+          "file": "property_access/src/usage.ts",
+          "from": "property_access/src/usage.ts::render::function",
+          "kind": "AccessesProperty",
+          "line": 4,
+          "properties_accessed": [
+            "token",
+            "userId"
+          ],
+          "to": "property_access/src/types.ts::Session::interface"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "property_access/src/usage.ts",
+          "id": "property_access/src/usage.ts::render::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "render",
+          "signature": "function render(session: Session): string { return `${session.userId}-${session.token}`; }"
+        },
+        {
+          "file": "property_access/src/usage.ts",
+          "id": "property_access/src/usage.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "re_exports/src/index.ts",
+      "language": "TypeScript",
+      "re_exports": [
+        {
+          "exported_name": "UserPayload",
+          "source_module": "./user_payload"
+        }
+      ],
+      "relationships": [
+        {
+          "alias": "PublicUser",
+          "context": "export { UserPayload as PublicUser } from './user_payload';",
+          "file": "re_exports/src/index.ts",
+          "from": "re_exports/src/index.ts::module::module",
+          "kind": "ReExports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "re_exports/src/user_payload.ts::UserPayload::class"
+        },
+        {
+          "alias": null,
+          "context": "export * from './user_payload';",
+          "file": "re_exports/src/index.ts",
+          "from": "re_exports/src/index.ts::module::module",
+          "kind": "ReExports",
+          "line": 2,
+          "properties_accessed": [],
+          "to": "re_exports/src/user_payload.ts::UserPayload::class"
+        },
+        {
+          "alias": null,
+          "context": "export * from './user_payload';",
+          "file": "re_exports/src/index.ts",
+          "from": "re_exports/src/index.ts::module::module",
+          "kind": "ReExports",
+          "line": 2,
+          "properties_accessed": [],
+          "to": "re_exports/src/user_payload.ts::userId::property"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "re_exports/src/index.ts",
+          "id": "re_exports/src/index.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "re_exports/src/user_payload.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "re_exports/src/user_payload.ts",
+          "id": "re_exports/src/user_payload.ts::UserPayload::class",
+          "kind": "Class",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "UserPayload",
+          "signature": "class UserPayload { userId: string; }"
+        },
+        {
+          "file": "re_exports/src/user_payload.ts",
+          "id": "re_exports/src/user_payload.ts::userId::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 2,
+          "line_start": 2,
+          "name": "userId",
+          "signature": "userId: string"
+        },
+        {
+          "file": "re_exports/src/user_payload.ts",
+          "id": "re_exports/src/user_payload.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "svelte_component/src/App.svelte",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "import { onMount } from \"svelte\";",
+          "file": "svelte_component/src/App.svelte",
+          "from": "svelte_component/src/App.svelte::user::variable",
+          "kind": "Imports",
+          "line": 2,
+          "properties_accessed": [],
+          "to": "ext::svelte::package"
+        },
+        {
+          "alias": null,
+          "context": "import { UserStore } from \"./stores/UserStore\";",
+          "file": "svelte_component/src/App.svelte",
+          "from": "svelte_component/src/App.svelte::user::variable",
+          "kind": "Imports",
+          "line": 3,
+          "properties_accessed": [],
+          "to": "svelte_component/src/stores/UserStore.ts::UserStore::variable"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "svelte_component/src/App.svelte",
+          "id": "svelte_component/src/App.svelte::user::variable",
+          "kind": "Variable",
+          "language": "TypeScript",
+          "line_end": 5,
+          "line_start": 5,
+          "name": "user",
+          "signature": "user = UserStore.get()"
+        },
+        {
+          "file": "svelte_component/src/App.svelte",
+          "id": "svelte_component/src/App.svelte::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "svelte_component/src/stores/UserStore.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "svelte_component/src/stores/UserStore.ts",
+          "id": "svelte_component/src/stores/UserStore.ts::UserData::interface",
+          "kind": "Interface",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "UserData",
+          "signature": "interface UserData { name: string; }"
+        },
+        {
+          "file": "svelte_component/src/stores/UserStore.ts",
+          "id": "svelte_component/src/stores/UserStore.ts::UserStore::variable",
+          "kind": "Variable",
+          "language": "TypeScript",
+          "line_end": 5,
+          "line_start": 5,
+          "name": "UserStore",
+          "signature": "UserStore = { get: (): UserData => ({ name: \"test\" }), load: () => {}, }"
+        },
+        {
+          "file": "svelte_component/src/stores/UserStore.ts",
+          "id": "svelte_component/src/stores/UserStore.ts::name::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 2,
+          "line_start": 2,
+          "name": "name",
+          "signature": "name: string"
+        },
+        {
+          "file": "svelte_component/src/stores/UserStore.ts",
+          "id": "svelte_component/src/stores/UserStore.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [
+        {
+          "category": "Resolution",
+          "file": "tsconfig_paths/src/app.ts",
+          "level": "Warning",
+          "line": null,
+          "message": "unable to resolve property-access type 'AppConfig' in tsconfig_paths/src/app.ts"
+        }
+      ],
+      "file": "tsconfig_paths/src/app.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "import { helper } from '@utils/helpers';",
+          "file": "tsconfig_paths/src/app.ts",
+          "from": "tsconfig_paths/src/app.ts::cfg::variable",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "ext::@utils/helpers::package"
+        },
+        {
+          "alias": null,
+          "context": "import { AppConfig } from '@/config';",
+          "file": "tsconfig_paths/src/app.ts",
+          "from": "tsconfig_paths/src/app.ts::cfg::variable",
+          "kind": "Imports",
+          "line": 2,
+          "properties_accessed": [
+            "name"
+          ],
+          "to": "ext::@/config::package"
+        },
+        {
+          "alias": "AppConfig",
+          "context": "property access",
+          "file": "tsconfig_paths/src/app.ts",
+          "from": "tsconfig_paths/src/app.ts::cfg::variable",
+          "kind": "AccessesProperty",
+          "line": 6,
+          "properties_accessed": [
+            "name"
+          ],
+          "to": "__UNRESOLVED_LOCAL_TYPE__|AppConfig"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "tsconfig_paths/src/app.ts",
+          "id": "tsconfig_paths/src/app.ts::cfg::variable",
+          "kind": "Variable",
+          "language": "TypeScript",
+          "line_end": 5,
+          "line_start": 5,
+          "name": "cfg",
+          "signature": "cfg: AppConfig = { name: 'test' }"
+        },
+        {
+          "file": "tsconfig_paths/src/app.ts",
+          "id": "tsconfig_paths/src/app.ts::main::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 4,
+          "line_start": 4,
+          "name": "main",
+          "signature": "function main(): string { const cfg: AppConfig = { name: 'test' }; return helper() + cfg.name; }"
+        },
+        {
+          "file": "tsconfig_paths/src/app.ts",
+          "id": "tsconfig_paths/src/app.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "tsconfig_paths/src/config.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "tsconfig_paths/src/config.ts",
+          "id": "tsconfig_paths/src/config.ts::AppConfig::interface",
+          "kind": "Interface",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "AppConfig",
+          "signature": "interface AppConfig { name: string; }"
+        },
+        {
+          "file": "tsconfig_paths/src/config.ts",
+          "id": "tsconfig_paths/src/config.ts::name::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 2,
+          "line_start": 2,
+          "name": "name",
+          "signature": "name: string"
+        },
+        {
+          "file": "tsconfig_paths/src/config.ts",
+          "id": "tsconfig_paths/src/config.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "tsconfig_paths/src/utils/helpers.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "tsconfig_paths/src/utils/helpers.ts",
+          "id": "tsconfig_paths/src/utils/helpers.ts::helper::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "helper",
+          "signature": "function helper(): string { return 'helper'; }"
+        },
+        {
+          "file": "tsconfig_paths/src/utils/helpers.ts",
+          "id": "tsconfig_paths/src/utils/helpers.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "tsx_jsx/src/component.tsx",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": "React",
+          "context": "import React from 'react';",
+          "file": "tsx_jsx/src/component.tsx",
+          "from": "tsx_jsx/src/component.tsx::Header::function",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "ext::react::package"
+        },
+        {
+          "alias": "Props",
+          "context": "property access",
+          "file": "tsx_jsx/src/component.tsx",
+          "from": "tsx_jsx/src/component.tsx::Header::function",
+          "kind": "AccessesProperty",
+          "line": 8,
+          "properties_accessed": [
+            "title"
+          ],
+          "to": "tsx_jsx/src/component.tsx::Props::type_alias"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "tsx_jsx/src/component.tsx",
+          "id": "tsx_jsx/src/component.tsx::Header::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 7,
+          "line_start": 7,
+          "name": "Header",
+          "signature": "function Header(props: Props) { return <h1>{props.title}</h1>; }"
+        },
+        {
+          "file": "tsx_jsx/src/component.tsx",
+          "id": "tsx_jsx/src/component.tsx::Props::type_alias",
+          "kind": "TypeAlias",
+          "language": "TypeScript",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "Props",
+          "signature": "type Props = { title: string; };"
+        },
+        {
+          "file": "tsx_jsx/src/component.tsx",
+          "id": "tsx_jsx/src/component.tsx::title::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 4,
+          "line_start": 4,
+          "name": "title",
+          "signature": "title: string"
+        },
+        {
+          "file": "tsx_jsx/src/component.tsx",
+          "id": "tsx_jsx/src/component.tsx::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "tsx_jsx/src/view.jsx",
+      "language": "JavaScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "tsx_jsx/src/view.jsx",
+          "id": "tsx_jsx/src/view.jsx::View::function",
+          "kind": "Function",
+          "language": "JavaScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "View",
+          "signature": "function View(props) { return <div>{props.label}</div>; }"
+        },
+        {
+          "file": "tsx_jsx/src/view.jsx",
+          "id": "tsx_jsx/src/view.jsx::module::module",
+          "kind": "Module",
+          "language": "JavaScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [
+        {
+          "category": "Resolution",
+          "file": "vue_component/src/App.vue",
+          "level": "Warning",
+          "line": 9,
+          "message": "unable to resolve symbol 'UserCard' from vue_component/src/components/UserCard.vue"
+        }
+      ],
+      "file": "vue_component/src/App.vue",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "import { ref } from \"vue\";",
+          "file": "vue_component/src/App.vue",
+          "from": "vue_component/src/App.vue::currentUser::variable",
+          "kind": "Imports",
+          "line": 8,
+          "properties_accessed": [],
+          "to": "ext::vue::package"
+        },
+        {
+          "alias": null,
+          "context": "import { UserCard } from \"./components/UserCard.vue\";",
+          "file": "vue_component/src/App.vue",
+          "from": "vue_component/src/App.vue::currentUser::variable",
+          "kind": "Imports",
+          "line": 9,
+          "properties_accessed": [],
+          "to": "__UNRESOLVED_IMPORT__|./components/UserCard.vue|UserCard"
+        },
+        {
+          "alias": null,
+          "context": "import { UserService } from \"./services/user-service\";",
+          "file": "vue_component/src/App.vue",
+          "from": "vue_component/src/App.vue::currentUser::variable",
+          "kind": "Imports",
+          "line": 10,
+          "properties_accessed": [],
+          "to": "vue_component/src/services/user-service.ts::UserService::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "vue_component/src/App.vue",
+          "id": "vue_component/src/App.vue::currentUser::variable",
+          "kind": "Variable",
+          "language": "TypeScript",
+          "line_end": 12,
+          "line_start": 12,
+          "name": "currentUser",
+          "signature": "currentUser = ref(UserService.getCurrent())"
+        },
+        {
+          "file": "vue_component/src/App.vue",
+          "id": "vue_component/src/App.vue::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "vue_component/src/components/UserCard.vue",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "import type { User } from \"../types/user\";",
+          "file": "vue_component/src/components/UserCard.vue",
+          "from": "vue_component/src/components/UserCard.vue::user::property",
+          "kind": "Imports",
+          "line": 6,
+          "properties_accessed": [],
+          "to": "vue_component/src/types/user.ts::User::interface"
+        },
+        {
+          "alias": "type",
+          "context": "import type { User } from \"../types/user\";",
+          "file": "vue_component/src/components/UserCard.vue",
+          "from": "vue_component/src/components/UserCard.vue::user::property",
+          "kind": "Imports",
+          "line": 6,
+          "properties_accessed": [],
+          "to": "vue_component/src/types/user.ts::User::interface"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "vue_component/src/components/UserCard.vue",
+          "id": "vue_component/src/components/UserCard.vue::user::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 8,
+          "line_start": 8,
+          "name": "user",
+          "signature": "user: User"
+        },
+        {
+          "file": "vue_component/src/components/UserCard.vue",
+          "id": "vue_component/src/components/UserCard.vue::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "vue_component/src/services/user-service.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "import type { User } from \"../types/user\";",
+          "file": "vue_component/src/services/user-service.ts",
+          "from": "vue_component/src/services/user-service.ts::UserService::class",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "vue_component/src/types/user.ts::User::interface"
+        },
+        {
+          "alias": "type",
+          "context": "import type { User } from \"../types/user\";",
+          "file": "vue_component/src/services/user-service.ts",
+          "from": "vue_component/src/services/user-service.ts::UserService::class",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "vue_component/src/types/user.ts::User::interface"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "vue_component/src/services/user-service.ts",
+          "id": "vue_component/src/services/user-service.ts::UserService::class",
+          "kind": "Class",
+          "language": "TypeScript",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "UserService",
+          "signature": "class UserService { static getCurrent(): User { return { id: \"1\", name: \"Test\", email: \"test@example.com\" }; } }"
+        },
+        {
+          "file": "vue_component/src/services/user-service.ts",
+          "id": "vue_component/src/services/user-service.ts::getCurrent::method",
+          "kind": "Method",
+          "language": "TypeScript",
+          "line_end": 4,
+          "line_start": 4,
+          "name": "getCurrent",
+          "signature": "static getCurrent(): User { return { id: \"1\", name: \"Test\", email: \"test@example.com\" }; }"
+        },
+        {
+          "file": "vue_component/src/services/user-service.ts",
+          "id": "vue_component/src/services/user-service.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "vue_component/src/types/user.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "vue_component/src/types/user.ts",
+          "id": "vue_component/src/types/user.ts::User::interface",
+          "kind": "Interface",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "User",
+          "signature": "interface User { id: string; name: string; email: string; }"
+        },
+        {
+          "file": "vue_component/src/types/user.ts",
+          "id": "vue_component/src/types/user.ts::email::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 4,
+          "line_start": 4,
+          "name": "email",
+          "signature": "email: string"
+        },
+        {
+          "file": "vue_component/src/types/user.ts",
+          "id": "vue_component/src/types/user.ts::id::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 2,
+          "line_start": 2,
+          "name": "id",
+          "signature": "id: string"
+        },
+        {
+          "file": "vue_component/src/types/user.ts",
+          "id": "vue_component/src/types/user.ts::name::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "name",
+          "signature": "name: string"
+        },
+        {
+          "file": "vue_component/src/types/user.ts",
+          "id": "vue_component/src/types/user.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    }
+  ],
+  "language_stats": {
+    "JavaScript": 2,
+    "TypeScript": 51
+  },
+  "root": "<root>",
+  "schema_version": 1,
+  "stats": {
+    "alias_chains": 8,
+    "diagnostics": 10,
+    "files_indexed": 53,
+    "relationships": 55,
+    "symbols": 149
+  }
+}

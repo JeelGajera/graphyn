@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   present from the first release that emits JSON at all, because retrofitting
   one forces every existing consumer to handle its absence.
 
+- Golden snapshots of the analysis over the whole fixture corpus, and a CI
+  step asserting that two analyses of identical input agree byte for byte.
+  Per-adapter tests each assert one property of one language, which catches the
+  regression someone thought to look for and misses a refactor that quietly
+  changes the graph everywhere. Regenerate with `UPDATE_GOLDEN=1 cargo test -p
+  graphyn-cli --test golden_ir` and review the diff.
+
 ### Fixed
 
 - **Serialized output was not reproducible.** `RepoIR.language_stats` was a

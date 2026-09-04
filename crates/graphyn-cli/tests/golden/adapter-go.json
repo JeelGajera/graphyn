@@ -1,0 +1,586 @@
+{
+  "files": [
+    {
+      "diagnostics": [],
+      "file": "alias_import_bug/mappers/deep/view_model_mapper.go",
+      "language": "Go",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": "models",
+          "context": "models \"github.com/test/app/models\"",
+          "file": "alias_import_bug/mappers/deep/view_model_mapper.go",
+          "from": "alias_import_bug/mappers/deep/view_model_mapper.go::module::module",
+          "kind": "Imports",
+          "line": 4,
+          "properties_accessed": [
+            "Status",
+            "Timestamp",
+            "UserID"
+          ],
+          "to": "alias_import_bug/models::models::module"
+        },
+        {
+          "alias": "models.UserPayload",
+          "context": "property access",
+          "file": "alias_import_bug/mappers/deep/view_model_mapper.go",
+          "from": "alias_import_bug/mappers/deep/view_model_mapper.go::module::module",
+          "kind": "AccessesProperty",
+          "line": 11,
+          "properties_accessed": [
+            "Status",
+            "Timestamp",
+            "UserID"
+          ],
+          "to": "alias_import_bug/models/user_payload.go::UserPayload::class"
+        },
+        {
+          "alias": "ViewModelMapper",
+          "context": "type reference",
+          "file": "alias_import_bug/mappers/deep/view_model_mapper.go",
+          "from": "alias_import_bug/mappers/deep/view_model_mapper.go::module::module",
+          "kind": "UsesType",
+          "line": 9,
+          "properties_accessed": [],
+          "to": "alias_import_bug/mappers/deep/view_model_mapper.go::ViewModelMapper::class"
+        },
+        {
+          "alias": "models.UserPayload",
+          "context": "type reference",
+          "file": "alias_import_bug/mappers/deep/view_model_mapper.go",
+          "from": "alias_import_bug/mappers/deep/view_model_mapper.go::module::module",
+          "kind": "UsesType",
+          "line": 9,
+          "properties_accessed": [],
+          "to": "alias_import_bug/models/user_payload.go::UserPayload::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "alias_import_bug/mappers/deep/view_model_mapper.go",
+          "id": "alias_import_bug/mappers/deep/view_model_mapper.go::module::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "alias_import_bug/mappers/deep/view_model_mapper.go",
+          "id": "alias_import_bug/mappers/deep/view_model_mapper.go::ViewModelMapper::class",
+          "kind": "Class",
+          "language": "Go",
+          "line_end": 7,
+          "line_start": 7,
+          "name": "ViewModelMapper",
+          "signature": "ViewModelMapper struct{}"
+        },
+        {
+          "file": "alias_import_bug/mappers/deep/view_model_mapper.go",
+          "id": "alias_import_bug/mappers/deep/view_model_mapper.go::ViewModelMapper::Map::method",
+          "kind": "Method",
+          "language": "Go",
+          "line_end": 15,
+          "line_start": 9,
+          "name": "Map",
+          "signature": "func (m *ViewModelMapper) Map(data *models.UserPayload) map[string]interface{} {"
+        },
+        {
+          "file": "alias_import_bug/mappers/deep",
+          "id": "alias_import_bug/mappers/deep::deep::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "deep",
+          "signature": "package github.com/test/app/mappers/deep"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "alias_import_bug/models/user_payload.go",
+      "language": "Go",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "alias_import_bug/models/user_payload.go",
+          "id": "alias_import_bug/models/user_payload.go::module::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "alias_import_bug/models/user_payload.go",
+          "id": "alias_import_bug/models/user_payload.go::UserPayload::class",
+          "kind": "Class",
+          "language": "Go",
+          "line_end": 7,
+          "line_start": 3,
+          "name": "UserPayload",
+          "signature": "UserPayload struct {"
+        },
+        {
+          "file": "alias_import_bug/models",
+          "id": "alias_import_bug/models::models::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "models",
+          "signature": "package github.com/test/app/models"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "language_features/handlers/user.go",
+      "language": "Go",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "\"fmt\"",
+          "file": "language_features/handlers/user.go",
+          "from": "language_features/handlers/user.go::module::module",
+          "kind": "Imports",
+          "line": 4,
+          "properties_accessed": [],
+          "to": "ext::fmt::package"
+        },
+        {
+          "alias": "m",
+          "context": "m \"github.com/test/features/models\"",
+          "file": "language_features/handlers/user.go",
+          "from": "language_features/handlers/user.go::module::module",
+          "kind": "Imports",
+          "line": 6,
+          "properties_accessed": [
+            "Email",
+            "OrderID",
+            "UserID"
+          ],
+          "to": "language_features/models::models::module"
+        },
+        {
+          "alias": null,
+          "context": "\"github.com/test/features/store\"",
+          "file": "language_features/handlers/user.go",
+          "from": "language_features/handlers/user.go::module::module",
+          "kind": "Imports",
+          "line": 7,
+          "properties_accessed": [],
+          "to": "language_features/store::store::module"
+        },
+        {
+          "alias": "m.Order",
+          "context": "property access",
+          "file": "language_features/handlers/user.go",
+          "from": "language_features/handlers/user.go::module::module",
+          "kind": "AccessesProperty",
+          "line": 20,
+          "properties_accessed": [
+            "OrderID"
+          ],
+          "to": "language_features/models/order.go::Order::class"
+        },
+        {
+          "alias": "m.UserPayload",
+          "context": "property access",
+          "file": "language_features/handlers/user.go",
+          "from": "language_features/handlers/user.go::module::module",
+          "kind": "AccessesProperty",
+          "line": 20,
+          "properties_accessed": [
+            "Email",
+            "UserID"
+          ],
+          "to": "language_features/models/user.go::UserPayload::class"
+        },
+        {
+          "alias": "UserHandler",
+          "context": "type reference",
+          "file": "language_features/handlers/user.go",
+          "from": "language_features/handlers/user.go::module::module",
+          "kind": "UsesType",
+          "line": 18,
+          "properties_accessed": [],
+          "to": "language_features/handlers/user.go::UserHandler::class"
+        },
+        {
+          "alias": "m.Order",
+          "context": "type reference",
+          "file": "language_features/handlers/user.go",
+          "from": "language_features/handlers/user.go::module::module",
+          "kind": "UsesType",
+          "line": 18,
+          "properties_accessed": [],
+          "to": "language_features/models/order.go::Order::class"
+        },
+        {
+          "alias": "m.UserPayload",
+          "context": "type reference",
+          "file": "language_features/handlers/user.go",
+          "from": "language_features/handlers/user.go::module::module",
+          "kind": "UsesType",
+          "line": 18,
+          "properties_accessed": [],
+          "to": "language_features/models/user.go::UserPayload::class"
+        },
+        {
+          "alias": "store.Reader",
+          "context": "type reference",
+          "file": "language_features/handlers/user.go",
+          "from": "language_features/handlers/user.go::module::module",
+          "kind": "UsesType",
+          "line": 14,
+          "properties_accessed": [],
+          "to": "language_features/store/store.go::Reader::interface"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "language_features/handlers/user.go",
+          "id": "language_features/handlers/user.go::module::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "language_features/handlers/user.go",
+          "id": "language_features/handlers/user.go::UserHandler::class",
+          "kind": "Class",
+          "language": "Go",
+          "line_end": 12,
+          "line_start": 10,
+          "name": "UserHandler",
+          "signature": "UserHandler struct {"
+        },
+        {
+          "file": "language_features/handlers/user.go",
+          "id": "language_features/handlers/user.go::NewUserHandler::function",
+          "kind": "Function",
+          "language": "Go",
+          "line_end": 16,
+          "line_start": 14,
+          "name": "NewUserHandler",
+          "signature": "func NewUserHandler(reader store.Reader) *UserHandler {"
+        },
+        {
+          "file": "language_features/handlers/user.go",
+          "id": "language_features/handlers/user.go::UserHandler::Describe::method",
+          "kind": "Method",
+          "language": "Go",
+          "line_end": 21,
+          "line_start": 18,
+          "name": "Describe",
+          "signature": "func (h *UserHandler) Describe(payload *m.UserPayload, order *m.Order) string {"
+        },
+        {
+          "file": "language_features/handlers",
+          "id": "language_features/handlers::handlers::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "handlers",
+          "signature": "package github.com/test/features/handlers"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "language_features/models/order.go",
+      "language": "Go",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "language_features/models/order.go",
+          "id": "language_features/models/order.go::module::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "language_features/models/order.go",
+          "id": "language_features/models/order.go::Order::class",
+          "kind": "Class",
+          "language": "Go",
+          "line_end": 6,
+          "line_start": 3,
+          "name": "Order",
+          "signature": "Order struct {"
+        },
+        {
+          "file": "language_features/models",
+          "id": "language_features/models::models::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "models",
+          "signature": "package github.com/test/features/models"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "language_features/models/user.go",
+      "language": "Go",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": "Base",
+          "context": "type reference",
+          "file": "language_features/models/user.go",
+          "from": "language_features/models/user.go::module::module",
+          "kind": "UsesType",
+          "line": 8,
+          "properties_accessed": [],
+          "to": "language_features/models/user.go::Base::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "language_features/models/user.go",
+          "id": "language_features/models/user.go::module::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "language_features/models/user.go",
+          "id": "language_features/models/user.go::Base::class",
+          "kind": "Class",
+          "language": "Go",
+          "line_end": 5,
+          "line_start": 3,
+          "name": "Base",
+          "signature": "Base struct {"
+        },
+        {
+          "file": "language_features/models/user.go",
+          "id": "language_features/models/user.go::UserPayload::class",
+          "kind": "Class",
+          "language": "Go",
+          "line_end": 12,
+          "line_start": 7,
+          "name": "UserPayload",
+          "signature": "UserPayload struct {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "language_features/store/helpers.go",
+      "language": "Go",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": "MemoryStore",
+          "context": "type reference",
+          "file": "language_features/store/helpers.go",
+          "from": "language_features/store/helpers.go::module::module",
+          "kind": "UsesType",
+          "line": 3,
+          "properties_accessed": [],
+          "to": "language_features/store/store.go::MemoryStore::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "language_features/store/helpers.go",
+          "id": "language_features/store/helpers.go::module::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "language_features/store/helpers.go",
+          "id": "language_features/store/helpers.go::NewMemoryStore::function",
+          "kind": "Function",
+          "language": "Go",
+          "line_end": 5,
+          "line_start": 3,
+          "name": "NewMemoryStore",
+          "signature": "func NewMemoryStore() *MemoryStore {"
+        },
+        {
+          "file": "language_features/store",
+          "id": "language_features/store::store::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "store",
+          "signature": "package github.com/test/features/store"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "language_features/store/store.go",
+      "language": "Go",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "\"github.com/test/features/models\"",
+          "file": "language_features/store/store.go",
+          "from": "language_features/store/store.go::module::module",
+          "kind": "Imports",
+          "line": 3,
+          "properties_accessed": [],
+          "to": "language_features/models::models::module"
+        },
+        {
+          "alias": "MemoryStore",
+          "context": "property access",
+          "file": "language_features/store/store.go",
+          "from": "language_features/store/store.go::module::module",
+          "kind": "AccessesProperty",
+          "line": 15,
+          "properties_accessed": [
+            "items"
+          ],
+          "to": "language_features/store/store.go::MemoryStore::class"
+        },
+        {
+          "alias": "MemoryStore",
+          "context": "type reference",
+          "file": "language_features/store/store.go",
+          "from": "language_features/store/store.go::module::module",
+          "kind": "UsesType",
+          "line": 14,
+          "properties_accessed": [],
+          "to": "language_features/store/store.go::MemoryStore::class"
+        },
+        {
+          "alias": "models.UserPayload",
+          "context": "type reference",
+          "file": "language_features/store/store.go",
+          "from": "language_features/store/store.go::module::module",
+          "kind": "UsesType",
+          "line": 6,
+          "properties_accessed": [],
+          "to": "language_features/models/user.go::UserPayload::class"
+        },
+        {
+          "alias": null,
+          "context": "satisfies Reader (method set match)",
+          "file": "language_features/store/store.go",
+          "from": "language_features/store/store.go::MemoryStore::class",
+          "kind": "Implements",
+          "line": 0,
+          "properties_accessed": [
+            "Close",
+            "Get"
+          ],
+          "to": "language_features/store/store.go::Reader::interface"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "language_features/store/store.go",
+          "id": "language_features/store/store.go::module::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "language_features/store/store.go",
+          "id": "language_features/store/store.go::Reader::interface",
+          "kind": "Interface",
+          "language": "Go",
+          "line_end": 8,
+          "line_start": 5,
+          "name": "Reader",
+          "signature": "Reader interface {"
+        },
+        {
+          "file": "language_features/store/store.go",
+          "id": "language_features/store/store.go::Reader::Get::method",
+          "kind": "Method",
+          "language": "Go",
+          "line_end": 6,
+          "line_start": 6,
+          "name": "Get",
+          "signature": "Get(id string) *models.UserPayload"
+        },
+        {
+          "file": "language_features/store/store.go",
+          "id": "language_features/store/store.go::Reader::Close::method",
+          "kind": "Method",
+          "language": "Go",
+          "line_end": 7,
+          "line_start": 7,
+          "name": "Close",
+          "signature": "Close() error"
+        },
+        {
+          "file": "language_features/store/store.go",
+          "id": "language_features/store/store.go::MemoryStore::class",
+          "kind": "Class",
+          "language": "Go",
+          "line_end": 12,
+          "line_start": 10,
+          "name": "MemoryStore",
+          "signature": "MemoryStore struct {"
+        },
+        {
+          "file": "language_features/store/store.go",
+          "id": "language_features/store/store.go::MemoryStore::Get::method",
+          "kind": "Method",
+          "language": "Go",
+          "line_end": 16,
+          "line_start": 14,
+          "name": "Get",
+          "signature": "func (m *MemoryStore) Get(id string) *models.UserPayload {"
+        },
+        {
+          "file": "language_features/store/store.go",
+          "id": "language_features/store/store.go::MemoryStore::Close::method",
+          "kind": "Method",
+          "language": "Go",
+          "line_end": 20,
+          "line_start": 18,
+          "name": "Close",
+          "signature": "func (m *MemoryStore) Close() error {"
+        }
+      ]
+    }
+  ],
+  "language_stats": {
+    "Go": 7
+  },
+  "root": "<root>",
+  "schema_version": 1,
+  "stats": {
+    "alias_chains": 2,
+    "diagnostics": 0,
+    "files_indexed": 7,
+    "relationships": 20,
+    "symbols": 29
+  }
+}
