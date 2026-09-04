@@ -57,6 +57,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Under SemVer 0.x this is a permitted breaking change, and 1.0.0 is the last
   point at which the crate names are not yet a public commitment.
 
+- The `graphyn-adapter-ts`, `-python`, `-rust`, `-go`, `-c` and `-dispatch`
+  crate names are retired. A final patch release of each, carrying a
+  deprecation notice pointing at `graphyn-lang`, should be published from the
+  0.2.0 tag before 1.0.0 goes out. Nothing is yanked: yanking breaks existing
+  lockfiles for no benefit.
+
 - **`supported_languages()` reports what a build carries**, rather than a
   hardcoded list that happened to be accurate because only one build existed.
 
