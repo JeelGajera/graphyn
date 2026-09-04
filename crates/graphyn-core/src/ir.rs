@@ -130,5 +130,12 @@ pub struct FileIR {
 pub struct RepoIR {
     pub root: String,
     pub files: Vec<FileIR>,
-    pub language_stats: std::collections::HashMap<String, usize>,
+    /// File counts per language, ordered by language name.
+    ///
+    /// Ordered rather than hashed because this is serialized: `HashMap`
+    /// iteration order varies per process, so two runs over identical input
+    /// emitted the same counts in a different order. Determinism is the
+    /// property the graph is built to guarantee, and it has to hold all the
+    /// way out to the bytes on stdout.
+    pub language_stats: std::collections::BTreeMap<String, usize>,
 }

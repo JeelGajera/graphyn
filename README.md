@@ -67,6 +67,7 @@ graphyn watch ./my-repo
 ## Core Commands
 
 - `graphyn analyze <path>`: parse and build graph into `.graphyn/db`
+- `graphyn analyze <path> --json`: emit the analysis as JSON on stdout
 - `graphyn watch <path>`: keep graph in sync on file changes
 - `graphyn query blast-radius <symbol> [--file <path>] [--depth <n>]`
 - `graphyn query usages <symbol> [--file <path>]`
@@ -105,6 +106,21 @@ Example:
   "exclude": "tests/**"
 }
 ```
+
+## Machine-readable output
+
+`graphyn analyze --json` writes the full analysis to stdout as a single JSON
+document and suppresses all progress output, so it can be piped directly:
+
+```bash
+graphyn analyze . --json > analysis.json
+```
+
+The document carries a `schema_version`. Pin it: fields may be added within a
+version, and anything a consumer could observe breaking bumps it.
+
+Output is deterministic — the same input produces byte-identical bytes, which
+is what makes two analyses safe to diff.
 
 ## MCP Integration
 

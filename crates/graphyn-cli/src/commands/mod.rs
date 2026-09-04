@@ -1,4 +1,5 @@
 pub mod analyze;
+pub mod json;
 pub mod query;
 pub mod serve;
 pub mod status;

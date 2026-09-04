@@ -10,29 +10,95 @@ use graphyn_core::scan::{
 };
 use graphyn_store::RocksGraphStore;
 
+use crate::commands::json::AnalysisReport;
 use crate::output;
+
+/// Human progress reporting, silenced when the caller wants machine output.
+///
+/// `--json` has to put a parseable document on stdout and nothing else, so
+/// every progress line needs suppressing. Routing them through one gate keeps
+/// that a single decision rather than a condition repeated at each call site,
+/// where one missed branch would corrupt the document.
+struct Progress {
+    enabled: bool,
+}
+
+impl Progress {
+    fn banner(&self, subtitle: &str) {
+        if self.enabled {
+            output::banner(subtitle);
+        }
+    }
+    fn section(&self, title: &str) {
+        if self.enabled {
+            output::section(title);
+        }
+    }
+    fn info(&self, msg: &str) {
+        if self.enabled {
+            output::info(msg);
+        }
+    }
+    fn warning(&self, msg: &str) {
+        if self.enabled {
+            output::warning(msg);
+        }
+    }
+    fn stat(&self, label: &str, value: &str) {
+        if self.enabled {
+            output::stat(label, value);
+        }
+    }
+    fn stat_highlight(&self, label: &str, value: &str) {
+        if self.enabled {
+            output::stat_highlight(label, value);
+        }
+    }
+    fn dim_line(&self, msg: &str) {
+        if self.enabled {
+            output::dim_line(msg);
+        }
+    }
+    fn blank(&self) {
+        if self.enabled {
+            output::blank();
+        }
+    }
+    fn step(&self, label: &str, detail: &str) {
+        if self.enabled {
+            output::step(label, detail);
+        }
+    }
+    fn done(&self, msg: &str) {
+        if self.enabled {
+            output::done(msg);
+        }
+    }
+}
 
 pub fn run(
     path: &str,
     include_csv: Option<&str>,
     exclude_csv: Option<&str>,
     respect_gitignore: bool,
+    json: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let root = super::normalize_path(
         &std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?,
     );
+    let progress = Progress { enabled: !json };
 
-    output::banner("analyze");
-    output::info(&format!(
+    progress.banner("analyze");
+    progress.info(&format!(
         "Analyzing {}",
         output::file_path(&root.display().to_string())
     ));
-    output::blank();
+    progress.blank();
 
     let start = Instant::now();
 
     // ── 1. Scan and parse ────────────────────────────────────
-    output::step("Scanning files", "...");
+    progress.step("Scanning files", "...");
     let scan_config = ScanConfig {
         include_patterns: parse_csv_patterns(include_csv),
         exclude_patterns: parse_csv_patterns(exclude_csv),
@@ -44,15 +110,30 @@ pub fn run(
     let files = scan.files;
     if files.is_empty() {
         if !scan_config.include_patterns.is_empty() {
-            output::warning("No files matched your --include patterns.");
-            output::dim_line("  Tip: use ** for recursive matching, e.g. 'projects/api/**/*.ts'");
-            output::dim_line(&format!(
+            progress.warning("No files matched your --include patterns.");
+            progress.dim_line("  Tip: use ** for recursive matching, e.g. 'projects/api/**/*.ts'");
+            progress.dim_line(&format!(
                 "  Patterns used: {}",
                 scan_config.include_patterns.join(", ")
             ));
         } else {
-            output::warning("No source files were found for analysis.");
-            output::dim_line("  Check your path and include/exclude filters, then retry.");
+            progress.warning("No source files were found for analysis.");
+            progress.dim_line("  Check your path and include/exclude filters, then retry.");
+        }
+        // A consumer parsing stdout needs a document here too: "nothing
+        // matched" is a result, not an absence of one.
+        if json {
+            let empty = RepoIR {
+                root: root.display().to_string(),
+                files: Vec::new(),
+                language_stats: Default::default(),
+            };
+            let stats = AnalyzeStats {
+                symbols: 0,
+                relationships: 0,
+                alias_chains: 0,
+            };
+            println!("{}", AnalysisReport::new(&empty, &stats).to_json()?);
         }
         return Ok(());
     }
@@ -61,7 +142,7 @@ pub fn run(
     // "goes missing", so say so up front rather than leaving the user to guess.
     if !scan.skipped_dirs.is_empty() {
         let names: Vec<&str> = scan.skipped_dirs.iter().map(String::as_str).collect();
-        output::dim_line(&format!(
+        progress.dim_line(&format!(
             "  Skipped by default: {} — pass --include to index them",
             names.join(", ")
         ));
@@ -71,18 +152,18 @@ pub fn run(
 
     let file_count = repo_ir.files.len();
     let error_count: usize = repo_ir.files.iter().map(|f| f.diagnostics.len()).sum();
-    output::step(
+    progress.step(
         "Parsed files",
         &format!("{file_count} OK, {error_count} diagnostic(s)"),
     );
 
     // ── 2. Build graph ───────────────────────────────────────
     let (graph, stats) = build_graph(&repo_ir);
-    output::step(
+    progress.step(
         "Built graph",
         &format!("{} symbols, {} edges", stats.symbols, stats.relationships),
     );
-    output::step(
+    progress.step(
         "Resolved aliases",
         &format!("{} chain(s)", stats.alias_chains),
     );
@@ -97,19 +178,19 @@ pub fn run(
         .save_graph(&graph)
         .map_err(|e| format!("failed to persist graph: {e}"))?;
 
-    output::step(
+    progress.step(
         "Persisted to",
         &root.join(".graphyn/").display().to_string(),
     );
 
     // ── 4. Summary ───────────────────────────────────────────
     let elapsed = start.elapsed();
-    output::section("Summary");
-    output::stat_highlight("Symbols", &stats.symbols.to_string());
-    output::stat_highlight("Relationships", &stats.relationships.to_string());
-    output::stat_highlight("Files indexed", &file_count.to_string());
-    output::stat_highlight("Alias chains", &stats.alias_chains.to_string());
-    output::stat(
+    progress.section("Summary");
+    progress.stat_highlight("Symbols", &stats.symbols.to_string());
+    progress.stat_highlight("Relationships", &stats.relationships.to_string());
+    progress.stat_highlight("Files indexed", &file_count.to_string());
+    progress.stat_highlight("Alias chains", &stats.alias_chains.to_string());
+    progress.stat(
         "Respect .gitignore",
         if scan_config.respect_gitignore {
             "yes"
@@ -118,14 +199,14 @@ pub fn run(
         },
     );
     if !scan_config.include_patterns.is_empty() {
-        output::stat("Include", &scan_config.include_patterns.join(", "));
+        progress.stat("Include", &scan_config.include_patterns.join(", "));
     }
     if !scan_config.exclude_patterns.is_empty() {
-        output::stat("Exclude", &scan_config.exclude_patterns.join(", "));
+        progress.stat("Exclude", &scan_config.exclude_patterns.join(", "));
     }
 
     if !repo_ir.language_stats.is_empty() {
-        output::blank();
+        progress.blank();
         let mut langs: Vec<_> = repo_ir.language_stats.iter().collect();
         langs.sort_by(|a, b| b.1.cmp(a.1));
         for (lang, count) in langs {
@@ -139,12 +220,12 @@ pub fn run(
                 "Cpp" => "⚙",
                 _ => "•",
             };
-            output::stat(&format!("  {icon} {lang}"), &format!("{count} file(s)"));
+            progress.stat(&format!("  {icon} {lang}"), &format!("{count} file(s)"));
         }
     }
 
     if error_count > 0 {
-        output::blank();
+        progress.blank();
 
         // Show parse errors
         let errors: Vec<_> = repo_ir
@@ -158,13 +239,13 @@ pub fn run(
             })
             .collect();
         if !errors.is_empty() {
-            output::warning(&format!("{} parse error(s)", errors.len()));
+            progress.warning(&format!("{} parse error(s)", errors.len()));
             for (file, diag) in &errors {
                 let loc = match diag.line {
                     Some(l) => format!("{file}:{l}"),
                     None => file.to_string(),
                 };
-                output::dim_line(&format!("  {} — {}", loc, diag.message));
+                progress.dim_line(&format!("  {} — {}", loc, diag.message));
             }
         }
 
@@ -180,13 +261,13 @@ pub fn run(
             })
             .collect();
         if !warnings.is_empty() {
-            output::warning(&format!("{} resolution warning(s)", warnings.len()));
+            progress.warning(&format!("{} resolution warning(s)", warnings.len()));
             for (file, diag) in &warnings {
                 let loc = match diag.line {
                     Some(l) => format!("{file}:{l}"),
                     None => file.to_string(),
                 };
-                output::dim_line(&format!("  {} — {}", loc, diag.message));
+                progress.dim_line(&format!("  {} — {}", loc, diag.message));
             }
         }
 
@@ -198,14 +279,19 @@ pub fn run(
             .filter(|d| d.level == graphyn_core::ir::DiagnosticLevel::Info)
             .count();
         if info_count > 0 {
-            output::dim_line(&format!(
+            progress.dim_line(&format!(
                 "  {} info diagnostic(s) (skipped files, policy exclusions)",
                 info_count
             ));
         }
     }
 
-    output::done(&format!("Analysis complete ({:.0?})", elapsed));
+    progress.done(&format!("Analysis complete ({:.0?})", elapsed));
+
+    if json {
+        println!("{}", AnalysisReport::new(&repo_ir, &stats).to_json()?);
+    }
+
     Ok(())
 }
 
