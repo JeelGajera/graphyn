@@ -41,6 +41,10 @@ enum Commands {
         /// Disable .gitignore filtering
         #[arg(long)]
         no_gitignore: bool,
+
+        /// Emit the analysis as JSON on stdout instead of a human summary
+        #[arg(long)]
+        json: bool,
     },
 
     /// Query the symbol relationship graph
@@ -149,7 +153,14 @@ fn main() {
             include,
             exclude,
             no_gitignore,
-        } => commands::analyze::run(&path, include.as_deref(), exclude.as_deref(), !no_gitignore),
+            json,
+        } => commands::analyze::run(
+            &path,
+            include.as_deref(),
+            exclude.as_deref(),
+            !no_gitignore,
+            json,
+        ),
 
         Commands::Query { subcommand } => match subcommand {
             QueryCommands::BlastRadius {

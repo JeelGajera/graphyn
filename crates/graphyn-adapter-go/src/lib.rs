@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use graphyn_core::ir::RepoIR;
@@ -37,7 +37,7 @@ pub fn analyze_files(root: &Path, files: &[PathBuf]) -> Result<RepoIR, AdapterGo
         .collect();
 
     let mut file_irs = Vec::new();
-    let mut language_stats: HashMap<String, usize> = HashMap::new();
+    let mut language_stats: BTreeMap<String, usize> = BTreeMap::new();
     for result in parse_results {
         let file_ir = result?;
         *language_stats

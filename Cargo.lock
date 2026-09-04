@@ -572,6 +572,8 @@ dependencies = [
  "graphyn-mcp",
  "graphyn-store",
  "notify",
+ "serde",
+ "serde_json",
  "tokio",
  "tracing",
  "tracing-subscriber",

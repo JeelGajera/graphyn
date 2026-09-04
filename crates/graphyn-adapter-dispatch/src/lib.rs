@@ -119,7 +119,7 @@ pub fn analyze_files(root: &Path, files: &[PathBuf]) -> Result<RepoIR, DispatchE
     Ok(RepoIR {
         root: root.to_string_lossy().to_string(),
         files: all_files,
-        language_stats: language_stats.into_iter().collect(),
+        language_stats,
     })
 }
 

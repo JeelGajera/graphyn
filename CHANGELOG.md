@@ -5,6 +5,27 @@ All notable changes to Graphyn are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `graphyn analyze --json` — emits the analysis as a machine-readable document
+  on stdout instead of a human summary. Carries a `schema_version` so a
+  consumer can tell a shape it understands from one it does not; the version is
+  present from the first release that emits JSON at all, because retrofitting
+  one forces every existing consumer to handle its absence.
+
+### Fixed
+
+- **Serialized output was not reproducible.** `RepoIR.language_stats` was a
+  `HashMap`, and the dispatch layer built it as an ordered `BTreeMap` only to
+  collect it straight back into a `HashMap`, discarding the ordering it had
+  just established. `HashMap` iteration order is seeded per process, so the
+  same analysis emitted its language counts in a different order on every run.
+  Nothing surfaced it before because no output path serialized the field.
+  Determinism is the property the graph is built to guarantee, and it has to
+  hold all the way out to the bytes on stdout.
+
 ## [0.2.0] - 2026-08-16
 
 Graphyn is no longer TypeScript-only. This release adds Python, Rust, Go and

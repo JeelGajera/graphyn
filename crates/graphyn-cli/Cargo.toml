@@ -17,6 +17,8 @@ path = "src/main.rs"
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 notify = "6"
 tokio = { version = "1", features = ["full"] }
 tracing = "0.1"
@@ -28,3 +30,4 @@ graphyn-mcp = { path = "../graphyn-mcp", version = "0.2.0" }
 
 [dev-dependencies]
 walkdir = "2"
+serde_json = "1"
