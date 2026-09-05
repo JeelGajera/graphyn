@@ -260,6 +260,26 @@
           "line": 1,
           "properties_accessed": [],
           "to": "barrel_chain/src/components/code.ts::renderCodeBlock::function"
+        },
+        {
+          "alias": "renderBlockquote",
+          "context": "call",
+          "file": "barrel_chain/src/app.ts",
+          "from": "barrel_chain/src/app.ts::render::function",
+          "kind": "Calls",
+          "line": 4,
+          "properties_accessed": [],
+          "to": "barrel_chain/src/components/blockquote.ts::renderBlockquote::function"
+        },
+        {
+          "alias": "renderCodeBlock",
+          "context": "call",
+          "file": "barrel_chain/src/app.ts",
+          "from": "barrel_chain/src/app.ts::render::function",
+          "kind": "Calls",
+          "line": 4,
+          "properties_accessed": [],
+          "to": "barrel_chain/src/components/code.ts::renderCodeBlock::function"
         }
       ],
       "symbols": [
@@ -495,6 +515,155 @@
         {
           "file": "builtin_types/src/app.ts",
           "id": "builtin_types/src/app.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "call_edges/src/consumer.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "import { UserService, formatName as fmt } from \"./services\";",
+          "file": "call_edges/src/consumer.ts",
+          "from": "call_edges/src/consumer.ts::name::variable",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "call_edges/src/services.ts::UserService::class"
+        },
+        {
+          "alias": "fmt",
+          "context": "import { UserService, formatName as fmt } from \"./services\";",
+          "file": "call_edges/src/consumer.ts",
+          "from": "call_edges/src/consumer.ts::name::variable",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "to": "call_edges/src/services.ts::formatName::function"
+        },
+        {
+          "alias": "UserService",
+          "context": "instantiation",
+          "file": "call_edges/src/consumer.ts",
+          "from": "call_edges/src/consumer.ts::name::variable",
+          "kind": "Instantiates",
+          "line": 5,
+          "properties_accessed": [],
+          "to": "call_edges/src/services.ts::UserService::class"
+        },
+        {
+          "alias": "fmt",
+          "context": "call",
+          "file": "call_edges/src/consumer.ts",
+          "from": "call_edges/src/consumer.ts::name::variable",
+          "kind": "Calls",
+          "line": 8,
+          "properties_accessed": [],
+          "to": "call_edges/src/services.ts::formatName::function"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "call_edges/src/consumer.ts",
+          "id": "call_edges/src/consumer.ts::name::variable",
+          "kind": "Variable",
+          "language": "TypeScript",
+          "line_end": 8,
+          "line_start": 8,
+          "name": "name",
+          "signature": "name = fmt(\"Ada\", \"Lovelace\")"
+        },
+        {
+          "file": "call_edges/src/consumer.ts",
+          "id": "call_edges/src/consumer.ts::run::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "run",
+          "signature": "function run(): string { // Instantiation of an imported class. const service = new UserService(); // Call through a renamed import — resolves to the canonical symbol. const name = fmt(\"Ada\", \"Lovelace\"); // Member call: recorded as a property access on the receiver's type, // never as a call edge to the type itself. service.handle(); // Neither of these names a symbol this file can resolve, so no edge. setTimeout(() => {}, 0); console.log(name); return name; }"
+        },
+        {
+          "file": "call_edges/src/consumer.ts",
+          "id": "call_edges/src/consumer.ts::service::variable",
+          "kind": "Variable",
+          "language": "TypeScript",
+          "line_end": 5,
+          "line_start": 5,
+          "name": "service",
+          "signature": "service = new UserService()"
+        },
+        {
+          "file": "call_edges/src/consumer.ts",
+          "id": "call_edges/src/consumer.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "call_edges/src/services.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "call_edges/src/services.ts",
+          "id": "call_edges/src/services.ts::UserService::class",
+          "kind": "Class",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "UserService",
+          "signature": "class UserService { handle(): void {} }"
+        },
+        {
+          "file": "call_edges/src/services.ts",
+          "id": "call_edges/src/services.ts::formatName::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 5,
+          "line_start": 5,
+          "name": "formatName",
+          "signature": "function formatName(first: string, last: string): string { return `${first} ${last}`; }"
+        },
+        {
+          "file": "call_edges/src/services.ts",
+          "id": "call_edges/src/services.ts::handle::method",
+          "kind": "Method",
+          "language": "TypeScript",
+          "line_end": 2,
+          "line_start": 2,
+          "name": "handle",
+          "signature": "handle(): void {}"
+        },
+        {
+          "file": "call_edges/src/services.ts",
+          "id": "call_edges/src/services.ts::unusedHelper::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 9,
+          "line_start": 9,
+          "name": "unusedHelper",
+          "signature": "function unusedHelper(): void {}"
+        },
+        {
+          "file": "call_edges/src/services.ts",
+          "id": "call_edges/src/services.ts::module::module",
           "kind": "Module",
           "language": "TypeScript",
           "line_end": 1,
@@ -800,6 +969,16 @@
           "from": "deep_barrel/src/app.ts::main::function",
           "kind": "Imports",
           "line": 1,
+          "properties_accessed": [],
+          "to": "deep_barrel/src/lib/renderers/blockquote.ts::renderBlockquote::function"
+        },
+        {
+          "alias": "renderBlockquote",
+          "context": "call",
+          "file": "deep_barrel/src/app.ts",
+          "from": "deep_barrel/src/app.ts::main::function",
+          "kind": "Calls",
+          "line": 4,
           "properties_accessed": [],
           "to": "deep_barrel/src/lib/renderers/blockquote.ts::renderBlockquote::function"
         }
@@ -1381,6 +1560,16 @@
           "line": 1,
           "properties_accessed": [],
           "to": "esm_extensions/src/handler.cts::handler::function"
+        },
+        {
+          "alias": "handler",
+          "context": "call",
+          "file": "esm_extensions/src/server.mts",
+          "from": "esm_extensions/src/server.mts::serve::function",
+          "kind": "Calls",
+          "line": 4,
+          "properties_accessed": [],
+          "to": "esm_extensions/src/handler.cts::handler::function"
         }
       ],
       "symbols": [
@@ -1459,6 +1648,16 @@
           "from": "external_imports/src/app.ts::main::function",
           "kind": "Imports",
           "line": 5,
+          "properties_accessed": [],
+          "to": "external_imports/src/utils.ts::localHelper::function"
+        },
+        {
+          "alias": "localHelper",
+          "context": "call",
+          "file": "external_imports/src/app.ts",
+          "from": "external_imports/src/app.ts::main::function",
+          "kind": "Calls",
+          "line": 8,
           "properties_accessed": [],
           "to": "external_imports/src/utils.ts::localHelper::function"
         }
@@ -2692,16 +2891,16 @@
   ],
   "language_stats": {
     "JavaScript": 2,
-    "TypeScript": 51
+    "TypeScript": 53
   },
   "root": "<root>",
   "schema_version": 1,
   "stats": {
-    "alias_chains": 8,
-    "aliases": 10,
+    "alias_chains": 9,
+    "aliases": 11,
     "diagnostics": 10,
-    "files_indexed": 53,
-    "relationships": 55,
-    "symbols": 149
+    "files_indexed": 55,
+    "relationships": 64,
+    "symbols": 158
   }
 }

@@ -10,8 +10,7 @@
 use graphyn_core::graph::GraphynGraph;
 use graphyn_core::ir::{Language, Relationship, RelationshipKind, Symbol, SymbolKind};
 use graphyn_core::query::{
-    self, blast_radius, dependencies, symbol_usages, RelationshipKindMask, ALL_KINDS,
-    UNEMITTED_KINDS,
+    self, blast_radius, dependencies, kinds_present, symbol_usages, RelationshipKindMask, ALL_KINDS,
 };
 
 fn symbol(id: &str, name: &str, file: &str) -> Symbol {
@@ -232,10 +231,38 @@ fn kind_names_round_trip() {
 }
 
 #[test]
-fn unemitted_kinds_are_a_subset_of_all_kinds() {
-    // The honesty warning is keyed off this list. If a name here stopped
-    // matching a real variant the warning would silently stop firing.
-    for kind in UNEMITTED_KINDS {
-        assert!(ALL_KINDS.contains(&kind));
+fn kinds_present_reports_only_what_the_graph_contains() {
+    // The honesty warning is keyed off this. Asking the graph rather than a
+    // hand-maintained constant is what keeps the warning true when a kind is
+    // emitted for some languages but not others: the answer is about this
+    // repository, not about which adapters exist.
+    let mut graph = GraphynGraph::new();
+    graph.add_symbol(symbol("a::A::class", "A", "a.ts"));
+    graph.add_symbol(symbol("b::B::class", "B", "b.ts"));
+    graph.add_relationship(&rel(
+        "a::A::class",
+        "b::B::class",
+        RelationshipKind::Imports,
+        "a.ts",
+        1,
+    ));
+
+    let present = kinds_present(&graph);
+    assert!(present.contains(&RelationshipKind::Imports));
+    assert!(
+        !present.contains(&RelationshipKind::Calls),
+        "a kind no edge carries must not be reported as present"
+    );
+    for kind in &present {
+        assert!(ALL_KINDS.contains(kind));
     }
+}
+
+#[test]
+fn kinds_present_is_empty_for_a_graph_with_no_edges() {
+    // An empty graph must not claim to contain every kind, or the warning
+    // inverts and stays silent exactly when it is most needed.
+    let mut graph = GraphynGraph::new();
+    graph.add_symbol(symbol("a::A::class", "A", "a.ts"));
+    assert!(kinds_present(&graph).is_empty());
 }

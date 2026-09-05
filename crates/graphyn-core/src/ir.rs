@@ -59,7 +59,10 @@ pub struct Relationship {
     pub line: u32,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash)]
+/// `Ord` is derived because collections keyed by kind reach the user, and a
+/// stable order there is the product's first guarantee. The order is the
+/// declaration order below and carries no meaning beyond being fixed.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub enum RelationshipKind {
     Imports,
     Calls,

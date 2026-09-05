@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Call and instantiation edges**, for TypeScript and JavaScript. `foo()`
+  where `foo` arrived through an import or is defined in the file records a
+  `Calls` edge to that function; `new Foo()` records `Instantiates`. Both
+  travel through the existing import machinery, so a call to a function
+  imported through a barrel chain resolves to the file that defines it.
+
+  A callee that binds to nothing records **no edge at all** — not an edge
+  against a placeholder. `setTimeout(...)`, a global, or a value from an
+  untyped module names no symbol in the graph, and inventing one by matching
+  the leaf name repository-wide is the bug 0.2.0 fixed in the Rust adapter.
+  No diagnostic is raised for these, because there is nothing a user could fix.
+
+  `obj.method()` is deliberately not a call edge. It is already recorded as a
+  property access on the receiver's declared type, which is the honest
+  statement; a `Calls` edge to the *type* would claim the type was called and
+  would double every row for one source location.
+
+
 - `graphyn analyze --json` — emits the analysis as a machine-readable document
   on stdout instead of a human summary. Carries a `schema_version` so a
   consumer can tell a shape it understands from one it does not; the version is
@@ -115,11 +133,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   unrelated to crate-root discovery; documented here because the workspace fix
   is what made it visible.
 
-- `RelationshipKind::Calls` and `Instantiates` are declared but emitted by no
-  adapter, so a filter naming them matches nothing. Rather than returning a
-  silent empty result — which in a tool used to judge whether a change is safe
-  reads as "nothing calls this" — both the CLI and the MCP tools say the kind
-  is unimplemented. Call and instantiation edges are planned for 1.0.0.
+- **Call and instantiation edges are TypeScript-only so far.** The other Tier 1
+  languages parse calls but record no `Calls` or `Instantiates` edge, and Tier 2
+  languages emit `Calls` within a file only. A `--kind calls` query against a
+  Python repository therefore returns nothing — and says so, naming the graph
+  rather than the feature: the CLI and MCP tools now report which kinds the
+  analyzed graph actually contains instead of consulting a hand-maintained list
+  of unimplemented kinds. That list was wrong twice inside one release, and
+  could not express "call edges exist, but not for this repository's language".
 
 ### Fixed
 
