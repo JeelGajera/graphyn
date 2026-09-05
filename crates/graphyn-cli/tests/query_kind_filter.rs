@@ -2,9 +2,9 @@
 //!
 //! The interesting cases here are not the happy path but the two ways a
 //! filter can mislead: a name the tool does not know, and a name it knows but
-//! nothing emits. Both would otherwise produce an empty result that reads as
-//! "nothing depends on this" — the one answer Graphyn must never give without
-//! warrant.
+//! no edge in this graph carries. Both would otherwise produce an empty result
+//! that reads as "nothing depends on this" — the one answer Graphyn must never
+//! give without warrant.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -71,12 +71,15 @@ fn an_unknown_kind_is_rejected_rather_than_ignored() {
 }
 
 #[test]
-fn a_kind_nothing_emits_says_so() {
-    // `instantiates` is declared on RelationshipKind but nothing produces it.
+fn a_kind_absent_from_this_graph_says_so() {
     // A silent empty result here would read as "nothing instantiates this".
-    // (`calls` used to be the example, until structural analysis started
-    // emitting it from a grammar's own tags query.)
-    let root = scratch_copy("unemitted");
+    //
+    // The claim is deliberately about *this graph* rather than about what
+    // Graphyn implements. The fixture contains no `new` expression, so the
+    // answer is the same whether or not instantiation edges are supported —
+    // and it stays correct as languages gain call edges at different times,
+    // which a hand-maintained list of unimplemented kinds could not do.
+    let root = scratch_copy("absent-kind");
     let run = query(
         &root,
         &["blast-radius", "UserPayload", "--kind", "instantiates"],
@@ -84,8 +87,8 @@ fn a_kind_nothing_emits_says_so() {
 
     assert!(run.success, "a known kind is a valid query: {}", run.stdout);
     assert!(
-        run.stdout.contains("unimplemented"),
-        "expected an unimplemented warning, got:\n{}",
+        run.stdout.contains("no instantiates edge exists in this graph"),
+        "expected a warning naming the absent kind, got:\n{}",
         run.stdout
     );
     assert!(
@@ -176,6 +179,25 @@ fn an_unfiltered_query_reports_no_filter() {
     assert!(
         !run.stdout.contains("Kinds"),
         "an unfiltered query must not claim a filter:\n{}",
+        run.stdout
+    );
+
+    let _ = std::fs::remove_dir_all(&root);
+}
+
+#[test]
+fn a_kind_the_graph_does_contain_draws_no_warning() {
+    // The inverse of the absent-kind test, and the one that would catch the
+    // warning inverting. A graph that *has* call edges must not be told it has
+    // none — that would be the false reassurance in reverse, discouraging a
+    // filter that would have returned real dependents.
+    let root = scratch_copy("present-kind");
+    let run = query(&root, &["blast-radius", "UserPayload", "--kind", "imports"]);
+
+    assert!(run.success, "a known kind is a valid query: {}", run.stdout);
+    assert!(
+        !run.stdout.contains("exists in this graph"),
+        "warned about a kind the graph actually contains:\n{}",
         run.stdout
     );
 

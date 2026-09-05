@@ -187,6 +187,14 @@ however the variable was named.
 
 Being explicit about these is more useful than a feature list:
 
+- **Call and instantiation edges are TypeScript-only so far.** `foo()` and
+  `new Foo()` record `Calls` and `Instantiates` edges when the name binds to an
+  imported or file-local symbol; a callee that binds to nothing records no edge
+  rather than a guess. Other Tier 1 languages record neither yet, and Tier 2
+  languages see calls within a single file only. A query filtered to a kind no
+  edge in your graph carries is reported as such, so an empty result is never
+  mistaken for "nothing calls this".
+
 - **Imports resolve within one language.** A Python module importing a
   TypeScript file through a build step is not linked.
 - **Chained access is attributed to the first receiver only.** In `a.b.c`, the

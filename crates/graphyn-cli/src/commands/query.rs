@@ -29,37 +29,41 @@ pub fn mask_from_args(kinds: &[String]) -> Result<RelationshipKindMask, String> 
     Ok(mask)
 }
 
-/// Warn when a filter can only ever match nothing.
+/// Warn when a filter cannot match anything in *this* graph.
 ///
-/// `Calls` and `Instantiates` are declared on `RelationshipKind` but no
-/// adapter emits them. Returning a silent empty result for `--kind calls`
-/// would read as "nothing calls this", which is the one answer Graphyn must
-/// never give without warrant.
-fn warn_about_unemitted(mask: &RelationshipKindMask) {
+/// Returning a silent empty result for `--kind calls` would read as "nothing
+/// calls this", which is the one answer Graphyn must never give without
+/// warrant. The check is against the analyzed graph rather than a list of
+/// unimplemented kinds, so it stays true as languages gain call edges at
+/// different times: a Python-only repository is told that no call edge exists
+/// in it, which is the fact the user needs, without asserting anything about
+/// what Graphyn supports elsewhere.
+fn warn_about_absent_kinds(mask: &RelationshipKindMask, graph: &GraphynGraph) {
     if mask.is_all() {
         return;
     }
     let requested = mask.kinds();
-    let dead: Vec<&str> = requested
+    let present = query::kinds_present(graph);
+    let absent: Vec<&str> = requested
         .iter()
-        .filter(|k| query::UNEMITTED_KINDS.contains(k))
+        .filter(|k| !present.contains(k))
         .map(query::kind_name)
         .collect();
-    if dead.is_empty() {
+    if absent.is_empty() {
         return;
     }
 
-    if dead.len() == requested.len() {
+    if absent.len() == requested.len() {
         output::warning(&format!(
-            "every kind you asked for ({}) is unimplemented",
-            dead.join(", ")
+            "no {} edge exists in this graph",
+            absent.join(" or ")
         ));
-        output::dim_line("  No adapter emits it, so this result is empty regardless of your code.");
+        output::dim_line("  This result is empty for that reason alone.");
         output::dim_line("  Do not read it as evidence that nothing depends on the symbol.");
     } else {
         output::warning(&format!(
-            "{} is unimplemented and contributed nothing",
-            dead.join(", ")
+            "{} matched nothing: no such edge in this graph",
+            absent.join(", ")
         ));
     }
     output::blank();
@@ -100,7 +104,7 @@ pub fn run_blast_radius(
     output::stat("Depth", &depth.to_string());
     report_filter(&mask);
     output::blank();
-    warn_about_unemitted(&mask);
+    warn_about_absent_kinds(&mask, &graph);
 
     if edges.is_empty() {
         // Never claim safety on a filtered query: the caller narrowed the
@@ -182,7 +186,7 @@ pub fn run_usages(
     print_symbol_header(&graph, symbol, file);
     report_filter(&mask);
     output::blank();
-    warn_about_unemitted(&mask);
+    warn_about_absent_kinds(&mask, &graph);
 
     let edges = query::symbol_usages(&graph, symbol, file, true, mask)
         .map_err(|e| format_query_error(e, symbol))?;
@@ -226,7 +230,7 @@ pub fn run_deps(
     output::stat("Depth", &depth.to_string());
     report_filter(&mask);
     output::blank();
-    warn_about_unemitted(&mask);
+    warn_about_absent_kinds(&mask, &graph);
 
     let edges = query::dependencies(&graph, symbol, file, Some(depth), mask)
         .map_err(|e| format_query_error(e, symbol))?;

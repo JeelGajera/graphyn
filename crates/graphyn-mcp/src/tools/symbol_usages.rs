@@ -11,7 +11,7 @@ use graphyn_core::graph::GraphynGraph;
 use graphyn_core::query;
 
 use crate::context_builder;
-use crate::tools::kinds::{mask_from_names, unemitted_warning, KINDS_DOC};
+use crate::tools::kinds::{absent_kinds_warning, mask_from_names, KINDS_DOC};
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct SymbolUsagesParams {
@@ -44,7 +44,7 @@ pub fn execute(graph: &GraphynGraph, params: SymbolUsagesParams) -> Result<Strin
         params.file.as_deref(),
         &edges,
     );
-    Ok(match unemitted_warning(&mask) {
+    Ok(match absent_kinds_warning(&mask, graph) {
         Some(warning) => format!("{warning}\n\n{body}"),
         None => body,
     })

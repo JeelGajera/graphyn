@@ -10,8 +10,9 @@ use graphyn_core::query::{self, RelationshipKindMask};
 pub const KINDS_DOC: &str = "Optional: only follow these relationship kinds. \
 One or more of: imports, calls, extends, implements, uses-type, \
 accesses-property, re-exports, instantiates. Omit to follow every kind. \
-Note that 'calls' and 'instantiates' are not currently emitted by any \
-language adapter and will match nothing.";
+Which kinds a given repository contains depends on its languages; a filter \
+matching no edge in the analyzed graph is reported as such rather than \
+returning a bare empty result.";
 
 /// Build a mask from tool arguments.
 ///
@@ -41,11 +42,18 @@ pub fn mask_from_names(names: &Option<Vec<String>>) -> Result<RelationshipKindMa
     Ok(mask)
 }
 
-/// A warning to prepend when a caller asked only for kinds nothing emits.
+/// A warning to prepend when a caller asked only for kinds this graph lacks.
 ///
 /// Without it the reply is an empty result that reads as "nothing depends on
 /// this" — the exact false reassurance Graphyn exists to prevent.
-pub fn unemitted_warning(mask: &RelationshipKindMask) -> Option<String> {
+///
+/// Asks the analyzed graph rather than a hand-maintained list of unimplemented
+/// kinds, so the note stays true as languages gain call edges at different
+/// times and says something about this repository rather than about Graphyn.
+pub fn absent_kinds_warning(
+    mask: &RelationshipKindMask,
+    graph: &graphyn_core::graph::GraphynGraph,
+) -> Option<String> {
     if mask.is_all() {
         return None;
     }
@@ -54,28 +62,27 @@ pub fn unemitted_warning(mask: &RelationshipKindMask) -> Option<String> {
         return None;
     }
 
-    let dead: Vec<&str> = requested
+    let present = query::kinds_present(graph);
+    let absent: Vec<&str> = requested
         .iter()
-        .filter(|k| query::UNEMITTED_KINDS.contains(k))
+        .filter(|k| !present.contains(k))
         .map(query::kind_name)
         .collect();
-    if dead.is_empty() {
+    if absent.is_empty() {
         return None;
     }
 
-    let all_dead = dead.len() == requested.len();
-    Some(if all_dead {
+    Some(if absent.len() == requested.len() {
         format!(
-            "NOTE: every requested kind ({}) is unimplemented — no adapter emits it, \
-             so this result is empty regardless of the code. This is not evidence \
-             that nothing depends on the symbol.",
-            dead.join(", ")
+            "NOTE: no {} edge exists in this graph, so this result is empty for \
+             that reason alone. This is not evidence that nothing depends on the \
+             symbol.",
+            absent.join(" or ")
         )
     } else {
         format!(
-            "NOTE: {} is unimplemented — no adapter emits it, so it contributed \
-             nothing to this result.",
-            dead.join(", ")
+            "NOTE: {} matched nothing — no such edge exists in this graph.",
+            absent.join(", ")
         )
     })
 }

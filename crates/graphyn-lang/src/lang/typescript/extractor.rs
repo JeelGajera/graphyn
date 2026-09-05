@@ -129,6 +129,23 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
     }
     relationships.extend(collect_method_scoped_accesses(parsed, &symbols));
 
+    for (callee, kind, line) in collect_calls_and_instantiations(parsed) {
+        let context = match kind {
+            RelationshipKind::Instantiates => "instantiation",
+            _ => "call",
+        };
+        relationships.push(Relationship {
+            from: from_symbol_id.clone(),
+            to: unresolved_local_type_symbol_id(&callee),
+            kind,
+            alias: Some(callee),
+            properties_accessed: Vec::new(),
+            context: context.to_string(),
+            file: parsed.file.clone(),
+            line,
+        });
+    }
+
     relationships.sort_by(|a, b| {
         a.file
             .cmp(&b.file)
@@ -903,4 +920,67 @@ fn primary_type_name(input: &str) -> &str {
 
 fn compact_whitespace(input: &str) -> String {
     input.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
+/// Direct calls and constructions whose target is a name the file can resolve.
+///
+/// # Why only direct calls
+///
+/// A call edge is worth having only if it says *which* function ran. `foo()`
+/// where `foo` arrived through an import, or is defined in this file, names a
+/// symbol. A bare `foo()` with no such binding does not: matching it by leaf
+/// name across the repository is the bug 0.2.0 fixed in the Rust adapter, and
+/// an edge invented that way is worse than a missing one in a tool used to
+/// decide whether a change is safe.
+///
+/// `obj.method()` is deliberately **not** a call edge. It is already recorded
+/// as a property access on the receiver's declared type, which is the honest
+/// statement — the type is touched at that line. Emitting `Calls` to the *type*
+/// as well would claim the type was called, and would double every row for one
+/// source location.
+///
+/// Returns `(callee_name, kind, line)`, sorted by the caller, so identical
+/// input yields identical output.
+fn collect_calls_and_instantiations(parsed: &ParsedFile) -> Vec<(String, RelationshipKind, u32)> {
+    let mut out: Vec<(String, RelationshipKind, u32)> = Vec::new();
+
+    walk_tree(parsed.tree.root_node(), &mut |node| {
+        let (name_node, kind) = match node.kind() {
+            // `new Foo(...)` — the constructor names a class directly.
+            "new_expression" => match node.child_by_field_name("constructor") {
+                Some(n) => (n, RelationshipKind::Instantiates),
+                None => return,
+            },
+            // `foo(...)`, but not `obj.method(...)`: a non-identifier callee is
+            // a member or computed expression, covered by property access.
+            "call_expression" => match node.child_by_field_name("function") {
+                Some(n) if n.kind() == "identifier" => (n, RelationshipKind::Calls),
+                _ => return,
+            },
+            _ => return,
+        };
+
+        if name_node.kind() != "identifier" {
+            return;
+        }
+        let Some(text) = node_text(name_node, &parsed.source) else {
+            return;
+        };
+        let name = sanitize_identifier(text);
+        if name.is_empty() {
+            return;
+        }
+
+        out.push((
+            name.to_string(),
+            kind,
+            name_node.start_position().row as u32 + 1,
+        ));
+    });
+
+    // One row per (callee, kind, line): a name called twice on one line is one
+    // fact about that line, and the order must not depend on traversal.
+    out.sort();
+    out.dedup();
+    out
 }

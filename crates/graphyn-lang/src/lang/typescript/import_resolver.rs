@@ -155,6 +155,24 @@ pub fn resolve_repo_ir(root: &Path, repo_ir: &mut RepoIR) {
         }
 
         for rel in &mut resolved {
+            if rel.kind == RelationshipKind::Calls || rel.kind == RelationshipKind::Instantiates {
+                if let Some(callee) = parse_unresolved_local_type_symbol_id(&rel.to) {
+                    if let Some(canonical) = local_alias_to_symbol_id.get(&callee) {
+                        rel.to = canonical.clone();
+                    } else if let Some(found) =
+                        find_symbol_by_name_in_file(&file_to_symbols, &file_ir.file, &callee)
+                    {
+                        rel.to = found;
+                    }
+                    // Anything still unresolved keeps its unresolved id and is
+                    // dropped below. A call whose target is not a symbol this
+                    // file can name — a global, a built-in, a value from an
+                    // untyped module — is not a fact about the codebase graph,
+                    // and no diagnostic is raised because there is nothing the
+                    // user could fix. See the retain() after this loop.
+                }
+                continue;
+            }
             if rel.kind != RelationshipKind::AccessesProperty
                 && rel.kind != RelationshipKind::UsesType
             {
@@ -187,6 +205,17 @@ pub fn resolve_repo_ir(root: &Path, repo_ir: &mut RepoIR) {
                 });
             }
         }
+
+        // A call or instantiation that never bound to a symbol is discarded
+        // rather than recorded against a placeholder target. Keeping it would
+        // put an edge in the graph pointing at a name rather than at a symbol,
+        // and `blast-radius` would count it as a dependent.
+        resolved.retain(|rel| {
+            if rel.kind != RelationshipKind::Calls && rel.kind != RelationshipKind::Instantiates {
+                return true;
+            }
+            parse_unresolved_local_type_symbol_id(&rel.to).is_none()
+        });
 
         file_ir.relationships = resolved;
     }
