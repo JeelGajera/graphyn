@@ -197,14 +197,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   unrelated to crate-root discovery; documented here because the workspace fix
   is what made it visible.
 
-- **Call and instantiation edges are TypeScript-only so far.** The other Tier 1
-  languages parse calls but record no `Calls` or `Instantiates` edge, and Tier 2
-  languages emit `Calls` within a file only. A `--kind calls` query against a
-  Python repository therefore returns nothing — and says so, naming the graph
-  rather than the feature: the CLI and MCP tools now report which kinds the
-  analyzed graph actually contains instead of consulting a hand-maintained list
-  of unimplemented kinds. That list was wrong twice inside one release, and
-  could not express "call edges exist, but not for this repository's language".
+- **Call and instantiation edges cover TypeScript, Python and Rust so far.** Go
+  and C parse calls but record no `Calls` or `Instantiates` edge, and Tier 2
+  languages emit `Calls` within a file only. A `--kind calls` query against a Go
+  repository therefore returns nothing — and says so, naming the graph rather
+  than the feature: the CLI and MCP tools report which kinds the analyzed graph
+  actually contains instead of consulting a hand-maintained list of
+  unimplemented kinds. That list was wrong twice inside one release, and could
+  not express "call edges exist, but not for this repository's language" — which
+  is exactly the statement that had to stay true as each language followed.
 
 ### Fixed
 
