@@ -17,7 +17,8 @@ use graphyn_core::ir::{
     Diagnostic, DiagnosticCategory, DiagnosticLevel, RelationshipKind, RepoIR, SymbolKind,
 };
 use graphyn_core::symbol_id::{
-    external_package_id, parse_unresolved_import_id, parse_unresolved_local_type_id,
+    external_package_id, is_external_package, kind_suffix, parse_symbol_id,
+    parse_unresolved_import_id, parse_unresolved_local_type_id,
 };
 
 use crate::lang::rust::module_tree::{ModuleTree, Resolved};
@@ -25,6 +26,33 @@ use crate::lang::rust::scope_analyzer::is_builtin_type;
 
 pub fn resolve_repo_ir(root: &Path, repo_ir: &mut RepoIR) {
     let tree = ModuleTree::build(root, &repo_ir.files);
+
+    // Symbols of every file, keyed by the file that defines them. Needed only
+    // by `Foo::new()`, where the method lives in whichever file defines `Foo`
+    // rather than in the file making the call. Lookups are always anchored to
+    // a file already resolved from this file's imports — never a repository-
+    // wide search for a leaf name, which is the bug 0.2.0 fixed here.
+    //
+    // Keyed by the *qualified* name from the symbol id rather than by
+    // `Symbol::name`: a method's display name is the bare `new`, which two
+    // types in one file both carry. The id's name component is `UserService::
+    // new`, which is what a call site spells and what distinguishes them.
+    let symbols_by_file: HashMap<String, HashMap<String, String>> = repo_ir
+        .files
+        .iter()
+        .map(|f| {
+            let symbols = f
+                .symbols
+                .iter()
+                .filter(|s| s.kind != SymbolKind::Module)
+                .filter_map(|s| {
+                    let (_, qualified, _) = parse_symbol_id(&s.id)?;
+                    Some((qualified.to_string(), s.id.clone()))
+                })
+                .collect();
+            (f.file.clone(), symbols)
+        })
+        .collect();
 
     for file in &mut repo_ir.files {
         let path = file.file.clone();
@@ -118,6 +146,41 @@ pub fn resolve_repo_ir(root: &Path, repo_ir: &mut RepoIR) {
                 continue;
             };
 
+            // Calls resolve differently from type references: a path callee
+            // has to reach a method in another file, and an unresolved callee
+            // is silence rather than a diagnostic.
+            if rel.kind == RelationshipKind::Calls || rel.kind == RelationshipKind::Instantiates {
+                match resolve_callee(&type_name, &local_names, &own_symbols, &symbols_by_file) {
+                    // `Foo(1)` on a tuple struct, and `Enum::Variant(x)` on a
+                    // tuple variant, are construction spelled as a call. The
+                    // resolved target's kind settles it, the same way it does
+                    // in Python — and it has to, because nothing at the call
+                    // site distinguishes them from a function call. Leaving
+                    // these as `Calls` would put an edge in the graph saying a
+                    // variant was called, which nothing ever does.
+                    Some(id) if constructs(&id) => {
+                        rel.kind = RelationshipKind::Instantiates;
+                        rel.context = "instantiation".to_string();
+                        rel.to = id;
+                    }
+                    // A call into a crate from crates.io: the only id available
+                    // is the package, and an edge saying a *package* was called
+                    // would be counted by blast-radius as a dependent of
+                    // something nobody can open. The import edge already
+                    // records that dependency.
+                    Some(id) if is_external_package(&id) => {
+                        drop_type.push(index);
+                    }
+                    Some(id) => rel.to = id,
+                    // A prelude name (`Some`, `drop`), a macro-generated call,
+                    // or a fully-qualified path used without a `use`. None of
+                    // them name a symbol in the graph, and no diagnostic is
+                    // raised because there is nothing here a user could fix.
+                    None => drop_type.push(index),
+                }
+                continue;
+            }
+
             let resolved = local_names
                 .get(&type_name)
                 .or_else(|| own_symbols.get(&type_name))
@@ -176,6 +239,73 @@ pub fn resolve_repo_ir(root: &Path, repo_ir: &mut RepoIR) {
             });
         }
     }
+}
+
+/// Bind a callee name to the symbol that actually runs.
+///
+/// Three shapes, in order:
+///
+/// 1. `foo` — a free function or tuple struct, resolved through the file's
+///    imports and then its own symbols, exactly like a type reference.
+/// 2. `Foo::new` where `Foo` is defined in this file — the method symbol is
+///    named `Foo::new`, so the file's own table already holds it.
+/// 3. `Foo::new` where `Foo` was imported — resolve `Foo` first, then look the
+///    method up **in the file that defines `Foo`**. The lookup is anchored to
+///    that file rather than searched for repository-wide; matching a leaf name
+///    across the repository is the bug 0.2.0 fixed in this adapter.
+///
+/// A path with more than one segment before the method (`crate::foo::Foo::new`
+/// with no `use`) returns `None`. Resolving it would mean guessing which `Foo`
+/// was meant, and "fully-qualified paths used inline without a `use` record no
+/// edge" is a limit the README states and this keeps true.
+fn resolve_callee(
+    callee: &str,
+    local_names: &HashMap<String, String>,
+    own_symbols: &HashMap<String, String>,
+    symbols_by_file: &HashMap<String, HashMap<String, String>>,
+) -> Option<String> {
+    if let Some(id) = local_names.get(callee).or_else(|| own_symbols.get(callee)) {
+        return Some(id.clone());
+    }
+
+    let (type_path, method) = callee.rsplit_once("::")?;
+    if type_path.contains("::") {
+        return None;
+    }
+
+    let type_id = local_names
+        .get(type_path)
+        .or_else(|| own_symbols.get(type_path))?;
+
+    // An associated function on a type from another crate is not a symbol we
+    // hold; the import edge already carries that dependency.
+    let (defining_file, _, _) = parse_symbol_id(type_id)?;
+    symbols_by_file
+        .get(defining_file)?
+        .get(&format!("{type_path}::{method}"))
+        .cloned()
+}
+
+/// Whether a resolved target is a thing that gets constructed rather than run.
+///
+/// A tuple struct and a tuple enum variant are both invoked with call syntax
+/// and neither is a function. The distinction cannot be made at the call site,
+/// only from the symbol the call resolves to.
+fn constructs(id: &str) -> bool {
+    matches!(
+        kind_suffix_of(id),
+        Some(suffix)
+            if suffix == kind_suffix(&SymbolKind::Class)
+                || suffix == kind_suffix(&SymbolKind::EnumVariant)
+    )
+}
+
+/// The kind component of a resolved symbol id, if it is one.
+///
+/// Compared against [`kind_suffix`] rather than a string literal, so a rename
+/// of the suffix in `symbol_id` moves both sides together.
+fn kind_suffix_of(id: &str) -> Option<&str> {
+    parse_symbol_id(id).map(|(_, _, kind)| kind)
 }
 
 fn last_segment(path: &str) -> &str {

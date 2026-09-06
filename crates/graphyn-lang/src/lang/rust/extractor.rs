@@ -50,6 +50,7 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
     });
 
     relationships.extend(property_access_edges(root, source, file));
+    relationships.extend(call_edges(root, source, file));
 
     if stats.truncated() {
         diagnostics.push(Diagnostic {
@@ -73,6 +74,87 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
         diagnostics,
         re_exports: Vec::new(),
     }
+}
+
+// ── calls ────────────────────────────────────────────────────
+
+/// Calls and struct constructions whose target is a name the file can resolve.
+///
+/// Rust spells the three cases differently, and each is recorded as what it
+/// actually is:
+///
+/// - `foo(...)` — a free function, or a tuple-struct constructor. The kind is
+///   settled by the resolver from the target's kind, since `Foo(1)` and
+///   `foo(1)` are the same node.
+/// - `Foo::new(...)` — an associated function. The edge points at the *method*
+///   `Foo::new`, not at `Foo`: that is the symbol that runs. Calling it an
+///   instantiation would be reading meaning into the name `new`, which returns
+///   `Self` only by convention.
+/// - `Foo { .. }` — a struct literal, which is Rust's actual construction
+///   syntax, so this is the one shape that is `Instantiates` outright.
+///
+/// `obj.method(...)` records nothing, matching TypeScript and Python: it is
+/// already a property access on the receiver, and a call edge to the receiver
+/// would claim the receiver was called. `println!(...)` is a macro invocation
+/// rather than a call node, so macro-generated calls stay outside the graph —
+/// consistent with macro bodies being token trees everywhere else.
+///
+/// Returns `(callee_name, kind, line)`, sorted and deduplicated, so identical
+/// input yields identical output.
+fn call_edges(root: Node<'_>, source: &[u8], file: &str) -> Vec<Relationship> {
+    let mut found: Vec<(String, RelationshipKind, u32)> = Vec::new();
+
+    walk(root, &mut |node| {
+        let (name_node, kind) = match node.kind() {
+            // `Foo { .. }` — construction, unambiguously.
+            "struct_expression" => match node.child_by_field_name("name") {
+                Some(n) => (n, RelationshipKind::Instantiates),
+                None => return,
+            },
+            // A callee that is neither a bare name nor a path is a method call
+            // or a computed expression, both covered by property access.
+            "call_expression" => match node.child_by_field_name("function") {
+                Some(n) if matches!(n.kind(), "identifier" | "scoped_identifier") => {
+                    (n, RelationshipKind::Calls)
+                }
+                _ => return,
+            },
+            _ => return,
+        };
+
+        let Some(text) = node_text(name_node, source) else {
+            return;
+        };
+        let name = text.trim();
+        if name.is_empty() {
+            return;
+        }
+
+        found.push((name.to_string(), kind, start_line(name_node)));
+    });
+
+    // One row per (callee, kind, line): a name called twice on one line is one
+    // fact about that line, and the order must not depend on traversal.
+    found.sort();
+    found.dedup();
+
+    found
+        .into_iter()
+        .map(|(callee, kind, line)| Relationship {
+            from: module_symbol_id(file),
+            to: unresolved_local_type_id(&callee),
+            kind: kind.clone(),
+            alias: Some(callee),
+            properties_accessed: Vec::new(),
+            context: match kind {
+                RelationshipKind::Instantiates => "instantiation".to_string(),
+                _ => "call".to_string(),
+            },
+            file: file.to_string(),
+            line,
+            resolution: Resolution::default(),
+        })
+        .collect()
 }
 
 // ── symbols ──────────────────────────────────────────────────

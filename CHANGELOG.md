@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Call and instantiation edges for Rust.** Rust spells the cases differently
+  and each is recorded as what it is. `Foo::new(..)` is an associated function
+  call, so the edge names the *method* `Foo::new` rather than the type — `new`
+  returns `Self` only by convention, and an edge to the type would leave
+  `blast-radius` on the method blind to its own callers. `Foo { .. }` is Rust's
+  actual construction syntax and records `Instantiates` outright. `Foo(1)` on a
+  tuple struct reads as a plain call, so, as in Python, the resolved target's
+  kind is what makes it an instantiation.
+
+  `Enum::Variant(x)` is construction too, and is recorded as such: nothing ever
+  calls a variant, and an edge saying otherwise would surface under
+  `--kind calls` as a caller that does not exist. After both promotions a
+  `Calls` edge only ever targets a function or a method — something that can
+  actually run.
+
+  A path callee resolves through the file's imports and then into the file that
+  defines the type, never by matching a leaf name across the repository. A
+  fully-qualified path used inline without a `use` still records no edge, which
+  is the documented limit and is now pinned by a test rather than only by
+  prose. `obj.method()` records nothing, `println!(..)` is a macro invocation
+  rather than a call node, and prelude names bind to nothing — none of them
+  raise a diagnostic, because there is nothing a user could fix.
+
+
 - **Call and instantiation edges for Python.** `foo()` where `foo` was imported
   or defined in the file records a `Calls` edge to the definition, travelling
   through the same import machinery as every other reference, so a call through
@@ -173,14 +197,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   unrelated to crate-root discovery; documented here because the workspace fix
   is what made it visible.
 
-- **Call and instantiation edges are TypeScript-only so far.** The other Tier 1
-  languages parse calls but record no `Calls` or `Instantiates` edge, and Tier 2
-  languages emit `Calls` within a file only. A `--kind calls` query against a
-  Python repository therefore returns nothing — and says so, naming the graph
-  rather than the feature: the CLI and MCP tools now report which kinds the
-  analyzed graph actually contains instead of consulting a hand-maintained list
-  of unimplemented kinds. That list was wrong twice inside one release, and
-  could not express "call edges exist, but not for this repository's language".
+- **Call and instantiation edges cover TypeScript, Python and Rust so far.** Go
+  and C parse calls but record no `Calls` or `Instantiates` edge, and Tier 2
+  languages emit `Calls` within a file only. A `--kind calls` query against a Go
+  repository therefore returns nothing — and says so, naming the graph rather
+  than the feature: the CLI and MCP tools report which kinds the analyzed graph
+  actually contains instead of consulting a hand-maintained list of
+  unimplemented kinds. That list was wrong twice inside one release, and could
+  not express "call edges exist, but not for this repository's language" — which
+  is exactly the statement that had to stay true as each language followed.
 
 ### Fixed
 
