@@ -1,10 +1,7 @@
 use std::collections::BTreeSet;
 
 use graphyn_core::ast::{first_line_of, node_text, start_line, walk};
-use graphyn_core::ir::{
-    Diagnostic, DiagnosticCategory, DiagnosticLevel, FileIR, Language, Relationship,
-    RelationshipKind, Symbol, SymbolKind,
-};
+use graphyn_core::ir::{Diagnostic, DiagnosticCategory, DiagnosticLevel, FileIR, Language, Relationship, RelationshipKind, Resolution, Symbol, SymbolKind};
 use graphyn_core::symbol_id::{
     make_symbol_id, module_symbol, module_symbol_id, unresolved_import_id,
     unresolved_local_type_id, IMPORT_ALL,
@@ -177,6 +174,7 @@ fn impl_block(
                 context: first_line_of(node, source).unwrap_or_default(),
                 file: file.to_string(),
                 line: start_line(node),
+                resolution: Resolution::default(),
             });
         }
     }
@@ -235,6 +233,7 @@ fn derive_edges(node: Node<'_>, source: &[u8], file: &str, kind: SymbolKind) -> 
             context: format!("#[derive({})]", d.name),
             file: file.to_string(),
             line: d.line,
+            resolution: Resolution::default(),
         })
         .collect()
 }
@@ -376,6 +375,7 @@ fn import(
         context: context.to_string(),
         file: file.to_string(),
         line,
+        resolution: Resolution::default(),
     }
 }
 
@@ -403,6 +403,7 @@ fn property_access_edges(root: Node<'_>, source: &[u8], file: &str) -> Vec<Relat
             context: "property access".to_string(),
             file: file.to_string(),
             line: access.first_line,
+            resolution: Resolution::default(),
         })
         .collect()
 }

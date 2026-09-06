@@ -2,14 +2,18 @@ use std::fmt::{Display, Formatter};
 use std::path::Path;
 
 use graphyn_core::graph::GraphynGraph;
-use graphyn_core::ir::{
-    Language, ReExportEntry, Relationship, RelationshipKind, Symbol, SymbolKind,
-};
+use graphyn_core::ir::{Language, ReExportEntry, Relationship, RelationshipKind, Resolution, Symbol, SymbolKind};
 use graphyn_core::resolver::{AliasEntry, AliasScope};
 use rocksdb::{Options, DB};
 
 const KEY_GRAPH_SNAPSHOT: &[u8] = b"graph_snapshot_v1";
-const SNAPSHOT_VERSION: u8 = 2;
+/// Bumped to 3 for the per-edge resolution byte.
+///
+/// A version 1 or 2 snapshot carries no resolution, and is read back as
+/// `Structural` — the weaker value — so a graph written before this existed is
+/// never treated as gate-safe on the strength of a field it does not have.
+/// Re-analysing rewrites it at the current version.
+const SNAPSHOT_VERSION: u8 = 3;
 
 #[derive(Debug)]
 pub enum StoreError {
@@ -143,6 +147,7 @@ impl GraphSnapshot {
                 context: meta.context.clone(),
                 file: meta.file.clone(),
                 line: meta.line,
+                resolution: meta.resolution,
             });
         }
         relationships.sort_by(|a, b| {
@@ -243,6 +248,7 @@ impl GraphSnapshot {
             write_string(&mut out, &relationship.context)?;
             write_string(&mut out, &relationship.file)?;
             write_u32(&mut out, relationship.line);
+            write_u8(&mut out, resolution_to_u8(&relationship.resolution));
         }
 
         write_u32(&mut out, self.alias_chains.len() as u32);
@@ -273,7 +279,7 @@ impl GraphSnapshot {
         let mut cursor = ByteCursor::new(bytes);
 
         let version = cursor.read_u8()?;
-        if version != 1 && version != SNAPSHOT_VERSION {
+        if !(1..=SNAPSHOT_VERSION).contains(&version) {
             return Err(StoreError::Serialization(format!(
                 "unsupported snapshot version: {version}"
             )));
@@ -309,6 +315,13 @@ impl GraphSnapshot {
             let context = cursor.read_string()?;
             let file = cursor.read_string()?;
             let line = cursor.read_u32()?;
+            let resolution = if version >= 3 {
+                resolution_from_u8(cursor.read_u8()?)
+            } else {
+                // Pre-3 snapshots predate the field. Defaulting to the weaker
+                // value keeps an old graph from being read as gate-safe.
+                Resolution::Structural
+            };
 
             relationships.push(Relationship {
                 from,
@@ -319,6 +332,7 @@ impl GraphSnapshot {
                 context,
                 file,
                 line,
+                resolution,
             });
         }
 
@@ -525,6 +539,26 @@ fn u8_to_language(input: u8) -> Result<Language, StoreError> {
     }
 }
 
+/// Resolution is persisted as a byte rather than by discriminant order, so
+/// adding a variant later cannot silently reinterpret existing snapshots.
+fn resolution_to_u8(resolution: &Resolution) -> u8 {
+    match resolution {
+        Resolution::Structural => 0,
+        Resolution::Resolved => 1,
+    }
+}
+
+/// An unknown byte reads as `Structural`. A snapshot written by a newer
+/// Graphyn may carry a resolution this build does not know; treating it as the
+/// weakest value is the only safe reading, since the alternative is claiming
+/// gate-safety on evidence this build cannot interpret.
+fn resolution_from_u8(raw: u8) -> Resolution {
+    match raw {
+        1 => Resolution::Resolved,
+        _ => Resolution::Structural,
+    }
+}
+
 fn relationship_kind_to_u8(kind: &RelationshipKind) -> u8 {
     match kind {
         RelationshipKind::Imports => 1,
@@ -572,5 +606,99 @@ fn u8_to_alias_scope(input: u8) -> Result<AliasScope, StoreError> {
         other => Err(StoreError::Serialization(format!(
             "unknown alias scope code: {other}"
         ))),
+    }
+}
+
+#[cfg(test)]
+mod resolution_tests {
+    use super::*;
+    use graphyn_core::graph::GraphynGraph;
+    use graphyn_core::ir::{Language, Symbol, SymbolKind};
+
+    fn symbol(id: &str, file: &str) -> Symbol {
+        Symbol {
+            id: id.to_string(),
+            name: id.to_string(),
+            kind: SymbolKind::Class,
+            language: Language::TypeScript,
+            file: file.to_string(),
+            line_start: 1,
+            line_end: 1,
+            signature: None,
+        }
+    }
+
+    fn edge(file: &str, resolution: Resolution) -> Relationship {
+        Relationship {
+            from: "a".to_string(),
+            to: "b".to_string(),
+            kind: RelationshipKind::Imports,
+            alias: None,
+            properties_accessed: vec![],
+            context: "test".to_string(),
+            file: file.to_string(),
+            line: 1,
+            resolution,
+        }
+    }
+
+    fn graph() -> GraphynGraph {
+        let mut g = GraphynGraph::new();
+        g.add_symbol(symbol("a", "a.ts"));
+        g.add_symbol(symbol("b", "b.java"));
+        g
+    }
+
+    #[test]
+    fn resolution_survives_a_round_trip_per_edge() {
+        // This field is what a gate reads. When persistence dropped it, every
+        // graph loaded from disk read back as structural — the safe direction,
+        // so nothing broke loudly, but `blast-radius` then refused to say
+        // "safe to modify" about a fully resolved repository and the feature
+        // was quietly useless. That is the bug this test exists to catch.
+        let mut g = graph();
+        g.add_relationship(&edge("a.ts", Resolution::Resolved));
+        g.add_relationship(&edge("b.java", Resolution::Structural));
+
+        let bytes = GraphSnapshot::from_graph(&g)
+            .expect("snapshot")
+            .to_bytes()
+            .expect("serialize");
+        let restored = GraphSnapshot::from_bytes(&bytes).expect("deserialize");
+
+        let mut got: Vec<(String, Resolution)> = restored
+            .relationships
+            .iter()
+            .map(|r| (r.file.clone(), r.resolution))
+            .collect();
+        got.sort();
+
+        assert_eq!(
+            got,
+            vec![
+                ("a.ts".to_string(), Resolution::Resolved),
+                ("b.java".to_string(), Resolution::Structural),
+            ]
+        );
+    }
+
+    // A version 1 or 2 payload carries no resolution byte, and `from_bytes`
+    // gates the read on `version >= 3`, defaulting to Structural. That path is
+    // not covered by a test here: a valid old payload cannot be produced by
+    // editing a current one, because dropping the byte misaligns every section
+    // after it, and hand-building one would pin the test to a format this code
+    // no longer writes. The property it would assert — that a missing
+    // resolution is never read as gate-safe — is covered by
+    // `the_weaker_resolution_is_the_default` in graphyn-core and by the codec
+    // test below.
+
+    #[test]
+    fn an_unknown_resolution_byte_reads_as_structural() {
+        // A snapshot from a newer Graphyn may carry a resolution this build
+        // cannot interpret. Treating it as the weakest value is the only safe
+        // reading; the alternative claims gate-safety on unread evidence.
+        assert_eq!(resolution_from_u8(0), Resolution::Structural);
+        assert_eq!(resolution_from_u8(1), Resolution::Resolved);
+        assert_eq!(resolution_from_u8(200), Resolution::Structural);
     }
 }

@@ -43,6 +43,7 @@
           "kind": "Imports",
           "line": 2,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "astro_component/src/types/layout.ts::LayoutProps::interface"
         },
         {
@@ -53,6 +54,7 @@
           "kind": "Imports",
           "line": 2,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "astro_component/src/types/layout.ts::LayoutProps::interface"
         }
       ],
@@ -101,6 +103,7 @@
           "kind": "Imports",
           "line": 2,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "__UNRESOLVED_IMPORT__|../layouts/Layout.astro|Layout"
         },
         {
@@ -111,6 +114,7 @@
           "kind": "Imports",
           "line": 3,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "astro_component/src/components/Card.ts::Card::function"
         },
         {
@@ -121,6 +125,7 @@
           "kind": "Imports",
           "line": 4,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "astro_component/src/types/index.ts::PageData::interface"
         },
         {
@@ -131,6 +136,7 @@
           "kind": "Imports",
           "line": 4,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "astro_component/src/types/index.ts::PageData::interface"
         }
       ],
@@ -249,6 +255,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "barrel_chain/src/components/blockquote.ts::renderBlockquote::function"
         },
         {
@@ -259,6 +266,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "barrel_chain/src/components/code.ts::renderCodeBlock::function"
         },
         {
@@ -269,6 +277,7 @@
           "kind": "Calls",
           "line": 4,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "barrel_chain/src/components/blockquote.ts::renderBlockquote::function"
         },
         {
@@ -279,6 +288,7 @@
           "kind": "Calls",
           "line": 4,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "barrel_chain/src/components/code.ts::renderCodeBlock::function"
         }
       ],
@@ -386,6 +396,7 @@
           "kind": "ReExports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "barrel_chain/src/components/blockquote.ts::renderBlockquote::function"
         },
         {
@@ -396,6 +407,7 @@
           "kind": "ReExports",
           "line": 2,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "barrel_chain/src/components/code.ts::renderCodeBlock::function"
         }
       ],
@@ -428,6 +440,7 @@
           "properties_accessed": [
             "host"
           ],
+          "resolution": "resolved",
           "to": "builtin_types/src/app.ts::Config::interface"
         }
       ],
@@ -538,6 +551,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "call_edges/src/services.ts::UserService::class"
         },
         {
@@ -548,6 +562,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "call_edges/src/services.ts::formatName::function"
         },
         {
@@ -558,6 +573,7 @@
           "kind": "Instantiates",
           "line": 5,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "call_edges/src/services.ts::UserService::class"
         },
         {
@@ -568,6 +584,7 @@
           "kind": "Calls",
           "line": 8,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "call_edges/src/services.ts::formatName::function"
         }
       ],
@@ -775,6 +792,7 @@
           "properties_accessed": [
             "id"
           ],
+          "resolution": "resolved",
           "to": "__UNRESOLVED_LOCAL_TYPE__|Payload"
         }
       ],
@@ -835,6 +853,7 @@
           "kind": "ReExports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "__UNRESOLVED_IMPORT__|./b|foo"
         }
       ],
@@ -880,6 +899,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "__UNRESOLVED_IMPORT__|./a|foo"
         }
       ],
@@ -940,6 +960,7 @@
           "kind": "ReExports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "__UNRESOLVED_IMPORT__|./a|foo"
         }
       ],
@@ -970,6 +991,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "deep_barrel/src/lib/renderers/blockquote.ts::renderBlockquote::function"
         },
         {
@@ -980,6 +1002,7 @@
           "kind": "Calls",
           "line": 4,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "deep_barrel/src/lib/renderers/blockquote.ts::renderBlockquote::function"
         }
       ],
@@ -1025,6 +1048,7 @@
           "kind": "ReExports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "deep_barrel/src/lib/renderers/blockquote.ts::renderBlockquote::function"
         }
       ],
@@ -1089,6 +1113,7 @@
           "kind": "ReExports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "deep_barrel/src/lib/renderers/blockquote.ts::renderBlockquote::function"
         }
       ],
@@ -1121,6 +1146,7 @@
           "properties_accessed": [
             "id"
           ],
+          "resolution": "resolved",
           "to": "deep_dependency/src/models/account.ts::Account::class"
         },
         {
@@ -1133,6 +1159,7 @@
           "properties_accessed": [
             "id"
           ],
+          "resolution": "resolved",
           "to": "deep_dependency/src/models/account.ts::Account::class"
         }
       ],
@@ -1263,6 +1290,7 @@
           "properties_accessed": [
             "findById"
           ],
+          "resolution": "resolved",
           "to": "di_injection/src/user.repository.ts::UserRepository::class"
         },
         {
@@ -1275,6 +1303,7 @@
           "properties_accessed": [
             "sendReceipt"
           ],
+          "resolution": "resolved",
           "to": "di_injection/src/email.service.ts::EmailService::class"
         },
         {
@@ -1287,6 +1316,7 @@
           "properties_accessed": [
             "findById"
           ],
+          "resolution": "resolved",
           "to": "di_injection/src/user.repository.ts::UserRepository::class"
         },
         {
@@ -1299,6 +1329,7 @@
           "properties_accessed": [
             "findById"
           ],
+          "resolution": "resolved",
           "to": "di_injection/src/user.repository.ts::UserRepository::class"
         },
         {
@@ -1311,6 +1342,7 @@
           "properties_accessed": [
             "sendReceipt"
           ],
+          "resolution": "resolved",
           "to": "di_injection/src/email.service.ts::EmailService::class"
         },
         {
@@ -1323,6 +1355,7 @@
           "properties_accessed": [
             "sendReceipt"
           ],
+          "resolution": "resolved",
           "to": "di_injection/src/email.service.ts::EmailService::class"
         }
       ],
@@ -1559,6 +1592,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "esm_extensions/src/handler.cts::handler::function"
         },
         {
@@ -1569,6 +1603,7 @@
           "kind": "Calls",
           "line": 4,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "esm_extensions/src/handler.cts::handler::function"
         }
       ],
@@ -1609,6 +1644,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::react::package"
         },
         {
@@ -1619,6 +1655,7 @@
           "kind": "Imports",
           "line": 2,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::react::package"
         },
         {
@@ -1629,6 +1666,7 @@
           "kind": "Imports",
           "line": 3,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::path::package"
         },
         {
@@ -1639,6 +1677,7 @@
           "kind": "Imports",
           "line": 4,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::@quantajs/core::package"
         },
         {
@@ -1649,6 +1688,7 @@
           "kind": "Imports",
           "line": 5,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "external_imports/src/utils.ts::localHelper::function"
         },
         {
@@ -1659,6 +1699,7 @@
           "kind": "Calls",
           "line": 8,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "external_imports/src/utils.ts::localHelper::function"
         }
       ],
@@ -1848,6 +1889,7 @@
             "token",
             "userId"
           ],
+          "resolution": "resolved",
           "to": "multiline_import/src/model.ts::Session::interface"
         },
         {
@@ -1861,6 +1903,7 @@
             "token",
             "userId"
           ],
+          "resolution": "resolved",
           "to": "multiline_import/src/model.ts::Session::interface"
         }
       ],
@@ -1901,6 +1944,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::@nestjs/common::package"
         },
         {
@@ -1911,6 +1955,7 @@
           "kind": "Imports",
           "line": 2,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "nestjs_di/src/user.service.ts::UserService::class"
         },
         {
@@ -1921,6 +1966,7 @@
           "kind": "Imports",
           "line": 3,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "nestjs_di/src/user.repository.ts::UserRepository::class"
         },
         {
@@ -1931,6 +1977,7 @@
           "kind": "UsesType",
           "line": 5,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "nestjs_di/src/user.repository.ts::UserRepository::class"
         },
         {
@@ -1941,6 +1988,7 @@
           "kind": "UsesType",
           "line": 5,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "nestjs_di/src/user.service.ts::UserService::class"
         }
       ],
@@ -2020,6 +2068,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::@nestjs/common::package"
         },
         {
@@ -2032,6 +2081,7 @@
           "properties_accessed": [
             "findById"
           ],
+          "resolution": "resolved",
           "to": "nestjs_di/src/user.repository.ts::UserRepository::class"
         },
         {
@@ -2044,6 +2094,7 @@
           "properties_accessed": [
             "findById"
           ],
+          "resolution": "resolved",
           "to": "nestjs_di/src/user.repository.ts::UserRepository::class"
         },
         {
@@ -2056,6 +2107,7 @@
           "properties_accessed": [
             "findById"
           ],
+          "resolution": "resolved",
           "to": "nestjs_di/src/user.repository.ts::UserRepository::class"
         }
       ],
@@ -2168,6 +2220,7 @@
             "token",
             "userId"
           ],
+          "resolution": "resolved",
           "to": "property_access/src/types.ts::Session::interface"
         },
         {
@@ -2181,6 +2234,7 @@
             "token",
             "userId"
           ],
+          "resolution": "resolved",
           "to": "property_access/src/types.ts::Session::interface"
         }
       ],
@@ -2226,6 +2280,7 @@
           "kind": "ReExports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "re_exports/src/user_payload.ts::UserPayload::class"
         },
         {
@@ -2236,6 +2291,7 @@
           "kind": "ReExports",
           "line": 2,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "re_exports/src/user_payload.ts::UserPayload::class"
         },
         {
@@ -2246,6 +2302,7 @@
           "kind": "ReExports",
           "line": 2,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "re_exports/src/user_payload.ts::userId::property"
         }
       ],
@@ -2315,6 +2372,7 @@
           "kind": "Imports",
           "line": 2,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::svelte::package"
         },
         {
@@ -2325,6 +2383,7 @@
           "kind": "Imports",
           "line": 3,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "svelte_component/src/stores/UserStore.ts::UserStore::variable"
         }
       ],
@@ -2422,6 +2481,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::@utils/helpers::package"
         },
         {
@@ -2434,6 +2494,7 @@
           "properties_accessed": [
             "name"
           ],
+          "resolution": "resolved",
           "to": "ext::@/config::package"
         },
         {
@@ -2446,6 +2507,7 @@
           "properties_accessed": [
             "name"
           ],
+          "resolution": "resolved",
           "to": "__UNRESOLVED_LOCAL_TYPE__|AppConfig"
         }
       ],
@@ -2564,6 +2626,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::react::package"
         },
         {
@@ -2576,6 +2639,7 @@
           "properties_accessed": [
             "title"
           ],
+          "resolution": "resolved",
           "to": "tsx_jsx/src/component.tsx::Props::type_alias"
         }
       ],
@@ -2673,6 +2737,7 @@
           "kind": "Imports",
           "line": 8,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::vue::package"
         },
         {
@@ -2683,6 +2748,7 @@
           "kind": "Imports",
           "line": 9,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "__UNRESOLVED_IMPORT__|./components/UserCard.vue|UserCard"
         },
         {
@@ -2693,6 +2759,7 @@
           "kind": "Imports",
           "line": 10,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "vue_component/src/services/user-service.ts::UserService::class"
         }
       ],
@@ -2733,6 +2800,7 @@
           "kind": "Imports",
           "line": 6,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "vue_component/src/types/user.ts::User::interface"
         },
         {
@@ -2743,6 +2811,7 @@
           "kind": "Imports",
           "line": 6,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "vue_component/src/types/user.ts::User::interface"
         }
       ],
@@ -2783,6 +2852,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "vue_component/src/types/user.ts::User::interface"
         },
         {
@@ -2793,6 +2863,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "vue_component/src/types/user.ts::User::interface"
         }
       ],

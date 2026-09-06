@@ -8,7 +8,7 @@
 //! being ignored rather than rejected.
 
 use graphyn_core::graph::GraphynGraph;
-use graphyn_core::ir::{Language, Relationship, RelationshipKind, Symbol, SymbolKind};
+use graphyn_core::ir::{Language, Relationship, RelationshipKind, Resolution, Symbol, SymbolKind};
 use graphyn_core::query::{
     self, blast_radius, dependencies, kinds_present, symbol_usages, RelationshipKindMask, ALL_KINDS,
 };
@@ -36,6 +36,7 @@ fn rel(from: &str, to: &str, kind: RelationshipKind, file: &str, line: u32) -> R
         context: String::new(),
         file: file.to_string(),
         line,
+        resolution: Resolution::Resolved,
     }
 }
 

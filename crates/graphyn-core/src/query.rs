@@ -6,7 +6,7 @@ use petgraph::Direction;
 use crate::error::GraphynError;
 use crate::graph::GraphynGraph;
 use crate::index::find_symbol_id;
-use crate::ir::{RelationshipKind, SymbolId};
+use crate::ir::{RelationshipKind, Resolution, SymbolId};
 
 const DEFAULT_DEPTH: usize = 3;
 const MAX_DEPTH: usize = 10;
@@ -26,6 +26,38 @@ pub const ALL_KINDS: [RelationshipKind; 8] = [
     RelationshipKind::ReExports,
     RelationshipKind::Instantiates,
 ];
+
+/// Files whose edges were resolved structurally, i.e. within one file only.
+///
+/// An empty blast radius is a claim about the whole repository. Structural
+/// analysis cannot see across files, so a reference from such a file to the
+/// symbol in question would not appear in the graph at all — the emptiness is
+/// partly an artefact of how much was resolved, not a fact about the code.
+/// Callers use this to qualify the verdict rather than withdraw it: the answer
+/// is still the best available, it is just not one a gate may act on alone.
+pub fn structural_files(graph: &GraphynGraph) -> BTreeSet<String> {
+    graph
+        .graph
+        .edge_references()
+        .filter(|e| !e.weight().resolution.is_gate_safe())
+        .map(|e| e.weight().file.clone())
+        .collect()
+}
+
+/// Whether every edge in this graph was resolved well enough to gate on.
+///
+/// A graph with no edges at all is not gate-safe: there is nothing to have
+/// been resolved, so an empty result from it carries no evidence either way.
+pub fn is_gate_safe(graph: &GraphynGraph) -> bool {
+    let mut any = false;
+    for e in graph.graph.edge_references() {
+        any = true;
+        if !e.weight().resolution.is_gate_safe() {
+            return false;
+        }
+    }
+    any
+}
 
 /// The relationship kinds this graph actually contains.
 ///
@@ -153,6 +185,11 @@ pub struct QueryEdge {
     /// boundary until now, which left every consumer treating a property
     /// access and a trait implementation as the same fact.
     pub kind: RelationshipKind,
+    /// How this edge's target was determined.
+    ///
+    /// A result set mixes tiers in a polyglot repository, so the caller needs
+    /// this per row rather than per query to know which rows a gate may act on.
+    pub resolution: Resolution,
     pub file: String,
     pub line: u32,
     pub alias: Option<String>,
@@ -359,6 +396,7 @@ fn traverse(
                 from: from_id,
                 to: to_id,
                 kind: meta.kind.clone(),
+                resolution: meta.resolution,
                 file: meta.file.clone(),
                 line: meta.line,
                 alias: meta.alias.clone(),

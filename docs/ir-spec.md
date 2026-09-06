@@ -164,8 +164,39 @@ pub struct Relationship {
 
     /// The line number where this relationship begins.
     pub line: u32,
+
+    /// How `to` was determined, and therefore what this edge is worth.
+    pub resolution: Resolution,
 }
 ```
+
+### `Resolution`
+
+```rust
+pub enum Resolution {
+    /// Matched by name inside one file, with no import table in play.
+    /// Advisory only — a gate must not draw a conclusion from it.
+    Structural,
+    /// Bound through the file's imports, aliases and declared types.
+    Resolved,
+}
+```
+
+A polyglot graph mixes both in a single answer, so this belongs on the edge
+rather than on the language: `blast-radius` over a repository with TypeScript
+and Java returns rows from each, and a reader needs to know per row which ones
+a gate may act on.
+
+Adapters do not set this field themselves. Dispatch stamps `Resolved` on the
+output of every Tier 1 pipeline, and structural analysis leaves the default.
+The default is `Structural` — the weaker value — so a construction site that
+omits the field, or a stored graph written before the field existed,
+under-claims rather than being read as gate-safe.
+
+**An empty `blast-radius` result is only "safe to modify" when every edge in
+the graph is `Resolved`.** Structural analysis cannot see across files, so a
+reference from a structural region would never have reached the graph at all,
+and the emptiness is partly an artefact of how much was resolved.
 
 ### `RelationshipKind`
 

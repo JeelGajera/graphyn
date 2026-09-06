@@ -6,7 +6,7 @@
 //! dependents, and twelve renames reported as one.
 
 use graphyn_core::graph::GraphynGraph;
-use graphyn_core::ir::{Language, Relationship, RelationshipKind, Symbol, SymbolKind};
+use graphyn_core::ir::{Language, Relationship, RelationshipKind, Resolution, Symbol, SymbolKind};
 use graphyn_core::query::{
     blast_radius, is_aliased_only_property, is_renamed, QueryEdge, RelationshipKindMask,
 };
@@ -36,6 +36,7 @@ fn edge(to: &str, alias: Option<&str>, props: &[&str]) -> QueryEdge {
         properties_accessed: props.iter().map(|p| p.to_string()).collect(),
         context: String::new(),
         hop: 1,
+        resolution: Resolution::Resolved,
     }
 }
 
@@ -139,6 +140,7 @@ fn rel(from: &str, to: &str, kind: RelationshipKind, line: u32) -> Relationship 
         context: String::new(),
         file: "src/audit/audit.repository.ts".to_string(),
         line,
+        resolution: Resolution::Resolved,
     }
 }
 

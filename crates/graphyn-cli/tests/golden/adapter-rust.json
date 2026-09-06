@@ -37,6 +37,7 @@
             "timestamp",
             "user_id"
           ],
+          "resolution": "resolved",
           "to": "alias_import_bug/src/models/user_payload.rs::UserPayload::class"
         },
         {
@@ -51,6 +52,7 @@
             "timestamp",
             "user_id"
           ],
+          "resolution": "resolved",
           "to": "alias_import_bug/src/models/user_payload.rs::UserPayload::class"
         }
       ],
@@ -168,6 +170,7 @@
           "kind": "Imports",
           "line": 4,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/src/models/user.rs::UserPayload::class"
         }
       ],
@@ -227,6 +230,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::serde::package"
         },
         {
@@ -237,6 +241,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::serde::package"
         },
         {
@@ -247,6 +252,7 @@
           "kind": "Implements",
           "line": 3,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::serde::package"
         },
         {
@@ -257,6 +263,7 @@
           "kind": "Implements",
           "line": 3,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::serde::package"
         },
         {
@@ -267,6 +274,7 @@
           "kind": "Implements",
           "line": 14,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/src/models/user.rs::Identify::interface"
         },
         {
@@ -279,6 +287,7 @@
           "properties_accessed": [
             "user_id"
           ],
+          "resolution": "resolved",
           "to": "language_features/src/models/user.rs::UserPayload::class"
         }
       ],
@@ -390,6 +399,7 @@
           "properties_accessed": [
             "total"
           ],
+          "resolution": "resolved",
           "to": "language_features/src/models/order.rs::Order::class"
         },
         {
@@ -400,6 +410,7 @@
           "kind": "Imports",
           "line": 2,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/src/models/user.rs::Identify::interface"
         },
         {
@@ -413,6 +424,7 @@
             "email",
             "user_id"
           ],
+          "resolution": "resolved",
           "to": "language_features/src/models/user.rs::UserPayload::class"
         },
         {
@@ -423,6 +435,7 @@
           "kind": "Imports",
           "line": 3,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/src/models/mod.rs::module::module"
         },
         {
@@ -436,6 +449,7 @@
             "email",
             "user_id"
           ],
+          "resolution": "resolved",
           "to": "language_features/src/models/user.rs::UserPayload::class"
         },
         {
@@ -448,6 +462,7 @@
           "properties_accessed": [
             "total"
           ],
+          "resolution": "resolved",
           "to": "language_features/src/models/order.rs::Order::class"
         }
       ],
@@ -527,6 +542,7 @@
           "kind": "Imports",
           "line": 2,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "workspace/crates/app/src/service.rs::Service::class"
         }
       ],
@@ -570,6 +586,7 @@
             "email",
             "user_id"
           ],
+          "resolution": "resolved",
           "to": "workspace/crates/core-lib/src/models/payload.rs::UserPayload::class"
         },
         {
@@ -583,6 +600,7 @@
             "email",
             "user_id"
           ],
+          "resolution": "resolved",
           "to": "workspace/crates/core-lib/src/models/payload.rs::UserPayload::class"
         },
         {
@@ -595,6 +613,7 @@
           "properties_accessed": [
             "id"
           ],
+          "resolution": "resolved",
           "to": "workspace/crates/renamed-lib/src/lib.rs::Kernel::class"
         },
         {
@@ -607,6 +626,7 @@
           "properties_accessed": [
             "id"
           ],
+          "resolution": "resolved",
           "to": "workspace/crates/renamed-lib/src/lib.rs::Kernel::class"
         },
         {
@@ -619,6 +639,7 @@
           "properties_accessed": [
             "email"
           ],
+          "resolution": "resolved",
           "to": "workspace/crates/core-lib/src/models/payload.rs::UserPayload::class"
         },
         {
@@ -631,6 +652,7 @@
           "properties_accessed": [
             "user_id"
           ],
+          "resolution": "resolved",
           "to": "workspace/crates/core-lib/src/models/payload.rs::UserPayload::class"
         }
       ],
@@ -720,6 +742,7 @@
           "kind": "Imports",
           "line": 5,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "workspace/crates/core-lib/src/models/payload.rs::UserPayload::class"
         }
       ],
@@ -781,6 +804,7 @@
           "properties_accessed": [
             "path"
           ],
+          "resolution": "resolved",
           "to": "workspace/crates/legacy/src/store.rs::LegacyStore::class"
         },
         {
@@ -793,6 +817,7 @@
           "properties_accessed": [
             "path"
           ],
+          "resolution": "resolved",
           "to": "workspace/crates/legacy/src/store.rs::LegacyStore::class"
         }
       ],

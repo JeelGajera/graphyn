@@ -1,8 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
-use graphyn_core::ir::{
-    FileIR, Language, ReExportEntry, Relationship, RelationshipKind, Symbol, SymbolKind,
-};
+use graphyn_core::ir::{FileIR, Language, ReExportEntry, Relationship, RelationshipKind, Resolution, Symbol, SymbolKind};
 use tree_sitter::Node;
 
 use crate::lang::typescript::parser::ParsedFile;
@@ -125,6 +123,7 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
             context: "property access".to_string(),
             file: parsed.file.clone(),
             line: first_line,
+            resolution: Resolution::default(),
         });
     }
     relationships.extend(collect_method_scoped_accesses(parsed, &symbols));
@@ -143,6 +142,7 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
             context: context.to_string(),
             file: parsed.file.clone(),
             line,
+            resolution: Resolution::default(),
         });
     }
 
@@ -260,6 +260,7 @@ fn collect_method_scoped_accesses(parsed: &ParsedFile, symbols: &[Symbol]) -> Ve
                 context: format!("method property access: {method_name}"),
                 file: parsed.file.clone(),
                 line,
+                resolution: Resolution::default(),
             });
         }
     });
@@ -367,6 +368,7 @@ fn collect_import_and_reexport_relationships(
                 context: entry.context,
                 file: parsed.file.clone(),
                 line: entry.line,
+                resolution: Resolution::default(),
             });
         }
     });
@@ -408,6 +410,7 @@ fn collect_decorator_references(parsed: &ParsedFile, from_symbol_id: &str) -> Ve
                     context: format!("@Module {key} reference"),
                     file: parsed.file.clone(),
                     line,
+                    resolution: Resolution::default(),
                 });
             }
         }

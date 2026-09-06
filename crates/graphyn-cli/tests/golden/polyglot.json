@@ -43,6 +43,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::requests::package"
         }
       ],
