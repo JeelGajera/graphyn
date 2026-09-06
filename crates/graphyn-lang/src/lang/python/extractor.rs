@@ -40,6 +40,20 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
         _ => {}
     });
 
+    for (callee, line) in collect_direct_calls(root, source) {
+        relationships.push(Relationship {
+            from: module_symbol_id(file),
+            to: unresolved_local_type_id(&callee),
+            kind: RelationshipKind::Calls,
+            alias: Some(callee),
+            properties_accessed: Vec::new(),
+            context: "call".to_string(),
+            file: file.to_string(),
+            line,
+            resolution: Resolution::default(),
+        });
+    }
+
     for (type_name, access) in collect_type_accesses(root, source) {
         if access.properties.is_empty() {
             continue;
@@ -79,6 +93,64 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
         diagnostics,
         re_exports,
     }
+}
+
+// ── calls ────────────────────────────────────────────────────
+
+/// Direct calls whose callee is a bare name the file can resolve.
+///
+/// # Why only bare names
+///
+/// A call edge earns its place only if it says *which* function ran. `foo()`
+/// where `foo` was imported or defined in this file names a symbol; a bare
+/// `foo()` bound to nothing does not, and matching it by leaf name across the
+/// repository is the bug 0.2.0 fixed in the Rust adapter. The resolver drops
+/// what it cannot bind rather than pointing an edge at a name.
+///
+/// `obj.method()` is deliberately **not** a call edge, matching TypeScript: it
+/// is already recorded as a property access on the receiver, which is the
+/// honest statement — the receiver is touched at that line. This also excludes
+/// `self.method()`, `super().__init__()` and `module.function()`, all of which
+/// are attribute calls.
+///
+/// # Why the kind is decided later
+///
+/// Python does not distinguish construction from invocation at the call site:
+/// `Foo()` and `foo()` are the same node. Nothing here can tell them apart,
+/// and guessing from capitalization would be a convention, not a fact. So this
+/// emits `Calls` for every one of them and the resolver promotes an edge to
+/// `Instantiates` once the target turns out to be a class — a decision made
+/// from the resolved symbol rather than from the spelling of the name.
+///
+/// Returns `(callee_name, line)`, sorted and deduplicated, so identical input
+/// yields identical output.
+fn collect_direct_calls(root: Node<'_>, source: &[u8]) -> Vec<(String, u32)> {
+    let mut out: Vec<(String, u32)> = Vec::new();
+
+    walk(root, &mut |node| {
+        if node.kind() != "call" {
+            return;
+        }
+        let Some(function) = node.child_by_field_name("function") else {
+            return;
+        };
+        if function.kind() != "identifier" {
+            return;
+        }
+        let Some(name) = node_text(function, source) else {
+            return;
+        };
+        if name.is_empty() {
+            return;
+        }
+        out.push((name.to_string(), start_line(function)));
+    });
+
+    // One row per (callee, line): a name called twice on one line is one fact
+    // about that line, and the order must not depend on traversal.
+    out.sort();
+    out.dedup();
+    out
 }
 
 // ── symbols ──────────────────────────────────────────────────

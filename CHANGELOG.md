@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Call and instantiation edges for Python.** `foo()` where `foo` was imported
+  or defined in the file records a `Calls` edge to the definition, travelling
+  through the same import machinery as every other reference, so a call through
+  a renamed import resolves to the canonical symbol rather than the alias.
+
+  Python spells construction and invocation identically — `Foo()` and `foo()`
+  are the same node — so the split is made from the resolved target: an edge
+  whose target turns out to be a class is promoted to `Instantiates`. Deciding
+  it from a capitalized name would be a naming convention presented as an
+  analysis.
+
+  As in TypeScript, `obj.method()` records no call edge (it is already a
+  property access on the receiver, which is the honest statement), and a callee
+  that binds to nothing records nothing at all — no `print()` edge, and no
+  diagnostic, because there is nothing a user could fix. A call landing on a
+  third-party import is dropped for the same reason: the only id available is
+  the package, and "this function calls the requests package" is a claim about
+  a symbol nobody can open. The `Imports` edge already carries that dependency.
+
+
 - **Per-edge resolution, and a safety verdict that depends on it.** Every
   relationship carries a `resolution` of `resolved` (bound through the file's
   imports, aliases and declared types) or `structural` (matched by name inside
