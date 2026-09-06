@@ -1,8 +1,10 @@
 use graphyn_core::ast::{first_line_of, node_text, start_line, walk};
 use graphyn_core::ir::{Diagnostic, DiagnosticCategory, DiagnosticLevel, FileIR, Language, Relationship, RelationshipKind, Resolution, Symbol, SymbolKind};
+use std::collections::BTreeSet;
+
 use graphyn_core::symbol_id::{
-    make_symbol_id, module_symbol, module_symbol_id, unresolved_import_id,
-    unresolved_local_type_id, IMPORT_ALL,
+    make_symbol_id, module_symbol, module_symbol_id, parse_unresolved_import_id,
+    unresolved_import_id, unresolved_local_type_id, IMPORT_ALL,
 };
 use tree_sitter::Node;
 
@@ -29,6 +31,8 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
         "import_declaration" => relationships.extend(imports(node, source, file)),
         _ => {}
     });
+
+    relationships.extend(call_edges(root, source, file, &package_names(&relationships)));
 
     // Property accesses and type references, both grounded in declared types.
     let analysis = analyze(root, source);
@@ -89,6 +93,146 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
         diagnostics,
         re_exports: Vec::new(),
     }
+}
+
+// ── calls ────────────────────────────────────────────────────
+
+/// The names this file can use to qualify a reference to another package.
+///
+/// `import "app/models"` binds `models`; `import m "app/models"` binds `m`.
+/// Blank and dot imports bind nothing and are already excluded upstream, where
+/// they produce no alias.
+///
+/// This set is what separates `models.New(..)` — a call into another package —
+/// from `user.Save(..)`, a method on a value. Go spells both with a selector,
+/// and the file's own import list is the only thing that tells them apart.
+fn package_names(relationships: &[Relationship]) -> BTreeSet<String> {
+    relationships
+        .iter()
+        .filter(|rel| rel.kind == RelationshipKind::Imports)
+        .filter_map(|rel| {
+            if let Some(alias) = &rel.alias {
+                return Some(alias.clone());
+            }
+            let (path, _) = parse_unresolved_import_id(&rel.to)?;
+            Some(path.rsplit('/').next().unwrap_or(path).to_string())
+        })
+        .collect()
+}
+
+/// Calls and composite literals whose target is a name the file can resolve.
+///
+/// Go separates the two cleanly, unlike Python and Rust:
+///
+/// - `New(..)` and `models.New(..)` are calls. The second is the shape that
+///   matters most, because a cross-package call in Go is *always* written
+///   through the package name — skipping selectors, as the other languages do,
+///   would leave call edges that never cross a file boundary.
+/// - `Foo{..}` and `models.Foo{..}` are composite literals, which is Go's
+///   construction syntax, so they are `Instantiates` outright. `&Foo{..}` is
+///   the same literal under a unary `&` and is reached the same way.
+///
+/// `user.Save(..)` records nothing: the operand is a value, not a package, so
+/// it is a method call — already a property access on the receiver, and a call
+/// edge to the receiver would claim the receiver was called.
+///
+/// A composite literal for a slice, map or array (`[]string{..}`) has a
+/// composite type rather than a name, and names no symbol to point at.
+///
+/// Returns relationships sorted and deduplicated by the caller's key, so
+/// identical input yields identical output.
+fn call_edges(
+    root: Node<'_>,
+    source: &[u8],
+    file: &str,
+    packages: &BTreeSet<String>,
+) -> Vec<Relationship> {
+    let mut found: BTreeSet<(String, u32, bool)> = BTreeSet::new();
+
+    walk(root, &mut |node| match node.kind() {
+        "call_expression" => {
+            let Some(function) = node.child_by_field_name("function") else {
+                return;
+            };
+            let name = match function.kind() {
+                "identifier" => node_text(function, source).map(str::to_string),
+                "selector_expression" => qualified_package_name(function, source, packages),
+                _ => None,
+            };
+            if let Some(name) = name {
+                found.insert((name, start_line(function), false));
+            }
+        }
+        "composite_literal" => {
+            let Some(ty) = node.child_by_field_name("type") else {
+                return;
+            };
+            let name = match ty.kind() {
+                "type_identifier" => node_text(ty, source).map(str::to_string),
+                "qualified_type" => qualified_type_name(ty, source, packages),
+                _ => None,
+            };
+            if let Some(name) = name {
+                found.insert((name, start_line(ty), true));
+            }
+        }
+        _ => {}
+    });
+
+    found
+        .into_iter()
+        .map(|(name, line, constructs)| Relationship {
+            from: module_symbol_id(file),
+            to: unresolved_local_type_id(&name),
+            kind: if constructs {
+                RelationshipKind::Instantiates
+            } else {
+                RelationshipKind::Calls
+            },
+            alias: Some(name),
+            properties_accessed: Vec::new(),
+            context: if constructs { "composite literal" } else { "call" }.to_string(),
+            file: file.to_string(),
+            line,
+            resolution: Resolution::default(),
+        })
+        .collect()
+}
+
+/// `models.New` from a selector, but only when `models` is an imported package.
+fn qualified_package_name(
+    selector: Node<'_>,
+    source: &[u8],
+    packages: &BTreeSet<String>,
+) -> Option<String> {
+    let operand = selector.child_by_field_name("operand")?;
+    if operand.kind() != "identifier" {
+        return None;
+    }
+    let package = node_text(operand, source)?;
+    if !packages.contains(package) {
+        return None;
+    }
+    let field = selector.child_by_field_name("field")?;
+    Some(format!("{package}.{}", node_text(field, source)?))
+}
+
+/// `models.Foo` from a qualified type in a composite literal.
+fn qualified_type_name(
+    ty: Node<'_>,
+    source: &[u8],
+    packages: &BTreeSet<String>,
+) -> Option<String> {
+    let package = ty
+        .child_by_field_name("package")
+        .and_then(|n| node_text(n, source))?;
+    if !packages.contains(package) {
+        return None;
+    }
+    let name = ty
+        .child_by_field_name("name")
+        .and_then(|n| node_text(n, source))?;
+    Some(format!("{package}.{name}"))
 }
 
 fn field_name<'a>(node: Node<'_>, source: &'a [u8]) -> Option<&'a str> {

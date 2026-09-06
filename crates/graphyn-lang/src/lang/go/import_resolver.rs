@@ -17,7 +17,8 @@ use graphyn_core::ir::{
     SymbolKind,
 };
 use graphyn_core::symbol_id::{
-    external_package_id, make_symbol_id, parse_unresolved_import_id, parse_unresolved_local_type_id,
+    external_package_id, kind_suffix, make_symbol_id, parse_symbol_id, parse_unresolved_import_id,
+    parse_unresolved_local_type_id,
 };
 
 use crate::lang::go::module_resolver::ModuleSet;
@@ -166,6 +167,33 @@ pub fn resolve_repo_ir(root: &Path, repo_ir: &mut RepoIR) {
                     .cloned(),
             };
 
+            // Calls resolve against the same table but fail quietly, and the
+            // kind is settled by what the name turned out to be.
+            if rel.kind == RelationshipKind::Calls || rel.kind == RelationshipKind::Instantiates {
+                match resolved {
+                    // `Foo(x)` on a type is a conversion, not a call — Go
+                    // spells `int64(n)` and `New(n)` identically. The resolved
+                    // target's kind is the only thing that distinguishes them,
+                    // and an edge saying a type was called would surface under
+                    // `--kind calls` as a caller that does not exist.
+                    Some(id) if kind_suffix_of(&id) == Some(kind_suffix(&SymbolKind::Class)) => {
+                        rel.kind = RelationshipKind::Instantiates;
+                        rel.context = "conversion or literal".to_string();
+                        rel.to = id;
+                    }
+                    Some(id) => rel.to = id,
+                    // `make`, `len`, `append`, `panic`, or a name from a
+                    // third-party package: none of them is a symbol in this
+                    // graph. No diagnostic, because there is nothing a user
+                    // could fix, and a warning per `len()` would bury the
+                    // resolution warnings that matter.
+                    None => {
+                        drop.insert(index);
+                    }
+                }
+                continue;
+            }
+
             match resolved {
                 Some(id) => {
                     if rel.kind == RelationshipKind::AccessesProperty {
@@ -226,6 +254,14 @@ pub fn resolve_repo_ir(root: &Path, repo_ir: &mut RepoIR) {
             });
         }
     }
+}
+
+/// The kind component of a resolved symbol id, if it is one.
+///
+/// Compared against [`kind_suffix`] rather than a string literal, so a rename
+/// of the suffix in `symbol_id` moves both sides together.
+fn kind_suffix_of(id: &str) -> Option<&str> {
+    parse_symbol_id(id).map(|(_, _, kind)| kind)
 }
 
 fn directory_of(file: &str) -> String {

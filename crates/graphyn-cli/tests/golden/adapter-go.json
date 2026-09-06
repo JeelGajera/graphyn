@@ -143,6 +143,265 @@
     },
     {
       "diagnostics": [],
+      "file": "call_edges/app/run.go",
+      "language": "Go",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "\"fmt\"",
+          "file": "call_edges/app/run.go",
+          "from": "call_edges/app/run.go::module::module",
+          "kind": "Imports",
+          "line": 4,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "ext::fmt::package"
+        },
+        {
+          "alias": null,
+          "context": "\"example.com/callgraph/models\"",
+          "file": "call_edges/app/run.go",
+          "from": "call_edges/app/run.go::module::module",
+          "kind": "Imports",
+          "line": 6,
+          "properties_accessed": [
+            "Greeting",
+            "Name"
+          ],
+          "resolution": "resolved",
+          "to": "call_edges/models::models::module"
+        },
+        {
+          "alias": "describe",
+          "context": "call",
+          "file": "call_edges/app/run.go",
+          "from": "call_edges/app/run.go::module::module",
+          "kind": "Calls",
+          "line": 22,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/app/run.go::describe::function"
+        },
+        {
+          "alias": "models.NewUser",
+          "context": "call",
+          "file": "call_edges/app/run.go",
+          "from": "call_edges/app/run.go::module::module",
+          "kind": "Calls",
+          "line": 12,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/models/user.go::NewUser::function"
+        },
+        {
+          "alias": "models.User",
+          "context": "conversion or literal",
+          "file": "call_edges/app/run.go",
+          "from": "call_edges/app/run.go::module::module",
+          "kind": "Instantiates",
+          "line": 15,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/models/user.go::User::class"
+        },
+        {
+          "alias": "models.UserID",
+          "context": "conversion or literal",
+          "file": "call_edges/app/run.go",
+          "from": "call_edges/app/run.go::module::module",
+          "kind": "Instantiates",
+          "line": 26,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/models/user.go::UserID::class"
+        },
+        {
+          "alias": "models.User",
+          "context": "property access",
+          "file": "call_edges/app/run.go",
+          "from": "call_edges/app/run.go::module::module",
+          "kind": "AccessesProperty",
+          "line": 39,
+          "properties_accessed": [
+            "Greeting",
+            "Name"
+          ],
+          "resolution": "resolved",
+          "to": "call_edges/models/user.go::User::class"
+        },
+        {
+          "alias": "models.User",
+          "context": "type reference",
+          "file": "call_edges/app/run.go",
+          "from": "call_edges/app/run.go::module::module",
+          "kind": "UsesType",
+          "line": 36,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/models/user.go::User::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "call_edges/app/run.go",
+          "id": "call_edges/app/run.go::module::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "call_edges/app/run.go",
+          "id": "call_edges/app/run.go::Run::function",
+          "kind": "Function",
+          "language": "Go",
+          "line_end": 34,
+          "line_start": 9,
+          "name": "Run",
+          "signature": "func Run() string {"
+        },
+        {
+          "file": "call_edges/app/run.go",
+          "id": "call_edges/app/run.go::describe::function",
+          "kind": "Function",
+          "language": "Go",
+          "line_end": 40,
+          "line_start": 36,
+          "name": "describe",
+          "signature": "func describe(u models.User) string {"
+        },
+        {
+          "file": "call_edges/app",
+          "id": "call_edges/app::app::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "app",
+          "signature": "package example.com/callgraph/app"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "call_edges/models/user.go",
+      "language": "Go",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": "User",
+          "context": "conversion or literal",
+          "file": "call_edges/models/user.go",
+          "from": "call_edges/models/user.go::module::module",
+          "kind": "Instantiates",
+          "line": 14,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/models/user.go::User::class"
+        },
+        {
+          "alias": "User",
+          "context": "property access",
+          "file": "call_edges/models/user.go",
+          "from": "call_edges/models/user.go::module::module",
+          "kind": "AccessesProperty",
+          "line": 10,
+          "properties_accessed": [
+            "Name"
+          ],
+          "resolution": "resolved",
+          "to": "call_edges/models/user.go::User::class"
+        },
+        {
+          "alias": "User",
+          "context": "type reference",
+          "file": "call_edges/models/user.go",
+          "from": "call_edges/models/user.go::module::module",
+          "kind": "UsesType",
+          "line": 9,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/models/user.go::User::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "call_edges/models/user.go",
+          "id": "call_edges/models/user.go::module::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "call_edges/models/user.go",
+          "id": "call_edges/models/user.go::UserID::class",
+          "kind": "Class",
+          "language": "Go",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "UserID",
+          "signature": "UserID int64"
+        },
+        {
+          "file": "call_edges/models/user.go",
+          "id": "call_edges/models/user.go::User::class",
+          "kind": "Class",
+          "language": "Go",
+          "line_end": 7,
+          "line_start": 5,
+          "name": "User",
+          "signature": "User struct {"
+        },
+        {
+          "file": "call_edges/models/user.go",
+          "id": "call_edges/models/user.go::User::Greeting::method",
+          "kind": "Method",
+          "language": "Go",
+          "line_end": 11,
+          "line_start": 9,
+          "name": "Greeting",
+          "signature": "func (u User) Greeting() string {"
+        },
+        {
+          "file": "call_edges/models/user.go",
+          "id": "call_edges/models/user.go::NewUser::function",
+          "kind": "Function",
+          "language": "Go",
+          "line_end": 15,
+          "line_start": 13,
+          "name": "NewUser",
+          "signature": "func NewUser(name string) User {"
+        },
+        {
+          "file": "call_edges/models/user.go",
+          "id": "call_edges/models/user.go::UnusedHelper::function",
+          "kind": "Function",
+          "language": "Go",
+          "line_end": 17,
+          "line_start": 17,
+          "name": "UnusedHelper",
+          "signature": "func UnusedHelper() {}"
+        },
+        {
+          "file": "call_edges/models",
+          "id": "call_edges/models::models::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "models",
+          "signature": "package example.com/callgraph/models"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
       "file": "language_features/handlers/user.go",
       "language": "Go",
       "re_exports": [],
@@ -183,6 +442,17 @@
           "properties_accessed": [],
           "resolution": "resolved",
           "to": "language_features/store::store::module"
+        },
+        {
+          "alias": "UserHandler",
+          "context": "conversion or literal",
+          "file": "language_features/handlers/user.go",
+          "from": "language_features/handlers/user.go::module::module",
+          "kind": "Instantiates",
+          "line": 15,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "language_features/handlers/user.go::UserHandler::class"
         },
         {
           "alias": "m.Order",
@@ -407,6 +677,17 @@
       "relationships": [
         {
           "alias": "MemoryStore",
+          "context": "conversion or literal",
+          "file": "language_features/store/helpers.go",
+          "from": "language_features/store/helpers.go::module::module",
+          "kind": "Instantiates",
+          "line": 4,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "language_features/store/store.go::MemoryStore::class"
+        },
+        {
+          "alias": "MemoryStore",
           "context": "type reference",
           "file": "language_features/store/helpers.go",
           "from": "language_features/store/helpers.go::module::module",
@@ -592,7 +873,7 @@
     }
   ],
   "language_stats": {
-    "Go": 7
+    "Go": 9
   },
   "root": "<root>",
   "schema_version": 1,
@@ -600,8 +881,8 @@
     "alias_chains": 2,
     "aliases": 2,
     "diagnostics": 0,
-    "files_indexed": 7,
-    "relationships": 20,
-    "symbols": 29
+    "files_indexed": 9,
+    "relationships": 33,
+    "symbols": 40
   }
 }

@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Call and instantiation edges for Go.** Go is the one language where the
+  selector rule had to be inverted. `obj.method()` records no call edge in
+  TypeScript, Python and Rust, but a cross-package call in Go is *always*
+  written `pkg.Func(..)` — applying the same rule would have left Go with call
+  edges that never cross a file boundary. So a selector call is recorded when
+  its operand is one of the file's imported package names, and skipped when it
+  is a value. The file's own import list is the only thing that tells the two
+  apart, and it is already parsed.
+
+  `Foo{..}`, `pkg.Foo{..}` and `&Foo{..}` are composite literals — Go's
+  construction syntax — so they record `Instantiates` from the syntax alone. A
+  composite literal for a slice, map or array names no symbol and records
+  nothing.
+
+  `models.UserID(42)` is a conversion spelled exactly like a call. Nothing is
+  called, so as in Python the resolved target's kind settles the kind: a target
+  that turns out to be a type makes the edge an instantiation. A `Calls` edge
+  still only ever targets a function or a method.
+
+  Builtins (`len`, `make`, `append`) and standard-library calls record nothing
+  and raise no diagnostic, since neither names a symbol in the graph.
+
+
 - **Call and instantiation edges for Rust.** Rust spells the cases differently
   and each is recorded as what it is. `Foo::new(..)` is an associated function
   call, so the edge names the *method* `Foo::new` rather than the type — `new`
@@ -197,9 +220,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   unrelated to crate-root discovery; documented here because the workspace fix
   is what made it visible.
 
-- **Call and instantiation edges cover TypeScript, Python and Rust so far.** Go
-  and C parse calls but record no `Calls` or `Instantiates` edge, and Tier 2
-  languages emit `Calls` within a file only. A `--kind calls` query against a Go
+- **Call and instantiation edges cover TypeScript, Python, Rust and Go so far.**
+  C parses calls but records no `Calls` or `Instantiates` edge, and Tier 2
+  languages emit `Calls` within a file only. A `--kind calls` query against a C
   repository therefore returns nothing — and says so, naming the graph rather
   than the feature: the CLI and MCP tools report which kinds the analyzed graph
   actually contains instead of consulting a hand-maintained list of
