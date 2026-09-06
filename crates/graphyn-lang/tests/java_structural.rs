@@ -14,7 +14,7 @@
 use std::path::{Path, PathBuf};
 
 use graphyn_core::ir::{FileIR, RelationshipKind, RepoIR, SymbolKind};
-use graphyn_lang::spec::{LanguageSpec, Tier};
+use graphyn_lang::spec::Tier;
 
 fn fixture_root() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/adapter-java/basic")
