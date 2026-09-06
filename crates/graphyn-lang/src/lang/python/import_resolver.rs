@@ -18,8 +18,8 @@ use graphyn_core::ir::{
     Diagnostic, DiagnosticCategory, DiagnosticLevel, RelationshipKind, RepoIR, SymbolKind,
 };
 use graphyn_core::symbol_id::{
-    external_package_id, module_symbol_id, parse_unresolved_import_id,
-    parse_unresolved_local_type_id, IMPORT_ALL,
+    external_package_id, is_external_package, kind_suffix, module_symbol_id, parse_symbol_id,
+    parse_unresolved_import_id, parse_unresolved_local_type_id, IMPORT_ALL,
 };
 
 use crate::lang::python::scope_analyzer::is_builtin_type;
@@ -169,6 +169,41 @@ pub fn resolve_repo_ir(_root: &Path, repo_ir: &mut RepoIR) {
                 .or_else(|| own_symbols.get(&type_name))
                 .cloned()
                 .or_else(|| resolve_dotted(&type_name, &local_names, &index));
+
+            // Calls resolve against the same table, but neither fail the same
+            // way nor keep the kind they were extracted with.
+            if rel.kind == RelationshipKind::Calls {
+                match resolved {
+                    // `Foo()` is construction, `foo()` is invocation, and
+                    // Python spells them identically. The resolved symbol
+                    // settles it: promoting on the target's kind is a fact
+                    // about what was called, where promoting on a capitalized
+                    // name would only be a convention.
+                    Some(id) if kind_suffix_of(&id) == Some(kind_suffix(&SymbolKind::Class)) => {
+                        rel.kind = RelationshipKind::Instantiates;
+                        rel.context = "instantiation".to_string();
+                        rel.to = id;
+                    }
+                    // `from requests import get` then `get()`: the call is
+                    // real, but the package is not the thing that ran. An edge
+                    // saying a package was called would be counted as a
+                    // dependent of the package by blast-radius, which is a
+                    // claim about a symbol nobody can open. The Imports edge
+                    // already records the dependency truthfully.
+                    Some(id) if is_external_package(&id) => {
+                        drop.insert(position);
+                    }
+                    Some(id) => rel.to = id,
+                    // A builtin, a global, or a name from an untyped module
+                    // binds to no symbol. No diagnostic: unlike an unresolved
+                    // type, there is nothing here a user could fix, and
+                    // `print()` in every file would drown the real warnings.
+                    None => {
+                        drop.insert(position);
+                    }
+                }
+                continue;
+            }
 
             match resolved {
                 Some(id) => {
@@ -344,6 +379,14 @@ fn first_segment(module: &str) -> &str {
 
 fn last_segment(module: &str) -> &str {
     module.rsplit('.').next().unwrap_or(module)
+}
+
+/// The kind component of a resolved symbol id, if it is one.
+///
+/// Compared against [`kind_suffix`] rather than a string literal, so a rename
+/// of the suffix in `symbol_id` moves both sides together.
+fn kind_suffix_of(id: &str) -> Option<&str> {
+    parse_symbol_id(id).map(|(_, _, kind)| kind)
 }
 
 #[cfg(test)]

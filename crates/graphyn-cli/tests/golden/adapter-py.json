@@ -141,6 +141,184 @@
     },
     {
       "diagnostics": [],
+      "file": "call_edges/app/__init__.py",
+      "language": "Python",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "call_edges/app/__init__.py",
+          "id": "call_edges/app/__init__.py::module::module",
+          "kind": "Module",
+          "language": "Python",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "call_edges/app/consumer.py",
+      "language": "Python",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "from .services import UserService, format_name as fmt",
+          "file": "call_edges/app/consumer.py",
+          "from": "call_edges/app/consumer.py::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [
+            "handle"
+          ],
+          "resolution": "resolved",
+          "to": "call_edges/app/services.py::UserService::class"
+        },
+        {
+          "alias": "fmt",
+          "context": "from .services import UserService, format_name as fmt",
+          "file": "call_edges/app/consumer.py",
+          "from": "call_edges/app/consumer.py::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/app/services.py::format_name::function"
+        },
+        {
+          "alias": null,
+          "context": "from requests import get",
+          "file": "call_edges/app/consumer.py",
+          "from": "call_edges/app/consumer.py::module::module",
+          "kind": "Imports",
+          "line": 2,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "ext::requests::package"
+        },
+        {
+          "alias": "UserService",
+          "context": "instantiation",
+          "file": "call_edges/app/consumer.py",
+          "from": "call_edges/app/consumer.py::module::module",
+          "kind": "Instantiates",
+          "line": 8,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/app/services.py::UserService::class"
+        },
+        {
+          "alias": "fmt",
+          "context": "call",
+          "file": "call_edges/app/consumer.py",
+          "from": "call_edges/app/consumer.py::module::module",
+          "kind": "Calls",
+          "line": 11,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/app/services.py::format_name::function"
+        },
+        {
+          "alias": "UserService",
+          "context": "attribute access",
+          "file": "call_edges/app/consumer.py",
+          "from": "call_edges/app/consumer.py::module::module",
+          "kind": "AccessesProperty",
+          "line": 15,
+          "properties_accessed": [
+            "handle"
+          ],
+          "resolution": "resolved",
+          "to": "call_edges/app/services.py::UserService::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "call_edges/app/consumer.py",
+          "id": "call_edges/app/consumer.py::module::module",
+          "kind": "Module",
+          "language": "Python",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "call_edges/app/consumer.py",
+          "id": "call_edges/app/consumer.py::run::function",
+          "kind": "Function",
+          "language": "Python",
+          "line_end": 25,
+          "line_start": 5,
+          "name": "run",
+          "signature": "def run():"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "call_edges/app/services.py",
+      "language": "Python",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "call_edges/app/services.py",
+          "id": "call_edges/app/services.py::module::module",
+          "kind": "Module",
+          "language": "Python",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "call_edges/app/services.py",
+          "id": "call_edges/app/services.py::UserService::class",
+          "kind": "Class",
+          "language": "Python",
+          "line_end": 3,
+          "line_start": 1,
+          "name": "UserService",
+          "signature": "class UserService:"
+        },
+        {
+          "file": "call_edges/app/services.py",
+          "id": "call_edges/app/services.py::UserService::handle::method",
+          "kind": "Method",
+          "language": "Python",
+          "line_end": 3,
+          "line_start": 2,
+          "name": "handle",
+          "signature": "def handle(self):"
+        },
+        {
+          "file": "call_edges/app/services.py",
+          "id": "call_edges/app/services.py::format_name::function",
+          "kind": "Function",
+          "language": "Python",
+          "line_end": 7,
+          "line_start": 6,
+          "name": "format_name",
+          "signature": "def format_name(first, last):"
+        },
+        {
+          "file": "call_edges/app/services.py",
+          "id": "call_edges/app/services.py::unused_helper::function",
+          "kind": "Function",
+          "language": "Python",
+          "line_end": 11,
+          "line_start": 10,
+          "name": "unused_helper",
+          "signature": "def unused_helper():"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
       "file": "language_features/api/routes.py",
       "language": "Python",
       "re_exports": [],
@@ -598,16 +776,16 @@
     }
   ],
   "language_stats": {
-    "Python": 7
+    "Python": 10
   },
   "root": "<root>",
   "schema_version": 1,
   "stats": {
-    "alias_chains": 1,
-    "aliases": 1,
+    "alias_chains": 2,
+    "aliases": 2,
     "diagnostics": 0,
-    "files_indexed": 7,
-    "relationships": 20,
-    "symbols": 33
+    "files_indexed": 10,
+    "relationships": 26,
+    "symbols": 42
   }
 }
