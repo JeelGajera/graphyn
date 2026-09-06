@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use graphyn_core::ast::{first_line_of, node_text, start_line, walk};
 use graphyn_core::ir::{Diagnostic, DiagnosticCategory, DiagnosticLevel, FileIR, Language, Relationship, RelationshipKind, Resolution, Symbol, SymbolKind};
 use graphyn_core::symbol_id::{
@@ -69,6 +71,8 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
         _ => {}
     });
 
+    relationships.extend(call_edges(root, source, file));
+
     for (type_name, access) in collect_type_accesses(root, source) {
         if access.properties.is_empty() {
             continue;
@@ -108,6 +112,78 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
         diagnostics,
         re_exports: Vec::new(),
     }
+}
+
+// ── calls ────────────────────────────────────────────────────
+
+/// Calls and `new` expressions whose target is a name the file can resolve.
+///
+/// # What is deliberately left out
+///
+/// Only a bare `foo(..)` records a call. `obj.method(..)` and `ptr->method(..)`
+/// record nothing, matching every other language: the receiver is touched, not
+/// called, and that is already a property access on its type.
+///
+/// `ns::func(..)` and `Klass::method(..)` also record nothing, because there is
+/// nothing to point them at — C++ methods are not symbols in this graph, only
+/// the class is. An edge naming the class would say the class was called, and
+/// resolving the leaf name repository-wide is the bug 0.2.0 fixed elsewhere.
+/// This is narrower than the other languages and is documented as such rather
+/// than papered over.
+///
+/// C has no construction syntax at all: `struct Foo f = {..}` is a declaration
+/// with an initializer, not an expression naming a constructor. So the only
+/// `Instantiates` edge here is C++'s `new Foo(..)`.
+///
+/// Returns relationships whose order does not depend on traversal.
+fn call_edges(root: Node<'_>, source: &[u8], file: &str) -> Vec<Relationship> {
+    let mut found: BTreeSet<(String, u32, bool)> = BTreeSet::new();
+
+    walk(root, &mut |node| match node.kind() {
+        "call_expression" => {
+            let Some(function) = node.child_by_field_name("function") else {
+                return;
+            };
+            if function.kind() != "identifier" {
+                return;
+            }
+            if let Some(name) = node_text(function, source) {
+                found.insert((name.to_string(), start_line(function), false));
+            }
+        }
+        // `new Foo(..)`, C++ only. The grammar puts the type in a `type` field.
+        "new_expression" => {
+            let Some(ty) = node.child_by_field_name("type") else {
+                return;
+            };
+            if !matches!(ty.kind(), "type_identifier" | "qualified_identifier") {
+                return;
+            }
+            if let Some(name) = node_text(ty, source) {
+                found.insert((name.to_string(), start_line(ty), true));
+            }
+        }
+        _ => {}
+    });
+
+    found
+        .into_iter()
+        .map(|(name, line, constructs)| Relationship {
+            from: module_symbol_id(file),
+            to: unresolved_local_type_id(&name),
+            kind: if constructs {
+                RelationshipKind::Instantiates
+            } else {
+                RelationshipKind::Calls
+            },
+            alias: Some(name),
+            properties_accessed: Vec::new(),
+            context: if constructs { "new expression" } else { "call" }.to_string(),
+            file: file.to_string(),
+            line,
+            resolution: Resolution::default(),
+        })
+        .collect()
 }
 
 /// Record a struct, union or class — but only where it is *defined*.
