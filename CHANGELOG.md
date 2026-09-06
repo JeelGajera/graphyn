@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Call and instantiation edges for Rust.** Rust spells the cases differently
+  and each is recorded as what it is. `Foo::new(..)` is an associated function
+  call, so the edge names the *method* `Foo::new` rather than the type — `new`
+  returns `Self` only by convention, and an edge to the type would leave
+  `blast-radius` on the method blind to its own callers. `Foo { .. }` is Rust's
+  actual construction syntax and records `Instantiates` outright. `Foo(1)` on a
+  tuple struct reads as a plain call, so, as in Python, the resolved target's
+  kind is what makes it an instantiation.
+
+  `Enum::Variant(x)` is construction too, and is recorded as such: nothing ever
+  calls a variant, and an edge saying otherwise would surface under
+  `--kind calls` as a caller that does not exist. After both promotions a
+  `Calls` edge only ever targets a function or a method — something that can
+  actually run.
+
+  A path callee resolves through the file's imports and then into the file that
+  defines the type, never by matching a leaf name across the repository. A
+  fully-qualified path used inline without a `use` still records no edge, which
+  is the documented limit and is now pinned by a test rather than only by
+  prose. `obj.method()` records nothing, `println!(..)` is a macro invocation
+  rather than a call node, and prelude names bind to nothing — none of them
+  raise a diagnostic, because there is nothing a user could fix.
+
+
 - **Call and instantiation edges for Python.** `foo()` where `foo` was imported
   or defined in the file records a `Calls` edge to the definition, travelling
   through the same import machinery as every other reference, so a call through

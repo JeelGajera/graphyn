@@ -139,6 +139,292 @@
     },
     {
       "diagnostics": [],
+      "file": "call_edges/src/consumer.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": "fmt",
+          "context": "use crate::services::{format_name as fmt, Outcome, UserService, Wrapper};",
+          "file": "call_edges/src/consumer.rs",
+          "from": "call_edges/src/consumer.rs::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/src/services.rs::format_name::function"
+        },
+        {
+          "alias": null,
+          "context": "use crate::services::{format_name as fmt, Outcome, UserService, Wrapper};",
+          "file": "call_edges/src/consumer.rs",
+          "from": "call_edges/src/consumer.rs::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/src/services.rs::Outcome::enum"
+        },
+        {
+          "alias": null,
+          "context": "use crate::services::{format_name as fmt, Outcome, UserService, Wrapper};",
+          "file": "call_edges/src/consumer.rs",
+          "from": "call_edges/src/consumer.rs::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [
+            "handle"
+          ],
+          "resolution": "resolved",
+          "to": "call_edges/src/services.rs::UserService::class"
+        },
+        {
+          "alias": null,
+          "context": "use crate::services::{format_name as fmt, Outcome, UserService, Wrapper};",
+          "file": "call_edges/src/consumer.rs",
+          "from": "call_edges/src/consumer.rs::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/src/services.rs::Wrapper::class"
+        },
+        {
+          "alias": "UserService",
+          "context": "property access",
+          "file": "call_edges/src/consumer.rs",
+          "from": "call_edges/src/consumer.rs::module::module",
+          "kind": "AccessesProperty",
+          "line": 23,
+          "properties_accessed": [
+            "handle"
+          ],
+          "resolution": "resolved",
+          "to": "call_edges/src/services.rs::UserService::class"
+        },
+        {
+          "alias": "Outcome::Ready",
+          "context": "instantiation",
+          "file": "call_edges/src/consumer.rs",
+          "from": "call_edges/src/consumer.rs::module::module",
+          "kind": "Instantiates",
+          "line": 20,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/src/services.rs::Outcome::Ready::enum_variant"
+        },
+        {
+          "alias": "UserService",
+          "context": "instantiation",
+          "file": "call_edges/src/consumer.rs",
+          "from": "call_edges/src/consumer.rs::module::module",
+          "kind": "Instantiates",
+          "line": 10,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/src/services.rs::UserService::class"
+        },
+        {
+          "alias": "UserService::new",
+          "context": "call",
+          "file": "call_edges/src/consumer.rs",
+          "from": "call_edges/src/consumer.rs::module::module",
+          "kind": "Calls",
+          "line": 7,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/src/services.rs::UserService::new::method"
+        },
+        {
+          "alias": "Wrapper",
+          "context": "instantiation",
+          "file": "call_edges/src/consumer.rs",
+          "from": "call_edges/src/consumer.rs::module::module",
+          "kind": "Instantiates",
+          "line": 16,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/src/services.rs::Wrapper::class"
+        },
+        {
+          "alias": "fmt",
+          "context": "call",
+          "file": "call_edges/src/consumer.rs",
+          "from": "call_edges/src/consumer.rs::module::module",
+          "kind": "Calls",
+          "line": 23,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/src/services.rs::format_name::function"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "call_edges/src/consumer.rs",
+          "id": "call_edges/src/consumer.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "call_edges/src/consumer.rs",
+          "id": "call_edges/src/consumer.rs::run::function",
+          "kind": "Function",
+          "language": "Rust",
+          "line_end": 40,
+          "line_start": 3,
+          "name": "run",
+          "signature": "pub fn run() -> String {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "call_edges/src/lib.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "call_edges/src/lib.rs",
+          "id": "call_edges/src/lib.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "call_edges/src/services.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": "UserService",
+          "context": "property access",
+          "file": "call_edges/src/services.rs",
+          "from": "call_edges/src/services.rs::module::module",
+          "kind": "AccessesProperty",
+          "line": 11,
+          "properties_accessed": [
+            "name"
+          ],
+          "resolution": "resolved",
+          "to": "call_edges/src/services.rs::UserService::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "call_edges/src/services.rs",
+          "id": "call_edges/src/services.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "call_edges/src/services.rs",
+          "id": "call_edges/src/services.rs::UserService::class",
+          "kind": "Class",
+          "language": "Rust",
+          "line_end": 3,
+          "line_start": 1,
+          "name": "UserService",
+          "signature": "pub struct UserService {"
+        },
+        {
+          "file": "call_edges/src/services.rs",
+          "id": "call_edges/src/services.rs::UserService::new::method",
+          "kind": "Method",
+          "language": "Rust",
+          "line_end": 8,
+          "line_start": 6,
+          "name": "new",
+          "signature": "impl UserService :: pub fn new(name: String) -> Self {"
+        },
+        {
+          "file": "call_edges/src/services.rs",
+          "id": "call_edges/src/services.rs::UserService::handle::method",
+          "kind": "Method",
+          "language": "Rust",
+          "line_end": 12,
+          "line_start": 10,
+          "name": "handle",
+          "signature": "impl UserService :: pub fn handle(&self) -> &str {"
+        },
+        {
+          "file": "call_edges/src/services.rs",
+          "id": "call_edges/src/services.rs::Wrapper::class",
+          "kind": "Class",
+          "language": "Rust",
+          "line_end": 15,
+          "line_start": 15,
+          "name": "Wrapper",
+          "signature": "pub struct Wrapper(pub u32);"
+        },
+        {
+          "file": "call_edges/src/services.rs",
+          "id": "call_edges/src/services.rs::Outcome::enum",
+          "kind": "Enum",
+          "language": "Rust",
+          "line_end": 20,
+          "line_start": 17,
+          "name": "Outcome",
+          "signature": "pub enum Outcome {"
+        },
+        {
+          "file": "call_edges/src/services.rs",
+          "id": "call_edges/src/services.rs::Outcome::Ready::enum_variant",
+          "kind": "EnumVariant",
+          "language": "Rust",
+          "line_end": 18,
+          "line_start": 18,
+          "name": "Ready",
+          "signature": "Ready(String)"
+        },
+        {
+          "file": "call_edges/src/services.rs",
+          "id": "call_edges/src/services.rs::Outcome::Idle::enum_variant",
+          "kind": "EnumVariant",
+          "language": "Rust",
+          "line_end": 19,
+          "line_start": 19,
+          "name": "Idle",
+          "signature": "Idle"
+        },
+        {
+          "file": "call_edges/src/services.rs",
+          "id": "call_edges/src/services.rs::format_name::function",
+          "kind": "Function",
+          "language": "Rust",
+          "line_end": 24,
+          "line_start": 22,
+          "name": "format_name",
+          "signature": "pub fn format_name(first: &str, last: &str) -> String {"
+        },
+        {
+          "file": "call_edges/src/services.rs",
+          "id": "call_edges/src/services.rs::unused_helper::function",
+          "kind": "Function",
+          "language": "Rust",
+          "line_end": 26,
+          "line_start": 26,
+          "name": "unused_helper",
+          "signature": "pub fn unused_helper() {}"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
       "file": "language_features/src/lib.rs",
       "language": "Rust",
       "re_exports": [],
@@ -923,16 +1209,16 @@
     }
   ],
   "language_stats": {
-    "Rust": 20
+    "Rust": 23
   },
   "root": "<root>",
   "schema_version": 1,
   "stats": {
-    "alias_chains": 3,
-    "aliases": 3,
+    "alias_chains": 4,
+    "aliases": 4,
     "diagnostics": 0,
-    "files_indexed": 20,
-    "relationships": 25,
-    "symbols": 43
+    "files_indexed": 23,
+    "relationships": 36,
+    "symbols": 56
   }
 }
