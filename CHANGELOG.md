@@ -246,9 +246,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is what made it visible.
 
 - **Call and instantiation edges cover every Tier 1 language, at different
-  depths.** C and C++ are the narrowest, and Tier 2
-  languages emit `Calls` within a file only. A `--kind calls` query against a
-  Java repository therefore returns only within-file callers — and says so, naming the graph rather
+  depths.** C and C++ are the narrowest, and Tier 2 languages emit `Calls`
+  within a file only. A `--kind calls` query against a Java repository therefore
+  returns only within-file callers — and says so, naming the graph rather
   than the feature: the CLI and MCP tools report which kinds the analyzed graph
   actually contains instead of consulting a hand-maintained list of
   unimplemented kinds. That list was wrong twice inside one release, and could

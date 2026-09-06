@@ -200,8 +200,8 @@ Being explicit about these is more useful than a feature list:
   neither does a call whose only available target is a third-party package. In
   Rust, `Foo::new(..)` names the method that runs rather than the type, and
   `Foo {..}` is construction outright; in Go, `pkg.Func(..)` is recorded because
-  that is how every cross-package call is written. `obj.method()` records no
-  call edge — it is a property access on the receiver's declared type instead.
+  that is how every cross-package call is written, and `Foo{..}` is
+  construction. `obj.method()` records no call edge — it is a property access on the receiver's declared type instead.
   C and C++ are the narrowest: only a bare `foo(..)` and `new Foo(..)`, because
   C++ methods are not symbols in this graph. Tier 2 languages see calls within a
   single file only. A query filtered to a kind no edge in your graph carries is
