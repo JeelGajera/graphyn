@@ -319,6 +319,71 @@
     },
     {
       "diagnostics": [],
+      "file": "call_edges/src/geometry.c",
+      "language": "C",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "#include \"geometry.h\"",
+          "file": "call_edges/src/geometry.c",
+          "from": "call_edges/src/geometry.c::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/include/geometry.h::module::module"
+        },
+        {
+          "alias": "Point",
+          "context": "member access",
+          "file": "call_edges/src/geometry.c",
+          "from": "call_edges/src/geometry.c::module::module",
+          "kind": "AccessesProperty",
+          "line": 4,
+          "properties_accessed": [
+            "x",
+            "y"
+          ],
+          "resolution": "resolved",
+          "to": "call_edges/include/geometry.h::Point::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "call_edges/src/geometry.c",
+          "id": "call_edges/src/geometry.c::module::module",
+          "kind": "Module",
+          "language": "C",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "call_edges/src/geometry.c",
+          "id": "call_edges/src/geometry.c::point_distance::function",
+          "kind": "Function",
+          "language": "C",
+          "line_end": 7,
+          "line_start": 3,
+          "name": "point_distance",
+          "signature": "int point_distance(struct Point a, struct Point b) {"
+        },
+        {
+          "file": "call_edges/src/geometry.c",
+          "id": "call_edges/src/geometry.c::unused_helper::function",
+          "kind": "Function",
+          "language": "C",
+          "line_end": 11,
+          "line_start": 9,
+          "name": "unused_helper",
+          "signature": "int unused_helper(void) {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
       "file": "call_edges/src/render.c",
       "language": "C",
       "re_exports": [],
@@ -344,6 +409,17 @@
           "properties_accessed": [],
           "resolution": "resolved",
           "to": "ext::stdio.h::package"
+        },
+        {
+          "alias": "point_distance",
+          "context": "call",
+          "file": "call_edges/src/render.c",
+          "from": "call_edges/src/render.c::module::module",
+          "kind": "Calls",
+          "line": 15,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/src/geometry.c::point_distance::function"
         },
         {
           "alias": "scale",
@@ -665,10 +741,223 @@
           "signature": "double render(Figure *figure) {"
         }
       ]
+    },
+    {
+      "diagnostics": [],
+      "file": "prototype_linking/api.h",
+      "language": "C",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "prototype_linking/api.h",
+          "id": "prototype_linking/api.h::module::module",
+          "kind": "Module",
+          "language": "C",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "prototype_linking/caller.c",
+      "language": "C",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "#include \"api.h\"",
+          "file": "prototype_linking/caller.c",
+          "from": "prototype_linking/caller.c::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "prototype_linking/api.h::module::module"
+        },
+        {
+          "alias": "handle",
+          "context": "call",
+          "file": "prototype_linking/caller.c",
+          "from": "prototype_linking/caller.c::module::module",
+          "kind": "Calls",
+          "line": 9,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "prototype_linking/handler.c::handle::function"
+        },
+        {
+          "alias": "shadowed",
+          "context": "call",
+          "file": "prototype_linking/caller.c",
+          "from": "prototype_linking/caller.c::module::module",
+          "kind": "Calls",
+          "line": 15,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "prototype_linking/caller.c::shadowed::function"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "prototype_linking/caller.c",
+          "id": "prototype_linking/caller.c::module::module",
+          "kind": "Module",
+          "language": "C",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "prototype_linking/caller.c",
+          "id": "prototype_linking/caller.c::shadowed::function",
+          "kind": "Function",
+          "language": "C",
+          "line_end": 5,
+          "line_start": 3,
+          "name": "shadowed",
+          "signature": "static int shadowed(void) {"
+        },
+        {
+          "file": "prototype_linking/caller.c",
+          "id": "prototype_linking/caller.c::run::function",
+          "kind": "Function",
+          "language": "C",
+          "line_end": 16,
+          "line_start": 7,
+          "name": "run",
+          "signature": "int run(void) {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "prototype_linking/detached.c",
+      "language": "C",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "prototype_linking/detached.c",
+          "id": "prototype_linking/detached.c::module::module",
+          "kind": "Module",
+          "language": "C",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "prototype_linking/detached.c",
+          "id": "prototype_linking/detached.c::orphan::function",
+          "kind": "Function",
+          "language": "C",
+          "line_end": 5,
+          "line_start": 3,
+          "name": "orphan",
+          "signature": "int orphan(void) {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "prototype_linking/fallback.c",
+      "language": "C",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "#include \"api.h\"",
+          "file": "prototype_linking/fallback.c",
+          "from": "prototype_linking/fallback.c::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "prototype_linking/api.h::module::module"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "prototype_linking/fallback.c",
+          "id": "prototype_linking/fallback.c::module::module",
+          "kind": "Module",
+          "language": "C",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "prototype_linking/fallback.c",
+          "id": "prototype_linking/fallback.c::dispatch::function",
+          "kind": "Function",
+          "language": "C",
+          "line_end": 6,
+          "line_start": 4,
+          "name": "dispatch",
+          "signature": "int dispatch(void) {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "prototype_linking/handler.c",
+      "language": "C",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "#include \"api.h\"",
+          "file": "prototype_linking/handler.c",
+          "from": "prototype_linking/handler.c::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "prototype_linking/api.h::module::module"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "prototype_linking/handler.c",
+          "id": "prototype_linking/handler.c::module::module",
+          "kind": "Module",
+          "language": "C",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "prototype_linking/handler.c",
+          "id": "prototype_linking/handler.c::handle::function",
+          "kind": "Function",
+          "language": "C",
+          "line_end": 5,
+          "line_start": 3,
+          "name": "handle",
+          "signature": "int handle(void) {"
+        },
+        {
+          "file": "prototype_linking/handler.c",
+          "id": "prototype_linking/handler.c::dispatch::function",
+          "kind": "Function",
+          "language": "C",
+          "line_end": 9,
+          "line_start": 7,
+          "name": "dispatch",
+          "signature": "int dispatch(void) {"
+        }
+      ]
     }
   ],
   "language_stats": {
-    "C": 6,
+    "C": 12,
     "Cpp": 6
   },
   "root": "<root>",
@@ -677,8 +966,8 @@
     "alias_chains": 4,
     "aliases": 4,
     "diagnostics": 1,
-    "files_indexed": 12,
-    "relationships": 21,
-    "symbols": 30
+    "files_indexed": 18,
+    "relationships": 29,
+    "symbols": 44
   }
 }

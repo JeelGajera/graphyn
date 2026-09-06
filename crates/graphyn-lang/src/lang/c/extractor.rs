@@ -61,6 +61,24 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
                 ));
             }
         }
+        // A prototype: `int point_distance(struct Point, struct Point);`.
+        // Recorded so the resolver can link a caller to the definition in
+        // another translation unit; it never reaches the finished graph.
+        "declaration" => {
+            if let Some(name) = prototype_name(node, source) {
+                relationships.push(Relationship {
+                    from: module_symbol_id(file),
+                    to: crate::lang::c::include_resolver::unresolved_prototype_id(&name),
+                    kind: RelationshipKind::ReExports,
+                    alias: Some(name),
+                    properties_accessed: Vec::new(),
+                    context: first_line_of(node, source).unwrap_or_default(),
+                    file: file.to_string(),
+                    line: start_line(node),
+                    resolution: Resolution::default(),
+                });
+            }
+        }
         "type_definition" => relationships.extend(typedef(node, source, file)),
         "alias_declaration" => relationships.extend(using_alias(node, source, file)),
         "preproc_include" => {
@@ -111,6 +129,37 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
         relationships,
         diagnostics,
         re_exports: Vec::new(),
+    }
+}
+
+/// The function name a declaration declares, when it declares one.
+///
+/// `int foo(void);` is a prototype; `int x;` and `struct Point p;` are not.
+/// The name sits under a `function_declarator`, which pointer returns wrap:
+/// `char *name(void);` nests it one level deeper, so the declarator chain is
+/// walked rather than probed at a fixed depth.
+///
+/// A definition is a `function_definition` node, a different kind entirely, so
+/// there is no risk of counting one twice.
+fn prototype_name(declaration: Node<'_>, source: &[u8]) -> Option<String> {
+    let mut node = declaration.child_by_field_name("declarator")?;
+
+    // Unwrap pointer and parenthesised declarators until the function is found.
+    loop {
+        match node.kind() {
+            "function_declarator" => {
+                let mut inner = node.child_by_field_name("declarator")?;
+                // The name itself may be wrapped the same way.
+                while inner.kind() != "identifier" {
+                    inner = inner.child_by_field_name("declarator")?;
+                }
+                return node_text(inner, source).map(str::to_string);
+            }
+            "pointer_declarator" | "parenthesized_declarator" | "init_declarator" => {
+                node = node.child_by_field_name("declarator")?;
+            }
+            _ => return None,
+        }
     }
 }
 

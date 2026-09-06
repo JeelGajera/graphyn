@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A C call through a header prototype reaches the definition.** C splits a
+  call across two files, and the shape is the dominant one in plain C: the
+  caller includes a header that *declares* the function, while the definition
+  lives in a `.c` file the caller never sees. Callers now attach to the
+  definition. That direction is the point — the graph answers "what breaks if I
+  change this", and a caller attached to the declaration would leave
+  `blast-radius` on the definition returning nothing, the exact failure call
+  edges exist to prevent.
+
+  The link is an agreement between two files rather than a name matched across
+  the repository: a header declares `N`, and exactly one file both defines `N`
+  and includes that header. Including the header that declares you is what a C
+  build already does so the compiler can check the two agree, so the rule keys
+  on a fact the language enforces rather than on a filename convention like
+  `geometry.c` implementing `geometry.h`. Two definers make it ambiguous and a
+  definer that does not include the header is unanchored; both record nothing
+  rather than guess, and neither raises a diagnostic. A definition the caller
+  can see directly still wins, so a `static` helper shadows an external
+  function of the same name exactly as it does at compile time.
+
+  A prototype is not a symbol. It names a function defined elsewhere, so
+  minting a node for it would put two nodes in the graph for one function and
+  make the name ambiguous to `find_symbol_id` — the ambiguity 0.2.0 spent a
+  release removing. The placeholders exist only between extraction and
+  resolution and are dropped before the graph is returned.
+
+
 - **Call and instantiation edges for C and C++.** A bare `foo(..)` records a
   call when the name resolves to a function the file can see — its own, or one
   defined in a header it includes. `new Foo(..)` records `Instantiates`; C has
@@ -219,15 +246,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known limits
 
-- **A C call through a header prototype records no edge.** `geometry.h`
-  declaring `int point_distance(struct Point, struct Point);` without defining
-  it means no symbol in the graph carries that name, so a caller including that
-  header has nothing to point at. This is the dominant call shape in plain C —
-  the edges that do resolve are same-file functions and header-defined ones,
-  which covers most of C++ and `static inline` C. Linking a prototype to the
-  definition in another translation unit is a separate change: it decides
-  whether the prototype or the definition is the node callers attach to, and
-  that is a graph-shape decision rather than a detail.
 
 - **Tier 2 languages resolve nothing across files.** A structural language
   records a reference only when the name is defined in the same file. A tags

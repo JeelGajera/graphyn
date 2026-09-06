@@ -203,16 +203,21 @@ Being explicit about these is more useful than a feature list:
   that is how every cross-package call is written, and `Foo{..}` is
   construction. `obj.method()` records no call edge — it is a property access on the receiver's declared type instead.
   C and C++ are the narrowest: only a bare `foo(..)` and `new Foo(..)`, because
-  C++ methods are not symbols in this graph. Tier 2 languages see calls within a
+  C++ methods are not symbols in this graph — but a bare call does cross
+  translation units through a header prototype. Tier 2 languages see calls within a
   single file only. A query filtered to a kind no edge in your graph carries is
   reported as such, so an empty result is never mistaken for "nothing calls
   this".
 
-- **A C call through a header prototype records no edge.** A header that
-  declares `int point_distance(...)` without defining it puts no symbol of that
-  name in the graph, so a caller including it has nothing to point at. The C
-  edges that do resolve are calls to same-file functions and to header-defined
-  ones — most of C++, and `static inline` in C.
+- **A C call through a header prototype reaches the definition.** C splits a
+  call across two files: the caller includes a header that declares the
+  function, and the definition lives in a `.c` file the caller never sees. The
+  caller attaches to the definition, so `blast-radius` on the definition finds
+  it. The link is made when a header declares a name and exactly one file both
+  defines that name and includes that header — an agreement between two files,
+  not a name matched across the repository. Two definitions, or a definition
+  whose file does not include the header, leave the call unlinked rather than
+  guessed at.
 
 - **A method call is only attributed where the receiver's type is declared.** A
   parameter or field gives the receiver a type, so `u.Greeting()` is recorded as
