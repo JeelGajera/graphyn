@@ -1,12 +1,14 @@
 use dashmap::DashMap;
 use petgraph::graph::{DiGraph, NodeIndex};
 
-use crate::ir::{ReExportEntry, Relationship, RelationshipKind, Symbol, SymbolId};
+use crate::ir::{ReExportEntry, Relationship, RelationshipKind, Resolution, Symbol, SymbolId};
 use crate::resolver::AliasEntry;
 
 #[derive(Debug, Clone)]
 pub struct RelationshipMeta {
     pub kind: RelationshipKind,
+    /// How `to` was determined. See [`crate::ir::Resolution`].
+    pub resolution: Resolution,
     pub alias: Option<String>,
     pub properties_accessed: Vec<String>,
     pub context: String,
@@ -163,6 +165,7 @@ impl GraphynGraph {
 
         let meta = RelationshipMeta {
             kind: relationship.kind.clone(),
+            resolution: relationship.resolution,
             alias: relationship.alias.clone(),
             properties_accessed: relationship.properties_accessed.clone(),
             context: relationship.context.clone(),

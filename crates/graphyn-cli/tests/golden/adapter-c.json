@@ -43,6 +43,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "alias_import_bug_c/include/user_payload.h::module::module"
         },
         {
@@ -57,6 +58,7 @@
             "timestamp",
             "user_id"
           ],
+          "resolution": "resolved",
           "to": "alias_import_bug_c/include/user_payload.h::UserPayload::class"
         },
         {
@@ -71,6 +73,7 @@
             "timestamp",
             "user_id"
           ],
+          "resolution": "resolved",
           "to": "alias_import_bug_c/include/user_payload.h::UserPayload::class"
         }
       ],
@@ -140,6 +143,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "alias_import_bug_cpp/include/user_payload.hpp::module::module"
         },
         {
@@ -154,6 +158,7 @@
             "timestamp",
             "user_id"
           ],
+          "resolution": "resolved",
           "to": "alias_import_bug_cpp/include/user_payload.hpp::UserPayload::class"
         },
         {
@@ -168,6 +173,7 @@
             "timestamp",
             "user_id"
           ],
+          "resolution": "resolved",
           "to": "alias_import_bug_cpp/include/user_payload.hpp::UserPayload::class"
         }
       ],
@@ -208,6 +214,7 @@
           "kind": "Extends",
           "line": 11,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/include/shapes.hpp::Shape::class"
         }
       ],
@@ -297,6 +304,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/include/user_payload.h::module::module"
         },
         {
@@ -307,6 +315,7 @@
           "kind": "Imports",
           "line": 2,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::stdio.h::package"
         },
         {
@@ -320,6 +329,7 @@
             "email",
             "user_id"
           ],
+          "resolution": "resolved",
           "to": "language_features/include/user_payload.h::UserPayload::class"
         },
         {
@@ -330,6 +340,7 @@
           "kind": "UsesType",
           "line": 12,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/include/user_payload.h::UserPayload::class"
         },
         {
@@ -342,6 +353,7 @@
           "properties_accessed": [
             "order_id"
           ],
+          "resolution": "resolved",
           "to": "language_features/include/user_payload.h::Order::class"
         },
         {
@@ -355,6 +367,7 @@
             "email",
             "user_id"
           ],
+          "resolution": "resolved",
           "to": "language_features/include/user_payload.h::UserPayload::class"
         }
       ],
@@ -395,6 +408,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/include/shapes.hpp::module::module"
         },
         {
@@ -408,6 +422,7 @@
             "area",
             "radius"
           ],
+          "resolution": "resolved",
           "to": "language_features/include/shapes.hpp::Circle::class"
         },
         {
@@ -421,6 +436,7 @@
             "area",
             "radius"
           ],
+          "resolution": "resolved",
           "to": "language_features/include/shapes.hpp::Circle::class"
         }
       ],

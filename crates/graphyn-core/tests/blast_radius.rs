@@ -1,7 +1,7 @@
 use graphyn_core::error::GraphynError;
 use graphyn_core::graph::GraphynGraph;
 use graphyn_core::incremental::replace_file_ir;
-use graphyn_core::ir::{FileIR, Language, Relationship, RelationshipKind, Symbol, SymbolKind};
+use graphyn_core::ir::{FileIR, Language, Relationship, RelationshipKind, Resolution, Symbol, SymbolKind};
 use graphyn_core::query::{blast_radius, dependencies, symbol_usages, RelationshipKindMask};
 
 fn symbol(id: &str, name: &str, file: &str, kind: SymbolKind) -> Symbol {
@@ -27,6 +27,7 @@ fn rel(from: &str, to: &str, file: &str, line: u32) -> Relationship {
         context: "import".to_string(),
         file: file.to_string(),
         line,
+        resolution: Resolution::Resolved,
     }
 }
 

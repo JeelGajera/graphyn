@@ -18,6 +18,7 @@
             "Timestamp",
             "UserID"
           ],
+          "resolution": "resolved",
           "to": "alias_import_bug/models::models::module"
         },
         {
@@ -32,6 +33,7 @@
             "Timestamp",
             "UserID"
           ],
+          "resolution": "resolved",
           "to": "alias_import_bug/models/user_payload.go::UserPayload::class"
         },
         {
@@ -42,6 +44,7 @@
           "kind": "UsesType",
           "line": 9,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "alias_import_bug/mappers/deep/view_model_mapper.go::ViewModelMapper::class"
         },
         {
@@ -52,6 +55,7 @@
           "kind": "UsesType",
           "line": 9,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "alias_import_bug/models/user_payload.go::UserPayload::class"
         }
       ],
@@ -151,6 +155,7 @@
           "kind": "Imports",
           "line": 4,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::fmt::package"
         },
         {
@@ -165,6 +170,7 @@
             "OrderID",
             "UserID"
           ],
+          "resolution": "resolved",
           "to": "language_features/models::models::module"
         },
         {
@@ -175,6 +181,7 @@
           "kind": "Imports",
           "line": 7,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/store::store::module"
         },
         {
@@ -187,6 +194,7 @@
           "properties_accessed": [
             "OrderID"
           ],
+          "resolution": "resolved",
           "to": "language_features/models/order.go::Order::class"
         },
         {
@@ -200,6 +208,7 @@
             "Email",
             "UserID"
           ],
+          "resolution": "resolved",
           "to": "language_features/models/user.go::UserPayload::class"
         },
         {
@@ -210,6 +219,7 @@
           "kind": "UsesType",
           "line": 18,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/handlers/user.go::UserHandler::class"
         },
         {
@@ -220,6 +230,7 @@
           "kind": "UsesType",
           "line": 18,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/models/order.go::Order::class"
         },
         {
@@ -230,6 +241,7 @@
           "kind": "UsesType",
           "line": 18,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/models/user.go::UserPayload::class"
         },
         {
@@ -240,6 +252,7 @@
           "kind": "UsesType",
           "line": 14,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/store/store.go::Reader::interface"
         }
       ],
@@ -349,6 +362,7 @@
           "kind": "UsesType",
           "line": 8,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/models/user.go::Base::class"
         }
       ],
@@ -399,6 +413,7 @@
           "kind": "UsesType",
           "line": 3,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/store/store.go::MemoryStore::class"
         }
       ],
@@ -449,6 +464,7 @@
           "kind": "Imports",
           "line": 3,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/models::models::module"
         },
         {
@@ -461,6 +477,7 @@
           "properties_accessed": [
             "items"
           ],
+          "resolution": "resolved",
           "to": "language_features/store/store.go::MemoryStore::class"
         },
         {
@@ -471,6 +488,7 @@
           "kind": "UsesType",
           "line": 14,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/store/store.go::MemoryStore::class"
         },
         {
@@ -481,6 +499,7 @@
           "kind": "UsesType",
           "line": 6,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/models/user.go::UserPayload::class"
         },
         {
@@ -494,6 +513,7 @@
             "Close",
             "Get"
           ],
+          "resolution": "resolved",
           "to": "language_features/store/store.go::Reader::interface"
         }
       ],

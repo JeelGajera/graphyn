@@ -111,7 +111,30 @@ pub fn run_blast_radius(
         // question, and an empty answer to a narrow question says nothing
         // about the rest of the graph.
         if mask.is_all() {
-            output::success("No dependents found — safe to modify.");
+            // "Safe to modify" is a claim about the whole repository. It holds
+            // only if everything in the graph was resolved well enough to make
+            // it: a structural region cannot see across files, so a reference
+            // living there would never have reached the graph, and the
+            // emptiness is partly an artefact of how much was resolved.
+            let structural = query::structural_files(&graph);
+            if structural.is_empty() {
+                output::success("No dependents found — safe to modify.");
+            } else {
+                output::success("No dependents found.");
+                output::blank();
+                output::warning("not safe to conclude: this graph has structural regions");
+                output::dim_line(&format!(
+                    "  {} file(s) were analyzed within-file only, so a reference",
+                    structural.len()
+                ));
+                output::dim_line("  from one of them to this symbol would not appear here.");
+                for file in structural.iter().take(3) {
+                    output::dim_line(&format!("    {file}"));
+                }
+                if structural.len() > 3 {
+                    output::dim_line(&format!("    … and {} more", structural.len() - 3));
+                }
+            }
         } else {
             output::success("No dependents found under the selected kinds.");
             output::dim_line("  Other relationship kinds were not searched.");
@@ -302,10 +325,18 @@ fn print_edge(index: usize, edge: &QueryEdge, graph: &GraphynGraph) {
     let num = output::dim(&format!("{index:>3}."));
     let location = format!("{}:{}", output::file_path(&edge.file), edge.line,);
 
-    println!(
-        "  {num} {location} {}",
+    // A structural row is marked, because in a polyglot result it sits beside
+    // resolved ones and reads identically otherwise — and the two mean very
+    // different things to anyone deciding whether a change is safe.
+    let tag = if edge.resolution.is_gate_safe() {
         output::dim(&format!("[{}]", query::kind_name(&edge.kind)))
-    );
+    } else {
+        output::dim(&format!(
+            "[{}] [structural: within-file only]",
+            query::kind_name(&edge.kind)
+        ))
+    };
+    println!("  {num} {location} {tag}");
 
     // How this reference names the symbol.
     //

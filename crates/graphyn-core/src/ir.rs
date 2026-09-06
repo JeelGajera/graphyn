@@ -46,6 +46,57 @@ pub enum Language {
     Cpp,
 }
 
+/// How an edge's target was determined, and therefore what it is worth.
+///
+/// # Why this is on the edge rather than on the language
+///
+/// A polyglot graph mixes both in one answer. `blast-radius` over a repository
+/// with TypeScript and Java returns rows from each, and before this existed a
+/// reader could not tell which ones a gate may act on. The tier is a property
+/// of the analysis that produced the edge, so the edge is where it belongs.
+///
+/// Ordered so `Structural < Resolved` reads naturally, and so the weakest
+/// resolution in a set is its minimum.
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[serde(rename_all = "lowercase")]
+pub enum Resolution {
+    /// The target was matched by name inside one file, with no import table in
+    /// play. A tags query reports that a call to `foo` happened; it does not
+    /// say which `foo`. Advisory only.
+    Structural,
+    /// The target was bound through the file's imports, aliases and declared
+    /// types. This is the resolution a gate may act on.
+    Resolved,
+}
+
+impl Resolution {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Resolution::Structural => "structural",
+            Resolution::Resolved => "resolved",
+        }
+    }
+
+    /// Whether a gate may draw a conclusion from an edge resolved this way.
+    ///
+    /// Structural resolution cannot see across files, so "nothing references
+    /// this" from such an edge is a statement about one file rather than about
+    /// the repository. A gate treating it otherwise would report a pass it had
+    /// not earned.
+    pub fn is_gate_safe(&self) -> bool {
+        matches!(self, Resolution::Resolved)
+    }
+}
+
+/// Edges predate the resolution field, and a stored graph written before it
+/// existed carries none. Defaulting to the weaker value keeps an old graph
+/// from being read as gate-safe on the strength of a missing field.
+impl Default for Resolution {
+    fn default() -> Self {
+        Resolution::Structural
+    }
+}
+
 /// A directed relationship between two symbols.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Relationship {
@@ -57,6 +108,9 @@ pub struct Relationship {
     pub context: String,
     pub file: String,
     pub line: u32,
+    /// How `to` was determined. See [`Resolution`].
+    #[serde(default)]
+    pub resolution: Resolution,
 }
 
 /// `Ord` is derived because collections keyed by kind reach the user, and a

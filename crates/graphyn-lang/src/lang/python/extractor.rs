@@ -1,8 +1,5 @@
 use graphyn_core::ast::{first_line_of, node_text, start_line, walk};
-use graphyn_core::ir::{
-    Diagnostic, DiagnosticCategory, DiagnosticLevel, FileIR, Language, ReExportEntry, Relationship,
-    RelationshipKind, Symbol, SymbolKind,
-};
+use graphyn_core::ir::{Diagnostic, DiagnosticCategory, DiagnosticLevel, FileIR, Language, ReExportEntry, Relationship, RelationshipKind, Resolution, Symbol, SymbolKind};
 use graphyn_core::symbol_id::{
     make_symbol_id, module_symbol, module_symbol_id, unresolved_import_id,
     unresolved_local_type_id, IMPORT_ALL,
@@ -56,6 +53,7 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
             context: "attribute access".to_string(),
             file: file.to_string(),
             line: access.first_line,
+            resolution: Resolution::default(),
         });
     }
 
@@ -125,6 +123,7 @@ fn class_definition(
             context: format!("class {name}({base})"),
             file: file.to_string(),
             line: start_line(node),
+            resolution: Resolution::default(),
         });
     }
 
@@ -318,6 +317,7 @@ fn plain_import(node: Node<'_>, source: &[u8], file: &str) -> Vec<Relationship> 
             context: context.clone(),
             file: file.to_string(),
             line,
+            resolution: Resolution::default(),
         });
     }
     out
@@ -346,6 +346,7 @@ fn from_import(node: Node<'_>, source: &[u8], file: &str) -> Vec<Relationship> {
             context: context.clone(),
             file: file.to_string(),
             line,
+            resolution: Resolution::default(),
         });
     };
 

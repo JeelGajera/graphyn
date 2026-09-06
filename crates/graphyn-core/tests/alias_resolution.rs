@@ -1,5 +1,5 @@
 use graphyn_core::graph::GraphynGraph;
-use graphyn_core::ir::{Language, Relationship, RelationshipKind, Symbol, SymbolKind};
+use graphyn_core::ir::{Language, Relationship, RelationshipKind, Resolution, Symbol, SymbolKind};
 use graphyn_core::query::{blast_radius, symbol_usages, RelationshipKindMask};
 use graphyn_core::resolver::{AliasResolver, AliasScope};
 
@@ -50,6 +50,7 @@ fn test_aliased_import_is_tracked_with_property_accesses() {
             .to_string(),
         file: "src/mappers/response/deep/view_model_mapper.ts".to_string(),
         line: 1,
+        resolution: Resolution::Resolved,
     }];
 
     for relationship in &relationships {
@@ -128,6 +129,7 @@ fn test_alias_resolver_supports_reexport_barrel_and_default_scopes() {
             context: "export { UserPayload as PublicUser } from './user_payload'".to_string(),
             file: "src/models/index.ts".to_string(),
             line: 1,
+            resolution: Resolution::Resolved,
         },
         Relationship {
             from: barrel.id.clone(),
@@ -138,6 +140,7 @@ fn test_alias_resolver_supports_reexport_barrel_and_default_scopes() {
             context: "export * from './user_payload'".to_string(),
             file: "src/models/index.ts".to_string(),
             line: 2,
+            resolution: Resolution::Resolved,
         },
         Relationship {
             from: barrel.id.clone(),
@@ -148,6 +151,7 @@ fn test_alias_resolver_supports_reexport_barrel_and_default_scopes() {
             context: "import User from './user_payload' // default".to_string(),
             file: "src/models/index.ts".to_string(),
             line: 3,
+            resolution: Resolution::Resolved,
         },
     ];
 
@@ -205,6 +209,7 @@ fn test_accesses_property_edge_can_be_canonicalized_from_alias() {
             .to_string(),
         file: "src/mappers/response/deep/view_model_mapper.ts".to_string(),
         line: 1,
+        resolution: Resolution::Resolved,
     };
     let resolver = AliasResolver::default();
     resolver.ingest_relationships(&graph, &[import_rel]);
@@ -218,6 +223,7 @@ fn test_accesses_property_edge_can_be_canonicalized_from_alias() {
         context: "id: data.userId".to_string(),
         file: "src/mappers/response/deep/view_model_mapper.ts".to_string(),
         line: 6,
+        resolution: Resolution::Resolved,
     };
 
     let normalized = resolver.canonicalize_relationship(&accesses_property);
@@ -240,6 +246,7 @@ fn edge(to: &str, alias: Option<&str>) -> QueryEdge {
         properties_accessed: Vec::new(),
         context: String::new(),
         hop: 1,
+        resolution: Resolution::Resolved,
     }
 }
 

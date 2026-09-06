@@ -2,9 +2,7 @@ use std::path::PathBuf;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use graphyn_core::graph::GraphynGraph;
-use graphyn_core::ir::{
-    Language, ReExportEntry, Relationship, RelationshipKind, Symbol, SymbolKind,
-};
+use graphyn_core::ir::{Language, ReExportEntry, Relationship, RelationshipKind, Resolution, Symbol, SymbolKind};
 use graphyn_core::resolver::AliasResolver;
 use graphyn_store::{GraphSnapshot, RocksGraphStore, StoreError};
 
@@ -58,6 +56,7 @@ fn make_graph() -> GraphynGraph {
             .to_string(),
         file: "mappers/view_model_mapper.ts".to_string(),
         line: 1,
+        resolution: Resolution::Resolved,
     }];
 
     for rel in &relationships {

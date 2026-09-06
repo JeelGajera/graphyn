@@ -10,7 +10,7 @@
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
-use graphyn_core::ir::{FileIR, Language, RepoIR};
+use graphyn_core::ir::{FileIR, Language, Resolution, RepoIR};
 use graphyn_core::scan::detect_language_from_extension;
 use rayon::prelude::*;
 
@@ -164,7 +164,7 @@ fn run_adapter(
     // Each remaining arm is gated by its language's feature. `adapter_group`
     // already refuses to route to a language this build does not carry, so an
     // arm that is compiled out is unreachable rather than silently skipped.
-    Ok(match language {
+    let mut files_ir = match language {
         #[cfg(feature = "typescript")]
         Language::TypeScript => {
             crate::lang::typescript::analyze_files(root, files)
@@ -197,7 +197,22 @@ fn run_adapter(
         }
         // `adapter_group` never yields anything else.
         _ => Vec::new(),
-    })
+    };
+
+    // Everything above this point is a Tier 1 pipeline: it bound its targets
+    // through the file's imports, aliases and declared types. Stamping the
+    // resolution here rather than at each of the twenty-odd construction sites
+    // means a new edge in any Tier 1 extractor is classified correctly without
+    // the author having to remember — and `Resolution::default()` is the
+    // *weaker* value, so the failure mode of forgetting is under-claiming
+    // rather than marking an unresolved edge gate-safe.
+    for file_ir in &mut files_ir {
+        for rel in &mut file_ir.relationships {
+            rel.resolution = Resolution::Resolved;
+        }
+    }
+
+    Ok(files_ir)
 }
 
 /// Languages this build can analyse, for help text and diagnostics.

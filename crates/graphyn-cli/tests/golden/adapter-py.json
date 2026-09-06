@@ -18,6 +18,7 @@
             "timestamp",
             "user_id"
           ],
+          "resolution": "resolved",
           "to": "alias_import_bug/models/user_payload.py::UserPayload::class"
         },
         {
@@ -32,6 +33,7 @@
             "timestamp",
             "user_id"
           ],
+          "resolution": "resolved",
           "to": "alias_import_bug/models/user_payload.py::UserPayload::class"
         }
       ],
@@ -151,6 +153,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::typing::package"
         },
         {
@@ -161,6 +164,7 @@
           "kind": "Imports",
           "line": 3,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::fastapi::package"
         },
         {
@@ -174,6 +178,7 @@
             "email",
             "user_id"
           ],
+          "resolution": "resolved",
           "to": "language_features/models/user.py::UserPayload::class"
         },
         {
@@ -186,6 +191,7 @@
           "properties_accessed": [
             "term"
           ],
+          "resolution": "resolved",
           "to": "language_features/models/user.py::UserFilter::class"
         },
         {
@@ -196,6 +202,7 @@
           "kind": "Imports",
           "line": 6,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/models/user.py::normalize_email::function"
         },
         {
@@ -206,6 +213,7 @@
           "kind": "Imports",
           "line": 9,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/models/order.py::Order::class"
         },
         {
@@ -218,6 +226,7 @@
           "properties_accessed": [
             "term"
           ],
+          "resolution": "resolved",
           "to": "language_features/models/user.py::UserFilter::class"
         },
         {
@@ -231,6 +240,7 @@
             "email",
             "user_id"
           ],
+          "resolution": "resolved",
           "to": "language_features/models/user.py::UserPayload::class"
         }
       ],
@@ -281,6 +291,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/models/user.py::module::module"
         }
       ],
@@ -330,6 +341,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/models/user.py::UserPayload::class"
         },
         {
@@ -340,6 +352,7 @@
           "kind": "Imports",
           "line": 2,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "language_features/models/order.py::Order::class"
         }
       ],
@@ -370,6 +383,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::django::package"
         },
         {
@@ -380,6 +394,7 @@
           "kind": "Extends",
           "line": 4,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::django::package"
         }
       ],
@@ -420,6 +435,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::dataclasses::package"
         },
         {
@@ -430,6 +446,7 @@
           "kind": "Imports",
           "line": 2,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::typing::package"
         },
         {
@@ -440,6 +457,7 @@
           "kind": "Imports",
           "line": 4,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::pydantic::package"
         },
         {
@@ -450,6 +468,7 @@
           "kind": "Extends",
           "line": 7,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::pydantic::package"
         },
         {
@@ -460,6 +479,7 @@
           "kind": "Extends",
           "line": 19,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "ext::typing::package"
         }
       ],

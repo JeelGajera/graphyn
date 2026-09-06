@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Per-edge resolution, and a safety verdict that depends on it.** Every
+  relationship carries a `resolution` of `resolved` (bound through the file's
+  imports, aliases and declared types) or `structural` (matched by name inside
+  one file). A polyglot graph mixes both in one answer, so it belongs on the
+  edge: `blast-radius` over a TypeScript and Java repository returns rows from
+  each, and until now they read identically.
+
+  `blast-radius` finding nothing prints "safe to modify" — a claim about the
+  whole repository. It now holds that claim back when any edge in the graph is
+  structural, naming the files that were analyzed within-file only, because a
+  reference living in one of them would never have reached the graph. The
+  result is still reported; what changes is that it is no longer presented as
+  proof. Structural rows in a non-empty result are marked in both the CLI and
+  the MCP context, since an agent acts on that line.
+
+  Adapters do not set the field: dispatch stamps `Resolved` on Tier 1 output
+  and structural analysis leaves the default. The default is the *weaker*
+  value, so forgetting it under-claims rather than granting gate-safety.
+
+
 - **Call and instantiation edges**, for TypeScript and JavaScript. `foo()`
   where `foo` arrived through an import or is defined in the file records a
   `Calls` edge to that function; `new Foo()` records `Instantiates`. Both
@@ -143,6 +163,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   could not express "call edges exist, but not for this repository's language".
 
 ### Fixed
+
+- **The snapshot format dropped the resolution of every edge.** Introduced and
+  caught within this release: `GraphSnapshot` did not persist the new field, so
+  a graph loaded from `.graphyn/db` — which is every query, since queries read
+  the store — came back entirely `structural`. The failure was in the safe
+  direction and therefore silent: nothing errored, but `blast-radius` refused
+  to say "safe to modify" about a fully resolved repository, and the feature
+  was useless without being visibly broken. Snapshot version is now 3; a
+  version 1 or 2 snapshot reads back as `structural` and is rewritten on the
+  next analyse.
 
 - **`is_aliased_only_property` tested the wrong predicate.** It checked
   `alias.is_some()` while `partition_by_alias` had already been corrected to

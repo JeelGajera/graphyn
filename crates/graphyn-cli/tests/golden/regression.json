@@ -75,6 +75,7 @@
           "properties_accessed": [
             "a_field"
           ],
+          "resolution": "resolved",
           "to": "py/models/types.py::Alpha::class"
         },
         {
@@ -87,6 +88,7 @@
           "properties_accessed": [
             "b_field"
           ],
+          "resolution": "resolved",
           "to": "py/models/types.py::Beta::class"
         },
         {
@@ -99,6 +101,7 @@
           "properties_accessed": [
             "a_field"
           ],
+          "resolution": "resolved",
           "to": "py/models/types.py::Alpha::class"
         },
         {
@@ -111,6 +114,7 @@
           "properties_accessed": [
             "b_field"
           ],
+          "resolution": "resolved",
           "to": "py/models/types.py::Beta::class"
         }
       ],
@@ -221,6 +225,7 @@
           "properties_accessed": [
             "a_field"
           ],
+          "resolution": "resolved",
           "to": "rust/src/alpha.rs::Alpha::class"
         },
         {
@@ -233,6 +238,7 @@
           "properties_accessed": [
             "b_field"
           ],
+          "resolution": "resolved",
           "to": "rust/src/beta.rs::Beta::class"
         },
         {
@@ -245,6 +251,7 @@
           "properties_accessed": [
             "a_field"
           ],
+          "resolution": "resolved",
           "to": "rust/src/alpha.rs::Alpha::class"
         },
         {
@@ -257,6 +264,7 @@
           "properties_accessed": [
             "b_field"
           ],
+          "resolution": "resolved",
           "to": "rust/src/beta.rs::Beta::class"
         }
       ],
@@ -378,6 +386,7 @@
             "AField",
             "BField"
           ],
+          "resolution": "resolved",
           "to": "go/models::models::module"
         },
         {
@@ -390,6 +399,7 @@
           "properties_accessed": [
             "AField"
           ],
+          "resolution": "resolved",
           "to": "go/models/alpha.go::Alpha::class"
         },
         {
@@ -402,6 +412,7 @@
           "properties_accessed": [
             "BField"
           ],
+          "resolution": "resolved",
           "to": "go/models/alpha.go::Beta::class"
         },
         {
@@ -412,6 +423,7 @@
           "kind": "UsesType",
           "line": 5,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "go/models/alpha.go::Alpha::class"
         },
         {
@@ -422,6 +434,7 @@
           "kind": "UsesType",
           "line": 6,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "go/models/alpha.go::Beta::class"
         }
       ],
@@ -521,6 +534,7 @@
           "kind": "Imports",
           "line": 1,
           "properties_accessed": [],
+          "resolution": "resolved",
           "to": "c/include/types.h::module::module"
         },
         {
@@ -533,6 +547,7 @@
           "properties_accessed": [
             "a_field"
           ],
+          "resolution": "resolved",
           "to": "c/include/types.h::Alpha::class"
         },
         {
@@ -545,6 +560,7 @@
           "properties_accessed": [
             "b_field"
           ],
+          "resolution": "resolved",
           "to": "c/include/types.h::Beta::class"
         }
       ],

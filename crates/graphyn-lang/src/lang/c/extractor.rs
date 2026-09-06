@@ -1,8 +1,5 @@
 use graphyn_core::ast::{first_line_of, node_text, start_line, walk};
-use graphyn_core::ir::{
-    Diagnostic, DiagnosticCategory, DiagnosticLevel, FileIR, Language, Relationship,
-    RelationshipKind, Symbol, SymbolKind,
-};
+use graphyn_core::ir::{Diagnostic, DiagnosticCategory, DiagnosticLevel, FileIR, Language, Relationship, RelationshipKind, Resolution, Symbol, SymbolKind};
 use graphyn_core::symbol_id::{
     make_symbol_id, module_symbol, module_symbol_id, unresolved_local_type_id,
 };
@@ -85,6 +82,7 @@ pub fn extract_file_ir(parsed: &ParsedFile) -> FileIR {
             context: "member access".to_string(),
             file: file.to_string(),
             line: access.first_line,
+            resolution: Resolution::default(),
         });
     }
 
@@ -145,6 +143,7 @@ fn record_record_type(
                 context: first_line_of(node, source).unwrap_or_default(),
                 file: file.to_string(),
                 line: start_line(node),
+                resolution: Resolution::default(),
             });
         }
         return;
@@ -190,6 +189,7 @@ fn record_record_type(
                 context: first_line_of(node, source).unwrap_or_default(),
                 file: file.to_string(),
                 line: start_line(node),
+                resolution: Resolution::default(),
             });
         }
     }
@@ -269,6 +269,7 @@ fn typedef(node: Node<'_>, source: &[u8], file: &str) -> Vec<Relationship> {
             context: first_line_of(node, source).unwrap_or_default(),
             file: file.to_string(),
             line: start_line(node),
+            resolution: Resolution::default(),
         });
     }
     out
@@ -297,6 +298,7 @@ fn using_alias(node: Node<'_>, source: &[u8], file: &str) -> Vec<Relationship> {
         context: first_line_of(node, source).unwrap_or_default(),
         file: file.to_string(),
         line: start_line(node),
+        resolution: Resolution::default(),
     }]
 }
 
@@ -319,5 +321,6 @@ fn include(node: Node<'_>, source: &[u8], file: &str) -> Option<Relationship> {
             .to_string(),
         file: file.to_string(),
         line: start_line(node),
+        resolution: Resolution::default(),
     })
 }

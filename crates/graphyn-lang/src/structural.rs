@@ -35,10 +35,7 @@
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
-use graphyn_core::ir::{
-    Diagnostic, DiagnosticCategory, DiagnosticLevel, FileIR, Relationship, RelationshipKind,
-    Symbol, SymbolKind,
-};
+use graphyn_core::ir::{Diagnostic, DiagnosticCategory, DiagnosticLevel, FileIR, Relationship, RelationshipKind, Resolution, Symbol, SymbolKind};
 use graphyn_core::symbol_id::{make_symbol_id, module_symbol, module_symbol_id};
 use rayon::prelude::*;
 use tree_sitter::{Parser, Query, QueryCursor};
@@ -233,6 +230,7 @@ fn analyze_file(
                 context: String::new(),
                 file: relative.clone(),
                 line,
+                resolution: Resolution::default(),
             })
         })
         .collect();

@@ -14,7 +14,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use graphyn_core::ir::{Relationship, RelationshipKind, RepoIR, SymbolKind};
+use graphyn_core::ir::{Relationship, RelationshipKind, RepoIR, Resolution, SymbolKind};
 use graphyn_core::symbol_id::parse_symbol_id;
 
 pub fn detect_implementations(repo_ir: &mut RepoIR) {
@@ -106,6 +106,7 @@ pub fn detect_implementations(repo_ir: &mut RepoIR) {
                     context: format!("satisfies {interface_name} (method set match)"),
                     file: struct_file.clone(),
                     line: 0,
+                    resolution: Resolution::default(),
                 },
             ));
         }

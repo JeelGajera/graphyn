@@ -187,6 +187,12 @@ however the variable was named.
 
 Being explicit about these is more useful than a feature list:
 
+- **An empty blast radius is only "safe to modify" when the whole graph is
+  resolved.** Tier 2 (structural) analysis sees one file at a time, so a
+  reference from a structural region never reaches the graph. When any edge in
+  your graph is structural, `blast-radius` reports the empty result but
+  withholds the safety verdict and names the files it could not resolve across.
+
 - **Call and instantiation edges are TypeScript-only so far.** `foo()` and
   `new Foo()` record `Calls` and `Instantiates` edges when the name binds to an
   imported or file-local symbol; a callee that binds to nothing records no edge

@@ -30,7 +30,24 @@ pub fn format_blast_radius(
     ));
 
     if edges.is_empty() {
-        out.push_str("\nNo dependents found — safe to modify.\n");
+        // An agent acts on this line. "Safe to modify" is a claim about the
+        // whole repository, and it holds only if the whole graph was resolved
+        // well enough to make it — a structural region cannot see across
+        // files, so a reference living there would never have reached the
+        // graph at all.
+        let structural = graphyn_core::query::structural_files(graph);
+        if structural.is_empty() {
+            out.push_str("\nNo dependents found — safe to modify.\n");
+        } else {
+            out.push_str("\nNo dependents found.\n");
+            out.push_str(&format!(
+                "\nCAUTION: {} file(s) in this repository were analyzed \
+                 within-file only (structural resolution), so a reference from \
+                 one of them to this symbol would not appear above. Do not \
+                 treat this empty result as proof the symbol is unused.\n",
+                structural.len()
+            ));
+        }
         return out;
     }
 
@@ -79,7 +96,17 @@ fn format_blast_edge(graph: &GraphynGraph, edge: &QueryEdge) -> String {
         .get(&edge.from)
         .map(|s| format_language(&s.language))
         .unwrap_or("??");
-    out.push_str(&format!("  • {}:{} [{}]\n", edge.file, edge.line, lang));
+    // A structural row sits beside resolved ones in a polyglot result and
+    // reads identically otherwise. An agent deciding whether a change is safe
+    // needs the difference on the row, not buried in a preamble.
+    if edge.resolution.is_gate_safe() {
+        out.push_str(&format!("  • {}:{} [{}]\n", edge.file, edge.line, lang));
+    } else {
+        out.push_str(&format!(
+            "  • {}:{} [{}] (structural: within-file only)\n",
+            edge.file, edge.line, lang
+        ));
+    }
 
     // "renamed to X" and "imported by X" are opposite facts, and both were
     // printed as "imports as X". An agent reading this cannot recover which
