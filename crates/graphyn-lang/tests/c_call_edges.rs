@@ -111,21 +111,70 @@ fn a_functional_cast_is_not_recorded_as_a_call() {
 }
 
 #[test]
-fn a_call_through_a_header_prototype_records_nothing() {
-    // The documented gap, pinned so it cannot change silently in either
-    // direction. `geometry.h` *declares* `point_distance` without defining
-    // it, so no symbol in the graph carries that name and there is nothing
-    // to point an edge at. Linking a prototype to the definition in another
-    // translation unit is a separate change with graph-shape consequences.
+fn a_call_through_a_header_prototype_reaches_the_definition() {
+    // C splits a call across two files: `render.c` includes `geometry.h`,
+    // which *declares* `point_distance`, while the definition lives in
+    // `geometry.c` that the caller never sees.
     //
-    // This is the dominant call shape in plain C, so the test exists to keep
-    // the limitation visible rather than to bless it.
+    // The caller attaches to the definition, not to the prototype. The graph
+    // answers "what breaks if I change this", and a caller attached to the
+    // declaration would leave `blast-radius` on the definition returning
+    // nothing — the exact failure call edges exist to prevent.
     let ir = analyze(&fixture());
     let edges = call_edges(&ir, "render.c");
 
+    let crossing = edges
+        .iter()
+        .find(|(_, to, _)| to.contains("point_distance"))
+        .unwrap_or_else(|| panic!("no edge for point_distance, got {edges:?}"));
+
+    assert_eq!(crossing.0, RelationshipKind::Calls, "{crossing:?}");
     assert!(
-        edges.iter().all(|(_, to, _)| !to.contains("point_distance")),
-        "a header prototype resolved; the documented limit is now wrong: {edges:?}"
+        crossing.1.ends_with("geometry.c::point_distance::function"),
+        "the call must reach the definition, not the header that declares it; got {}",
+        crossing.1
+    );
+}
+
+#[test]
+fn a_prototype_is_not_a_symbol_in_the_finished_graph() {
+    // A declaration names a function defined elsewhere. Minting a node for it
+    // would put two nodes in the graph for one function and make the name
+    // ambiguous to `find_symbol_id` — the ambiguity 0.2.0 spent a release
+    // removing. The placeholders exist only between extraction and
+    // resolution.
+    let ir = analyze(&fixture());
+
+    let header = ir
+        .files
+        .iter()
+        .find(|f| f.file.ends_with("geometry.h"))
+        .expect("geometry.h in the analysis");
+
+    assert!(
+        !header
+            .symbols
+            .iter()
+            .any(|s| s.name == "point_distance" || s.name == "unused_helper"),
+        "a prototype became a symbol: {:?}",
+        header.symbols.iter().map(|s| &s.name).collect::<Vec<_>>()
+    );
+    assert!(
+        header
+            .relationships
+            .iter()
+            .all(|r| !r.to.contains("unresolved_prototype")),
+        "a prototype placeholder survived into the graph: {:?}",
+        header.relationships
+    );
+    assert_eq!(
+        ir.files
+            .iter()
+            .flat_map(|f| f.symbols.iter())
+            .filter(|s| s.name == "point_distance")
+            .count(),
+        1,
+        "point_distance must have exactly one node in the graph"
     );
 }
 
@@ -220,5 +269,85 @@ fn call_edges_reach_a_user_stamped_resolved() {
     assert!(
         calls.iter().all(|(_, _, res)| **res == Resolution::Resolved),
         "call edges left at the structural default: {calls:?}"
+    );
+}
+
+// ── the prototype link, and the three shapes it declines ─────
+
+fn linking_fixture() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../fixtures/adapter-c/prototype_linking")
+}
+
+#[test]
+fn a_unique_definer_that_includes_the_header_is_linked() {
+    let ir = analyze(&linking_fixture());
+    let edges = call_edges(&ir, "caller.c");
+
+    assert!(
+        edges.iter().any(|(kind, to, _)| *kind == RelationshipKind::Calls
+            && to.ends_with("handler.c::handle::function")),
+        "handle() did not reach its definition: {edges:?}"
+    );
+}
+
+#[test]
+fn two_definers_of_one_name_make_the_link_ambiguous() {
+    // `handler.c` and `fallback.c` both define `dispatch` and both include the
+    // header that declares it. Picking either would be a guess, so neither is
+    // recorded — this is what keeps the rule from becoming the repo-wide leaf
+    // matching that 0.2.0 removed.
+    let ir = analyze(&linking_fixture());
+    let edges = call_edges(&ir, "caller.c");
+
+    assert!(
+        edges.iter().all(|(_, to, _)| !to.contains("dispatch")),
+        "an ambiguous prototype was linked anyway: {edges:?}"
+    );
+}
+
+#[test]
+fn a_definer_that_does_not_include_the_header_is_not_linked() {
+    // `detached.c` defines `orphan` but includes nothing, so no agreement
+    // between the two files anchors the link. Matching on the name alone
+    // would be exactly the bug this rule is shaped to avoid.
+    let ir = analyze(&linking_fixture());
+    let edges = call_edges(&ir, "caller.c");
+
+    assert!(
+        edges.iter().all(|(_, to, _)| !to.contains("orphan")),
+        "an unanchored name was matched across the repository: {edges:?}"
+    );
+}
+
+#[test]
+fn a_local_definition_shadows_a_prototype_of_the_same_name() {
+    // The visible set is tried before the prototype table, so a `static`
+    // helper wins over an external function of the same name — exactly as it
+    // does at compile time.
+    let ir = analyze(&linking_fixture());
+    let edges = call_edges(&ir, "caller.c");
+
+    assert!(
+        edges.iter().any(|(_, to, _)| to.ends_with("caller.c::shadowed::function")),
+        "the local definition was not preferred: {edges:?}"
+    );
+}
+
+#[test]
+fn an_unlinked_prototype_call_raises_no_diagnostic() {
+    // `dispatch()` and `orphan()` resolve to nothing. That is a limit of the
+    // rule, not something the user could fix by editing their code.
+    let ir = analyze(&linking_fixture());
+
+    let caller = ir
+        .files
+        .iter()
+        .find(|f| f.file.ends_with("caller.c"))
+        .expect("caller.c in the analysis");
+
+    assert!(
+        caller.diagnostics.is_empty(),
+        "unlinked prototypes raised diagnostics: {:?}",
+        caller.diagnostics
     );
 }

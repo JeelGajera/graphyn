@@ -12,7 +12,7 @@
 //! visible if the file defines it or includes a header that does — which is
 //! what the C compiler does too.
 
-use std::collections::{BTreeSet, HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use graphyn_core::ir::{
     Diagnostic, DiagnosticCategory, DiagnosticLevel, RelationshipKind, RepoIR, SymbolKind,
@@ -38,6 +38,107 @@ fn parse_unresolved_include_id(raw: &str) -> Option<(bool, &str)> {
     let rest = raw.strip_prefix(INCLUDE_PREFIX)?.strip_prefix('|')?;
     let (kind, path) = rest.split_once('|')?;
     Some((kind == "local", path))
+}
+
+const PROTOTYPE_PREFIX: &str = "unresolved_prototype";
+
+/// Placeholder for a function *declaration* — `int point_distance(...);`.
+///
+/// A prototype is not a symbol. It names a function defined in another
+/// translation unit, so minting a node for it would put two nodes in the graph
+/// for one function and make the name ambiguous to `find_symbol_id` — the
+/// ambiguity 0.2.0 spent a release removing. These placeholders exist only
+/// between extraction and resolution, and [`resolve_repo_ir`] drops every one
+/// of them before returning.
+pub fn unresolved_prototype_id(name: &str) -> String {
+    format!("{PROTOTYPE_PREFIX}|{name}")
+}
+
+fn parse_unresolved_prototype_id(raw: &str) -> Option<&str> {
+    raw.strip_prefix(PROTOTYPE_PREFIX)?.strip_prefix('|')
+}
+
+/// Which definition each header's prototypes stand for.
+///
+/// C splits a call across two files: the caller includes a header that
+/// *declares* the function, and the definition lives in a `.c` file the caller
+/// never sees. A caller must attach to the **definition** — the question the
+/// graph answers is "what breaks if I change this", and a caller attached to
+/// the prototype would leave `blast-radius` on the definition returning
+/// nothing, which is the exact failure call edges exist to prevent.
+///
+/// The link is made by agreement between two files rather than by matching a
+/// name across the repository:
+///
+/// 1. header `H` declares `N`, and
+/// 2. exactly one file both defines `N` and includes `H`.
+///
+/// Condition 2 is what keeps this from being the repo-wide leaf matching that
+/// 0.2.0 removed. It is anchored on a specific header the two files share, so
+/// two unrelated projects in one repository never cross, and a `static` helper
+/// that happens to share a name with someone else's function makes the match
+/// ambiguous rather than wrong. Including the header that declares you is also
+/// exactly what a C build does to have the compiler check the two agree, so
+/// the rule keys on a fact the language already enforces rather than on a
+/// filename convention like `geometry.c` implementing `geometry.h`.
+///
+/// Where no unique definer exists the prototype links to nothing and the call
+/// records no edge, as before.
+fn link_prototypes(
+    repo_ir: &RepoIR,
+    includes: &HashMap<String, Vec<String>>,
+) -> BTreeMap<(String, String), String> {
+    // header → the names it declares.
+    let mut declared: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+    for file in &repo_ir.files {
+        for rel in &file.relationships {
+            if let Some(name) = parse_unresolved_prototype_id(&rel.to) {
+                declared
+                    .entry(file.file.clone())
+                    .or_default()
+                    .insert(name.to_string());
+            }
+        }
+    }
+
+    // name → the files that define it, and the symbol id of each definition.
+    let mut defined: BTreeMap<String, Vec<(String, String)>> = BTreeMap::new();
+    for file in &repo_ir.files {
+        for symbol in &file.symbols {
+            if symbol.kind == SymbolKind::Function {
+                defined
+                    .entry(symbol.name.clone())
+                    .or_default()
+                    .push((file.file.clone(), symbol.id.clone()));
+            }
+        }
+    }
+
+    let mut links = BTreeMap::new();
+    for (header, names) in &declared {
+        for name in names {
+            let Some(candidates) = defined.get(name) else {
+                continue;
+            };
+            let mut definers = candidates.iter().filter(|(definer, _)| {
+                includes
+                    .get(definer)
+                    .is_some_and(|headers| headers.contains(header))
+            });
+
+            let Some((_, id)) = definers.next() else {
+                continue;
+            };
+            // Ambiguous: more than one file defines this name and includes this
+            // header. Record nothing rather than pick one.
+            if definers.next().is_some() {
+                continue;
+            }
+            links.insert((header.clone(), name.clone()), id.clone());
+        }
+    }
+
+    links
 }
 
 pub fn resolve_repo_ir(_root: &std::path::Path, repo_ir: &mut RepoIR) {
@@ -111,9 +212,25 @@ pub fn resolve_repo_ir(_root: &std::path::Path, repo_ir: &mut RepoIR) {
         includes.insert(path, resolved_includes);
     }
 
+    // Which definition each header's prototypes stand for. Built once, after
+    // the include graph exists and before any call is resolved against it.
+    let prototypes = link_prototypes(repo_ir, &includes);
+
     // ── pass 2: type names ───────────────────────────────────
     for index in 0..repo_ir.files.len() {
         let path = repo_ir.files[index].file.clone();
+
+        // Names this file reaches through a prototype in a header it includes,
+        // transitively — a header may include the header that declares the
+        // function.
+        let mut via_prototype: HashMap<String, String> = HashMap::new();
+        for header in reachable_headers(&path, &includes) {
+            for ((declaring, name), id) in &prototypes {
+                if *declaring == header {
+                    via_prototype.insert(name.clone(), id.clone());
+                }
+            }
+        }
 
         // What this translation unit can see: its own symbols plus those of the
         // headers it includes, transitively — headers include headers.
@@ -159,6 +276,12 @@ pub fn resolve_repo_ir(_root: &std::path::Path, repo_ir: &mut RepoIR) {
             // the standard library is not in the graph, and a warning per
             // `printf` would bury the resolution warnings that matter.
             if rel.kind == RelationshipKind::Calls || rel.kind == RelationshipKind::Instantiates {
+                // A call the visible set cannot place may still cross a
+                // translation unit through a prototype. Tried second, so a
+                // definition the caller can actually see always wins — a
+                // `static` helper shadows the external function of the same
+                // name, exactly as it does at compile time.
+                let resolved = resolved.or_else(|| via_prototype.get(&type_name).cloned());
                 match resolved {
                     // A functional cast in C++ — `Celsius(x)` — is spelled like
                     // a call and calls nothing. The resolved target's kind is
@@ -224,7 +347,33 @@ pub fn resolve_repo_ir(_root: &std::path::Path, repo_ir: &mut RepoIR) {
                 keep
             });
         }
+
+        // Prototypes are resolution scaffolding, never graph content: a
+        // declaration is not a symbol, and leaving one behind would put a
+        // second node in the graph for a function that already has one.
+        file.relationships
+            .retain(|rel| parse_unresolved_prototype_id(&rel.to).is_none());
     }
+}
+
+/// Every in-repo header `file` can see, following includes transitively.
+///
+/// Shares the traversal shape of [`visible_symbols`] rather than its result,
+/// because a prototype link is keyed by the header that declares the name, not
+/// by the symbols that header defines.
+fn reachable_headers(file: &str, includes: &HashMap<String, Vec<String>>) -> BTreeSet<String> {
+    let mut seen = BTreeSet::new();
+    let mut queue = vec![file.to_string()];
+
+    while let Some(current) = queue.pop() {
+        for header in includes.get(&current).into_iter().flatten() {
+            if seen.insert(header.clone()) {
+                queue.push(header.clone());
+            }
+        }
+    }
+
+    seen
 }
 
 /// The kind component of a resolved symbol id, if it is one.
