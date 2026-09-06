@@ -164,7 +164,11 @@ fn run_adapter(
     // Each remaining arm is gated by its language's feature. `adapter_group`
     // already refuses to route to a language this build does not carry, so an
     // arm that is compiled out is unreachable rather than silently skipped.
-    let mut files_ir = match language {
+    // Annotated rather than inferred: in a build with no Tier 1 language
+    // enabled — `--features java` alone, which the language docs present as a
+    // supported slim build — every arm below is compiled out and the only one
+    // left is `Vec::new()`, whose element type nothing then pins down.
+    let mut files_ir: Vec<FileIR> = match language {
         #[cfg(feature = "typescript")]
         Language::TypeScript => {
             crate::lang::typescript::analyze_files(root, files)
