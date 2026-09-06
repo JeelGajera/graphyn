@@ -184,6 +184,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`graphyn-lang` did not build with only a Tier 2 language enabled.** With
+  every Tier 1 language turned off, each arm of the dispatch `match` is compiled
+  out and the sole remaining arm is `Vec::new()`, leaving an element type
+  nothing pins down; the `java_structural` test additionally carried an unused
+  import that only a java-enabled build ever compiled. `cargo build
+  --no-default-features --features java` failed on both. Neither was reachable
+  from `--workspace`, because java is not a default feature, so the file that
+  broke was never compiled by CI.
+
+  CI now runs clippy over `graphyn-lang` with each language feature enabled on
+  its own, taking the list from the crate's own feature table so a new language
+  is covered without anyone remembering to add it in two places. The
+  contributing guide has asked for this check by hand since the languages
+  became features; asking was not enough.
+
 - **The snapshot format dropped the resolution of every edge.** Introduced and
   caught within this release: `GraphSnapshot` did not persist the new field, so
   a graph loaded from `.graphyn/db` — which is every query, since queries read
