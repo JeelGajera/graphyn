@@ -193,17 +193,25 @@ Being explicit about these is more useful than a feature list:
   your graph is structural, `blast-radius` reports the empty result but
   withholds the safety verdict and names the files it could not resolve across.
 
-- **Call and instantiation edges cover TypeScript, Python and Rust so far.** A
-  direct call records `Calls` when the name binds to an imported or file-local
-  symbol, and `Instantiates` when the thing called turns out to be a class; a
+- **Call and instantiation edges cover TypeScript, Python, Rust and Go so far.**
+  A direct call records `Calls` when the name binds to an imported or file-local
+  symbol, and `Instantiates` when the thing called turns out to be a type; a
   callee that binds to nothing records no edge rather than a guess, and neither
   does a call whose only available target is a third-party package. In Rust,
   `Foo::new(..)` names the method that runs rather than the type, and `Foo {..}`
-  is the one shape recorded as construction outright. `obj.method()` is recorded
-  as a property access on the receiver, not as a call. Go and C record neither
-  kind yet, and Tier 2 languages see calls within a single file only. A query
-  filtered to a kind no edge in your graph carries is reported as such, so an
-  empty result is never mistaken for "nothing calls this".
+  is construction outright; in Go, `pkg.Func(..)` is recorded because that is
+  how every cross-package call is written, and `Foo{..}` is construction.
+  `obj.method()` records no call edge — it is a property access on the
+  receiver's declared type instead. C records neither kind yet, and Tier 2
+  languages see calls within a single file only. A query filtered to a kind no
+  edge in your graph carries is reported as such, so an empty result is never
+  mistaken for "nothing calls this".
+
+- **A method call is only attributed where the receiver's type is declared.** A
+  parameter or field gives the receiver a type, so `u.Greeting()` is recorded as
+  a property access on that type. A local bound by inference — Go's `u := f()`,
+  and the same shape elsewhere — is not tracked, so the method call reaches the
+  graph as nothing at all.
 
 - **Imports resolve within one language.** A Python module importing a
   TypeScript file through a build step is not linked.
