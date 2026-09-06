@@ -202,6 +202,209 @@
     },
     {
       "diagnostics": [],
+      "file": "call_edges/include/geometry.h",
+      "language": "C",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "call_edges/include/geometry.h",
+          "id": "call_edges/include/geometry.h::module::module",
+          "kind": "Module",
+          "language": "C",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "call_edges/include/geometry.h",
+          "id": "call_edges/include/geometry.h::Point::class",
+          "kind": "Class",
+          "language": "C",
+          "line_end": 7,
+          "line_start": 4,
+          "name": "Point",
+          "signature": "struct Point {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "call_edges/include/shapes.hpp",
+      "language": "Cpp",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "call_edges/include/shapes.hpp",
+          "id": "call_edges/include/shapes.hpp::module::module",
+          "kind": "Module",
+          "language": "Cpp",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "call_edges/include/shapes.hpp",
+          "id": "call_edges/include/shapes.hpp::Circle::class",
+          "kind": "Class",
+          "language": "Cpp",
+          "line_end": 7,
+          "line_start": 4,
+          "name": "Circle",
+          "signature": "class Circle {"
+        },
+        {
+          "file": "call_edges/include/shapes.hpp",
+          "id": "call_edges/include/shapes.hpp::area::function",
+          "kind": "Function",
+          "language": "Cpp",
+          "line_end": 11,
+          "line_start": 9,
+          "name": "area",
+          "signature": "inline int area(int radius) {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [
+        {
+          "category": "Resolution",
+          "file": "call_edges/src/draw.cpp",
+          "level": "Warning",
+          "line": 6,
+          "message": "unable to resolve type 'Circle'; no included header defines it"
+        }
+      ],
+      "file": "call_edges/src/draw.cpp",
+      "language": "Cpp",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "#include \"shapes.hpp\"",
+          "file": "call_edges/src/draw.cpp",
+          "from": "call_edges/src/draw.cpp::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "ext::shapes.hpp::package"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "call_edges/src/draw.cpp",
+          "id": "call_edges/src/draw.cpp::module::module",
+          "kind": "Module",
+          "language": "Cpp",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "call_edges/src/draw.cpp",
+          "id": "call_edges/src/draw.cpp::draw::function",
+          "kind": "Function",
+          "language": "Cpp",
+          "line_end": 14,
+          "line_start": 3,
+          "name": "draw",
+          "signature": "int draw(int radius) {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "call_edges/src/render.c",
+      "language": "C",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "#include \"geometry.h\"",
+          "file": "call_edges/src/render.c",
+          "from": "call_edges/src/render.c::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/include/geometry.h::module::module"
+        },
+        {
+          "alias": null,
+          "context": "#include <stdio.h>",
+          "file": "call_edges/src/render.c",
+          "from": "call_edges/src/render.c::module::module",
+          "kind": "Imports",
+          "line": 2,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "ext::stdio.h::package"
+        },
+        {
+          "alias": "scale",
+          "context": "call",
+          "file": "call_edges/src/render.c",
+          "from": "call_edges/src/render.c::module::module",
+          "kind": "Calls",
+          "line": 10,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "call_edges/src/render.c::scale::function"
+        },
+        {
+          "alias": "Point",
+          "context": "member access",
+          "file": "call_edges/src/render.c",
+          "from": "call_edges/src/render.c::module::module",
+          "kind": "AccessesProperty",
+          "line": 10,
+          "properties_accessed": [
+            "x"
+          ],
+          "resolution": "resolved",
+          "to": "call_edges/include/geometry.h::Point::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "call_edges/src/render.c",
+          "id": "call_edges/src/render.c::module::module",
+          "kind": "Module",
+          "language": "C",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "call_edges/src/render.c",
+          "id": "call_edges/src/render.c::scale::function",
+          "kind": "Function",
+          "language": "C",
+          "line_end": 6,
+          "line_start": 4,
+          "name": "scale",
+          "signature": "static int scale(int value) {"
+        },
+        {
+          "file": "call_edges/src/render.c",
+          "id": "call_edges/src/render.c::render::function",
+          "kind": "Function",
+          "language": "C",
+          "line_end": 21,
+          "line_start": 8,
+          "name": "render",
+          "signature": "int render(struct Point origin, struct Point target) {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
       "file": "language_features/include/shapes.hpp",
       "language": "Cpp",
       "re_exports": [],
@@ -465,17 +668,17 @@
     }
   ],
   "language_stats": {
-    "C": 4,
-    "Cpp": 4
+    "C": 6,
+    "Cpp": 6
   },
   "root": "<root>",
   "schema_version": 1,
   "stats": {
     "alias_chains": 4,
     "aliases": 4,
-    "diagnostics": 0,
-    "files_indexed": 8,
-    "relationships": 16,
-    "symbols": 19
+    "diagnostics": 1,
+    "files_indexed": 12,
+    "relationships": 21,
+    "symbols": 30
   }
 }

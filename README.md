@@ -193,19 +193,26 @@ Being explicit about these is more useful than a feature list:
   your graph is structural, `blast-radius` reports the empty result but
   withholds the safety verdict and names the files it could not resolve across.
 
-- **Call and instantiation edges cover TypeScript, Python, Rust and Go so far.**
-  A direct call records `Calls` when the name binds to an imported or file-local
-  symbol, and `Instantiates` when the thing called turns out to be a type; a
-  callee that binds to nothing records no edge rather than a guess, and neither
-  does a call whose only available target is a third-party package. In Rust,
-  `Foo::new(..)` names the method that runs rather than the type, and `Foo {..}`
-  is construction outright; in Go, `pkg.Func(..)` is recorded because that is
-  how every cross-package call is written, and `Foo{..}` is construction.
-  `obj.method()` records no call edge — it is a property access on the
-  receiver's declared type instead. C records neither kind yet, and Tier 2
-  languages see calls within a single file only. A query filtered to a kind no
-  edge in your graph carries is reported as such, so an empty result is never
-  mistaken for "nothing calls this".
+- **Call and instantiation edges cover every Tier 1 language, at different
+  depths.** A direct call records `Calls` when the name binds to a symbol the
+  file can see, and `Instantiates` when the thing called turns out to be a type;
+  a callee that binds to nothing records no edge rather than a guess, and
+  neither does a call whose only available target is a third-party package. In
+  Rust, `Foo::new(..)` names the method that runs rather than the type, and
+  `Foo {..}` is construction outright; in Go, `pkg.Func(..)` is recorded because
+  that is how every cross-package call is written, and `Foo{..}` is
+  construction. `obj.method()` records no call edge — it is a property access on the receiver's declared type instead.
+  C and C++ are the narrowest: only a bare `foo(..)` and `new Foo(..)`, because
+  C++ methods are not symbols in this graph. Tier 2 languages see calls within a
+  single file only. A query filtered to a kind no edge in your graph carries is
+  reported as such, so an empty result is never mistaken for "nothing calls
+  this".
+
+- **A C call through a header prototype records no edge.** A header that
+  declares `int point_distance(...)` without defining it puts no symbol of that
+  name in the graph, so a caller including it has nothing to point at. The C
+  edges that do resolve are calls to same-file functions and to header-defined
+  ones — most of C++, and `static inline` in C.
 
 - **A method call is only attributed where the receiver's type is declared.** A
   parameter or field gives the receiver a type, so `u.Greeting()` is recorded as

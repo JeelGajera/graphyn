@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Call and instantiation edges for C and C++.** A bare `foo(..)` records a
+  call when the name resolves to a function the file can see — its own, or one
+  defined in a header it includes. `new Foo(..)` records `Instantiates`; C has
+  no construction syntax at all, since `struct Foo f = {..}` is a declaration
+  with an initializer rather than an expression naming a constructor. A C++
+  functional cast, `Celsius(x)`, is spelled exactly like a call and calls
+  nothing, so as elsewhere the resolved target's kind settles the kind.
+
+  This is the narrowest of the five languages, and deliberately so. `ns::func()`
+  and `obj->method()` record nothing: C++ methods are not symbols in this graph,
+  only their class is, so an edge would either name the class — claiming the
+  class was called — or match a leaf name repository-wide, which is the bug
+  0.2.0 fixed elsewhere.
+
+
 - **Call and instantiation edges for Go.** Go is the one language where the
   selector rule had to be inverted. `obj.method()` records no call edge in
   TypeScript, Python and Rust, but a cross-package call in Go is *always*
@@ -204,6 +219,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Known limits
 
+- **A C call through a header prototype records no edge.** `geometry.h`
+  declaring `int point_distance(struct Point, struct Point);` without defining
+  it means no symbol in the graph carries that name, so a caller including that
+  header has nothing to point at. This is the dominant call shape in plain C —
+  the edges that do resolve are same-file functions and header-defined ones,
+  which covers most of C++ and `static inline` C. Linking a prototype to the
+  definition in another translation unit is a separate change: it decides
+  whether the prototype or the definition is the node callers attach to, and
+  that is a graph-shape decision rather than a detail.
+
 - **Tier 2 languages resolve nothing across files.** A structural language
   records a reference only when the name is defined in the same file. A tags
   query reports that a call to `foo` happened; it does not say which `foo`, and
@@ -220,10 +245,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   unrelated to crate-root discovery; documented here because the workspace fix
   is what made it visible.
 
-- **Call and instantiation edges cover TypeScript, Python, Rust and Go so far.**
-  C parses calls but records no `Calls` or `Instantiates` edge, and Tier 2
-  languages emit `Calls` within a file only. A `--kind calls` query against a C
-  repository therefore returns nothing — and says so, naming the graph rather
+- **Call and instantiation edges cover every Tier 1 language, at different
+  depths.** C and C++ are the narrowest, and Tier 2 languages emit `Calls`
+  within a file only. A `--kind calls` query against a Java repository therefore
+  returns only within-file callers — and says so, naming the graph rather
   than the feature: the CLI and MCP tools report which kinds the analyzed graph
   actually contains instead of consulting a hand-maintained list of
   unimplemented kinds. That list was wrong twice inside one release, and could

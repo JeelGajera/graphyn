@@ -18,7 +18,8 @@ use graphyn_core::ir::{
     Diagnostic, DiagnosticCategory, DiagnosticLevel, RelationshipKind, RepoIR, SymbolKind,
 };
 use graphyn_core::symbol_id::{
-    external_package_id, module_symbol_id, parse_unresolved_local_type_id,
+    external_package_id, kind_suffix, module_symbol_id, parse_symbol_id,
+    parse_unresolved_local_type_id,
 };
 
 const INCLUDE_PREFIX: &str = "unresolved_include";
@@ -154,6 +155,27 @@ pub fn resolve_repo_ir(_root: &std::path::Path, repo_ir: &mut RepoIR) {
                 .or_else(|| aliases.get(&type_name))
                 .cloned();
 
+            // Calls resolve against the same visible set, but fail quietly:
+            // the standard library is not in the graph, and a warning per
+            // `printf` would bury the resolution warnings that matter.
+            if rel.kind == RelationshipKind::Calls || rel.kind == RelationshipKind::Instantiates {
+                match resolved {
+                    // A functional cast in C++ — `Celsius(x)` — is spelled like
+                    // a call and calls nothing. The resolved target's kind is
+                    // what keeps it out of `--kind calls`.
+                    Some(id) if kind_suffix_of(&id) == Some(kind_suffix(&SymbolKind::Class)) => {
+                        rel.kind = RelationshipKind::Instantiates;
+                        rel.context = "construction or cast".to_string();
+                        rel.to = id;
+                    }
+                    Some(id) => rel.to = id,
+                    None => {
+                        drop.insert(position);
+                    }
+                }
+                continue;
+            }
+
             match resolved {
                 Some(id) => {
                     if rel.kind == RelationshipKind::AccessesProperty {
@@ -203,6 +225,14 @@ pub fn resolve_repo_ir(_root: &std::path::Path, repo_ir: &mut RepoIR) {
             });
         }
     }
+}
+
+/// The kind component of a resolved symbol id, if it is one.
+///
+/// Compared against [`kind_suffix`] rather than a string literal, so a rename
+/// of the suffix in `symbol_id` moves both sides together.
+fn kind_suffix_of(id: &str) -> Option<&str> {
+    parse_symbol_id(id).map(|(_, _, kind)| kind)
 }
 
 /// Symbols reachable from `file`: its own, plus every header it includes.
