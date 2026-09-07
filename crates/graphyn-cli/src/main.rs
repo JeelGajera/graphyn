@@ -108,6 +108,13 @@ enum QueryCommands {
         #[arg(long, default_value = ".")]
         path: String,
 
+        /// Lowest resolution an edge may have to be followed.
+        ///
+        /// `resolved` restricts the answer to edges bound through imports,
+        /// aliases and declared types — what a gate may act on. `structural`
+        /// also includes edges matched by name inside one file.
+        #[arg(long, value_name = "LEVEL", default_value = "structural")]
+        min_confidence: String,
         /// Only follow these relationship kinds (repeatable).
         /// One of: imports, calls, extends, implements, uses-type,
         /// accesses-property, re-exports, instantiates.
@@ -129,6 +136,13 @@ enum QueryCommands {
         #[arg(long, default_value = ".")]
         path: String,
 
+        /// Lowest resolution an edge may have to be followed.
+        ///
+        /// `resolved` restricts the answer to edges bound through imports,
+        /// aliases and declared types — what a gate may act on. `structural`
+        /// also includes edges matched by name inside one file.
+        #[arg(long, value_name = "LEVEL", default_value = "structural")]
+        min_confidence: String,
         /// Only follow these relationship kinds (repeatable).
         /// One of: imports, calls, extends, implements, uses-type,
         /// accesses-property, re-exports, instantiates.
@@ -154,6 +168,13 @@ enum QueryCommands {
         #[arg(long, default_value = ".")]
         path: String,
 
+        /// Lowest resolution an edge may have to be followed.
+        ///
+        /// `resolved` restricts the answer to edges bound through imports,
+        /// aliases and declared types — what a gate may act on. `structural`
+        /// also includes edges matched by name inside one file.
+        #[arg(long, value_name = "LEVEL", default_value = "structural")]
+        min_confidence: String,
         /// Only follow these relationship kinds (repeatable).
         /// One of: imports, calls, extends, implements, uses-type,
         /// accesses-property, re-exports, instantiates.
@@ -187,20 +208,43 @@ fn main() {
                 depth,
                 path,
                 kind,
-            } => commands::query::run_blast_radius(&symbol, file.as_deref(), depth, &path, &kind),
+                min_confidence,
+            } => commands::query::run_blast_radius(
+                &symbol,
+                file.as_deref(),
+                depth,
+                &path,
+                &kind,
+                &min_confidence,
+            ),
             QueryCommands::Usages {
                 symbol,
                 file,
                 path,
                 kind,
-            } => commands::query::run_usages(&symbol, file.as_deref(), &path, &kind),
+                min_confidence,
+            } => commands::query::run_usages(
+                &symbol,
+                file.as_deref(),
+                &path,
+                &kind,
+                &min_confidence,
+            ),
             QueryCommands::Deps {
                 symbol,
                 file,
                 depth,
                 path,
                 kind,
-            } => commands::query::run_deps(&symbol, file.as_deref(), depth, &path, &kind),
+                min_confidence,
+            } => commands::query::run_deps(
+                &symbol,
+                file.as_deref(),
+                depth,
+                &path,
+                &kind,
+                &min_confidence,
+            ),
         },
 
         Commands::Watch {

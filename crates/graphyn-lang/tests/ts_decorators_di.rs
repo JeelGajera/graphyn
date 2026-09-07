@@ -5,6 +5,7 @@
 
 use std::path::PathBuf;
 
+use graphyn_core::ir::Resolution;
 use graphyn_core::graph::GraphynGraph;
 use graphyn_core::ir::RelationshipKind;
 use graphyn_core::query::{blast_radius, RelationshipKindMask};
@@ -81,6 +82,7 @@ fn test_blast_radius_user_repository_includes_app_module_via_module_decorator() 
         None,
         Some(2),
         RelationshipKindMask::all(),
+        Resolution::Structural,
     )
     .expect("blast radius query should resolve UserRepository");
     assert!(

@@ -1,5 +1,6 @@
 #[cfg(feature = "ast")]
 pub mod ast;
+pub mod coverage;
 pub mod error;
 pub mod graph;
 pub mod incremental;

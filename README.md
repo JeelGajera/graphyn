@@ -260,7 +260,15 @@ radius — and explicitly not something to gate on. A tags query reports that a
 call to `foo` happened; it does not say which `foo`, and guessing by name
 across a repository is the bug Graphyn exists to avoid.
 
-`graphyn status` reports the tier of every language your build carries.
+`graphyn status` reports the tier of every language your build carries, and the
+share of edges that resolved — overall and per language. An enforcement tool
+that tells you "91% of references in this repository resolved, and here is what
+it could not" is worth more than one implying completeness.
+
+Queries take `--min-confidence resolved` to restrict an answer to edges bound
+through imports, aliases and declared types. The threshold is applied while
+traversing, not to the results, so nothing is reached by way of an edge below
+it. On a Tier 2 repository that correctly returns nothing.
 
 Planned as Tier 2:
 - Kotlin, Ruby, PHP, C#, Swift, Scala

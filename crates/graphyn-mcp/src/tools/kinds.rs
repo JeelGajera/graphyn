@@ -3,6 +3,7 @@
 //! Shared by every query tool so an agent gets one vocabulary and one error
 //! message rather than three that drifted apart.
 
+use graphyn_core::ir::Resolution;
 use graphyn_core::query::{self, RelationshipKindMask};
 
 /// Documentation for the `kinds` argument, kept in one place because it is
@@ -85,4 +86,23 @@ pub fn absent_kinds_warning(
             absent.join(", ")
         )
     })
+}
+
+/// Doc string for the `min_resolution` parameter, shared by the query tools.
+pub const MIN_RESOLUTION_DOC: &str = "Lowest resolution an edge may have to be \
+followed and returned. 'resolved' restricts the answer to edges bound through \
+imports, aliases and declared types — what a gate may act on. 'structural' \
+(the default) also includes edges matched by name inside one file. Edges below \
+the threshold are not traversed either, so nothing is reached by way of an \
+edge you said you could not trust.";
+
+/// Parse a `min_resolution` parameter, defaulting to the permissive floor.
+pub fn resolution_from_name(name: &Option<String>) -> Result<Resolution, String> {
+    match name.as_deref() {
+        None | Some("structural") => Ok(Resolution::Structural),
+        Some("resolved") => Ok(Resolution::Resolved),
+        Some(other) => Err(format!(
+            "unknown min_resolution '{other}'. Expected 'structural' or 'resolved'."
+        )),
+    }
 }

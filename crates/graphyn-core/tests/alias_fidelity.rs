@@ -188,6 +188,7 @@ fn one_reference_attributed_at_two_levels_is_one_row() {
         None,
         Some(1),
         RelationshipKindMask::all(),
+        Resolution::Structural,
     )
     .expect("blast radius succeeds");
 
@@ -214,7 +215,7 @@ fn two_kinds_at_one_location_stay_two_rows() {
         graph.add_relationship(&rel("d.ts::Derived::class", "b.ts::Base::class", kind, 7));
     }
 
-    let edges = blast_radius(&graph, "Base", None, Some(1), RelationshipKindMask::all())
+    let edges = blast_radius(&graph, "Base", None, Some(1), RelationshipKindMask::all(), Resolution::Structural)
         .expect("blast radius succeeds");
     assert_eq!(edges.len(), 2, "different kinds are different facts");
 }
@@ -246,7 +247,7 @@ fn deduplication_keeps_the_shortest_path() {
     indirect.file = "c.ts".to_string();
     graph.add_relationship(&indirect);
 
-    let edges = blast_radius(&graph, "A", None, Some(3), RelationshipKindMask::all())
+    let edges = blast_radius(&graph, "A", None, Some(3), RelationshipKindMask::all(), Resolution::Structural)
         .expect("blast radius succeeds");
     assert_eq!(edges.first().map(|e| e.hop), Some(1), "nearest first");
 }

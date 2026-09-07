@@ -9,7 +9,9 @@ use graphyn_core::graph::GraphynGraph;
 use graphyn_core::query;
 
 use crate::context_builder;
-use crate::tools::kinds::{absent_kinds_warning, mask_from_names, KINDS_DOC};
+use crate::tools::kinds::{
+    absent_kinds_warning, mask_from_names, resolution_from_name, KINDS_DOC, MIN_RESOLUTION_DOC,
+};
 
 #[derive(Debug, Deserialize, JsonSchema)]
 pub struct DependenciesParams {
@@ -21,18 +23,22 @@ pub struct DependenciesParams {
     pub depth: Option<i32>,
     #[schemars(description = KINDS_DOC)]
     pub kinds: Option<Vec<String>>,
+    #[schemars(description = MIN_RESOLUTION_DOC)]
+    pub min_resolution: Option<String>,
 }
 
 pub fn execute(graph: &GraphynGraph, params: DependenciesParams) -> Result<String, String> {
     let depth = params.depth.unwrap_or(3).clamp(1, 10) as usize;
 
     let mask = mask_from_names(&params.kinds)?;
+    let min_resolution = resolution_from_name(&params.min_resolution)?;
     let edges = query::dependencies(
         graph,
         &params.symbol,
         params.file.as_deref(),
         Some(depth),
         mask,
+        min_resolution,
     )
     .map_err(|e| format!("{e}"))?;
 

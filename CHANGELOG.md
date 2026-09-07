@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`graphyn status` reports resolution coverage, per language.** Every edge
+  already recorded whether it was bound through imports, aliases and declared
+  types or matched by name inside one file; nothing reported the ratio. That
+  ratio is what makes an enforcing tool trustworthy — "nothing broke" means
+  something very different at 98% resolved than at 40%, and a gate that cannot
+  tell them apart will eventually pass a change it should have stopped.
+  Reported per language as well as overall, because coverage is rarely uniform
+  and one badly resolved language otherwise hides inside the total. A file with
+  no relationships reports no coverage rather than 0% or 100%, both of which
+  would state something untrue about it. Where any structural edge exists the
+  known blind regions are named: Tier 2 languages, C++ template instantiations,
+  Rust macro bodies, cross-language imports, and chained access past the first
+  receiver.
+
+- **`--min-confidence` on `blast-radius`, `usages` and `deps`.** `resolved`
+  restricts an answer to edges a gate may act on; `structural`, the default,
+  keeps today's behaviour. The threshold is applied during traversal rather
+  than to the result set: an edge below the floor is not followed either, since
+  a symbol two hops away reached by way of a guess is itself a guess. The same
+  threshold is available to the MCP query tools as `min_resolution`. On a Tier
+  2 repository `--min-confidence resolved` correctly returns nothing, which is
+  the honest answer to "what may I act on here".
+
+
 - **A C call through a header prototype reaches the definition.** C splits a
   call across two files, and the shape is the dominant one in plain C: the
   caller includes a header that *declares* the function, while the definition

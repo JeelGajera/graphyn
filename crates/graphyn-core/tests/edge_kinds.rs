@@ -71,7 +71,7 @@ fn graph_with_one_kind_each() -> GraphynGraph {
 #[test]
 fn every_edge_carries_its_kind() {
     let graph = graph_with_one_kind_each();
-    let edges = blast_radius(&graph, "Target", None, Some(1), RelationshipKindMask::all())
+    let edges = blast_radius(&graph, "Target", None, Some(1), RelationshipKindMask::all(), Resolution::Structural)
         .expect("blast radius succeeds");
 
     assert_eq!(edges.len(), 4);
@@ -95,7 +95,7 @@ fn filtering_by_one_kind_returns_only_that_kind() {
     ] {
         let mask = RelationshipKindMask::from_kinds(std::slice::from_ref(&kind));
         let edges =
-            blast_radius(&graph, "Target", None, Some(1), mask).expect("blast radius succeeds");
+            blast_radius(&graph, "Target", None, Some(1), mask, Resolution::Structural).expect("blast radius succeeds");
         assert_eq!(
             edges.len(),
             1,
@@ -113,7 +113,7 @@ fn filtering_by_several_kinds_returns_their_union() {
         RelationshipKind::Imports,
         RelationshipKind::AccessesProperty,
     ]);
-    let edges = blast_radius(&graph, "Target", None, Some(1), mask).expect("blast radius succeeds");
+    let edges = blast_radius(&graph, "Target", None, Some(1), mask, Resolution::Structural).expect("blast radius succeeds");
 
     assert_eq!(edges.len(), 2);
     let mut kinds: Vec<&str> = edges.iter().map(|e| query::kind_name(&e.kind)).collect();
@@ -138,13 +138,13 @@ fn an_excluded_kind_also_blocks_the_path_through_it() {
     graph.add_relationship(&rel(&a.id, &b.id, RelationshipKind::Imports, "a.ts", 1));
     graph.add_relationship(&rel(&b.id, &c.id, RelationshipKind::Extends, "b.ts", 1));
 
-    let unfiltered = blast_radius(&graph, "C", None, Some(3), RelationshipKindMask::all())
+    let unfiltered = blast_radius(&graph, "C", None, Some(3), RelationshipKindMask::all(), Resolution::Structural)
         .expect("unfiltered succeeds");
     assert_eq!(unfiltered.len(), 2, "both hops are reachable unfiltered");
 
     let imports_only = RelationshipKindMask::from_kinds(&[RelationshipKind::Imports]);
     let filtered =
-        blast_radius(&graph, "C", None, Some(3), imports_only).expect("filtered succeeds");
+        blast_radius(&graph, "C", None, Some(3), imports_only, Resolution::Structural).expect("filtered succeeds");
     assert!(
         filtered.is_empty(),
         "A reaches C only through an excluded `extends` edge, so nothing imports C"
@@ -156,17 +156,17 @@ fn dependencies_and_usages_filter_the_same_way() {
     let graph = graph_with_one_kind_each();
 
     let extends_only = RelationshipKindMask::from_kinds(&[RelationshipKind::Extends]);
-    let usages = symbol_usages(&graph, "Target", None, true, extends_only).expect("usages succeed");
+    let usages = symbol_usages(&graph, "Target", None, true, extends_only, Resolution::Structural).expect("usages succeed");
     assert_eq!(usages.len(), 1);
     assert_eq!(usages[0].kind, RelationshipKind::Extends);
 
     // C0 imports Target, so from C0's side that edge is a dependency.
     let imports_only = RelationshipKindMask::from_kinds(&[RelationshipKind::Imports]);
-    let deps = dependencies(&graph, "C0", None, Some(1), imports_only).expect("deps succeed");
+    let deps = dependencies(&graph, "C0", None, Some(1), imports_only, Resolution::Structural).expect("deps succeed");
     assert_eq!(deps.len(), 1);
     assert_eq!(deps[0].kind, RelationshipKind::Imports);
 
-    let extends_deps = dependencies(&graph, "C0", None, Some(1), extends_only).expect("deps");
+    let extends_deps = dependencies(&graph, "C0", None, Some(1), extends_only, Resolution::Structural).expect("deps");
     assert!(extends_deps.is_empty(), "C0 has no outgoing `extends` edge");
 }
 
@@ -197,7 +197,7 @@ fn two_edges_between_the_same_pair_survive_when_their_kinds_differ() {
     ));
 
     let edges =
-        blast_radius(&graph, "Base", None, Some(1), RelationshipKindMask::all()).expect("ok");
+        blast_radius(&graph, "Base", None, Some(1), RelationshipKindMask::all(), Resolution::Structural).expect("ok");
     assert_eq!(edges.len(), 2, "same pair and line, different kinds");
 }
 
