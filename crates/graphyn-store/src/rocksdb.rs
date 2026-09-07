@@ -520,6 +520,12 @@ fn language_to_u8(language: &Language) -> u8 {
         Language::Java => 6,
         Language::C => 7,
         Language::Cpp => 8,
+        Language::Ruby => 9,
+        Language::Php => 10,
+        Language::CSharp => 11,
+        Language::Kotlin => 12,
+        Language::Swift => 13,
+        Language::Sql => 14,
     }
 }
 
@@ -533,6 +539,12 @@ fn u8_to_language(input: u8) -> Result<Language, StoreError> {
         6 => Ok(Language::Java),
         7 => Ok(Language::C),
         8 => Ok(Language::Cpp),
+        9 => Ok(Language::Ruby),
+        10 => Ok(Language::Php),
+        11 => Ok(Language::CSharp),
+        12 => Ok(Language::Kotlin),
+        13 => Ok(Language::Swift),
+        14 => Ok(Language::Sql),
         other => Err(StoreError::Serialization(format!(
             "unknown language code: {other}"
         ))),

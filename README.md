@@ -270,8 +270,15 @@ through imports, aliases and declared types. The threshold is applied while
 traversing, not to the results, so nothing is reached by way of an edge below
 it. On a Tier 2 repository that correctly returns nothing.
 
-Planned as Tier 2:
-- Kotlin, Ruby, PHP, C#, Swift, Scala
+Tier 2 today: Java, Ruby, C# — each behind its own feature, none in `default`.
+
+Still planned as Tier 2: Kotlin, PHP, Swift, Scala, SQL, Lua, Bash. These are
+not held up by Graphyn's architecture but by the grammar crates: adding one
+needs a crate that both works against the `tree-sitter` version Graphyn pins
+and ships its own `tags.scm`. Several of the obvious candidates currently fail
+one or the other — Scala and Lua pin an incompatible `tree-sitter`, Swift and
+PHP resolve to a second copy of it, and Kotlin, SQL and Bash ship no tags query
+for the analyzer to run. A `tree-sitter` upgrade unblocks most of them.
 
 ## Slim builds
 
@@ -282,10 +289,11 @@ need:
 cargo install graphyn-cli --no-default-features --features python
 ```
 
-Features: `typescript` (includes JavaScript), `python`, `rust`, `go`, `c`
-(includes C++). `graphyn status` and `--help` report what your build can
-analyse; a build skips files in languages it does not carry rather than
-failing on them.
+Tier 1 features: `typescript` (includes JavaScript), `python`, `rust`, `go`,
+`c` (includes C++) — these are `default`. Tier 2 features: `java`, `ruby`,
+`csharp`, or `full` for everything. `graphyn status` and `--help` report what
+your build can analyse; a build skips files in languages it does not carry
+rather than failing on them.
 
 Measured on one machine, a Python-only binary is 16M against 27M for all six
 languages.
