@@ -47,18 +47,18 @@ fn test_blast_radius_depth_and_direction() {
     graph.add_relationship(&rel(&c.id, &b.id, "c.ts", 20));
 
     let depth_1 =
-        blast_radius(&graph, "A", None, Some(1), RelationshipKindMask::all()).expect("depth1 ok");
+        blast_radius(&graph, "A", None, Some(1), RelationshipKindMask::all(), Resolution::Structural).expect("depth1 ok");
     assert_eq!(depth_1.len(), 1);
     assert_eq!(depth_1[0].from, b.id);
 
     let depth_2 =
-        blast_radius(&graph, "A", None, Some(2), RelationshipKindMask::all()).expect("depth2 ok");
+        blast_radius(&graph, "A", None, Some(2), RelationshipKindMask::all(), Resolution::Structural).expect("depth2 ok");
     assert_eq!(depth_2.len(), 2);
     assert_eq!(depth_2[0].hop, 1);
     assert_eq!(depth_2[1].hop, 2);
 
     let deps =
-        dependencies(&graph, "C", None, Some(2), RelationshipKindMask::all()).expect("deps ok");
+        dependencies(&graph, "C", None, Some(2), RelationshipKindMask::all(), Resolution::Structural).expect("deps ok");
     assert_eq!(deps.len(), 2);
     assert_eq!(deps[0].to, "b.ts::B::class");
     assert_eq!(deps[1].to, "a.ts::A::class");
@@ -74,7 +74,7 @@ fn test_symbol_lookup_ambiguity_requires_file_disambiguation() {
     graph.add_symbol(x1.clone());
     graph.add_symbol(x2.clone());
 
-    let err = blast_radius(&graph, "Thing", None, Some(1), RelationshipKindMask::all())
+    let err = blast_radius(&graph, "Thing", None, Some(1), RelationshipKindMask::all(), Resolution::Structural)
         .expect_err("must be ambiguous");
     match err {
         GraphynError::AmbiguousSymbol { symbol, candidates } => {
@@ -90,6 +90,7 @@ fn test_symbol_lookup_ambiguity_requires_file_disambiguation() {
         Some("a.ts"),
         Some(1),
         RelationshipKindMask::all(),
+        Resolution::Structural,
     );
     assert!(ok.is_ok());
 }
@@ -111,7 +112,7 @@ fn test_symbol_usages_dedupes_by_file_line() {
     graph.add_relationship(&r1);
     graph.add_relationship(&r2);
 
-    let usages = symbol_usages(&graph, "Target", None, true, RelationshipKindMask::all())
+    let usages = symbol_usages(&graph, "Target", None, true, RelationshipKindMask::all(), Resolution::Structural)
         .expect("usages ok");
     assert_eq!(usages.len(), 1);
     assert_eq!(usages[0].line, 30);
@@ -147,11 +148,11 @@ fn test_symbol_usages_respects_include_aliases_flag() {
     graph.add_relationship(&direct_rel);
     graph.add_relationship(&alias_rel);
 
-    let with_aliases = symbol_usages(&graph, "Target", None, true, RelationshipKindMask::all())
+    let with_aliases = symbol_usages(&graph, "Target", None, true, RelationshipKindMask::all(), Resolution::Structural)
         .expect("with aliases");
     assert_eq!(with_aliases.len(), 2);
 
-    let without_aliases = symbol_usages(&graph, "Target", None, false, RelationshipKindMask::all())
+    let without_aliases = symbol_usages(&graph, "Target", None, false, RelationshipKindMask::all(), Resolution::Structural)
         .expect("without aliases");
     assert_eq!(without_aliases.len(), 1);
     assert_eq!(without_aliases[0].from, direct.id);
@@ -190,7 +191,7 @@ fn test_incremental_replace_file_preserves_indexes() {
 #[test]
 fn test_invalid_depth_is_rejected() {
     let graph = GraphynGraph::new();
-    let err = blast_radius(&graph, "Any", None, Some(11), RelationshipKindMask::all())
+    let err = blast_radius(&graph, "Any", None, Some(11), RelationshipKindMask::all(), Resolution::Structural)
         .expect_err("invalid depth");
     match err {
         GraphynError::InvalidDepth { depth, max } => {
@@ -217,7 +218,7 @@ fn test_remove_file_keeps_remaining_node_indexes_valid() {
     graph.remove_file("b.ts");
 
     let blast =
-        blast_radius(&graph, "A", None, Some(1), RelationshipKindMask::all()).expect("blast ok");
+        blast_radius(&graph, "A", None, Some(1), RelationshipKindMask::all(), Resolution::Structural).expect("blast ok");
     assert_eq!(blast.len(), 1);
     assert_eq!(blast[0].from, c.id);
 }

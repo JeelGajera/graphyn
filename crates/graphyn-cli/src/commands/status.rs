@@ -1,3 +1,6 @@
+use std::collections::BTreeMap;
+
+use graphyn_core::coverage;
 use graphyn_core::ir::SymbolKind;
 
 use crate::output;
@@ -49,6 +52,77 @@ pub fn run(path: &str) -> Result<(), Box<dyn std::error::Error>> {
     if any_structural {
         output::dim_line("  Tier 2 sees symbols and intra-file references only — no imports,");
         output::dim_line("  aliases or declared types. Gates must not draw conclusions from it.");
+    }
+
+    // ── resolution coverage ──────────────────────────────────
+    //
+    // The number that decides how much of this graph a gate may act on. An
+    // enforcing tool that says "nothing broke" is making a claim about the
+    // edges it resolved, not about the repository, and the difference between
+    // 98% and 40% is the difference between a gate and a coin flip.
+    //
+    // Reported per language because coverage is rarely uniform: one badly
+    // resolved language drags the total down and an overall figure hides which.
+    output::section("Resolution Coverage");
+
+    let overall = coverage::overall(&graph);
+    match overall.percent() {
+        Some(percent) => output::stat_highlight(
+            "Resolved",
+            &format!(
+                "{percent:.1}% ({} of {} edge(s))",
+                overall.resolved,
+                overall.total()
+            ),
+        ),
+        None => output::stat("Resolved", "no relationships in this graph"),
+    }
+
+    let mut per_language: BTreeMap<&'static str, coverage::Coverage> = BTreeMap::new();
+    let mut unattributed = coverage::Coverage::default();
+    for (file, file_coverage) in coverage::by_file(&graph) {
+        match graphyn_lang::for_path(&file) {
+            Some(spec) => {
+                let entry = per_language.entry(spec.name()).or_default();
+                entry.resolved += file_coverage.resolved;
+                entry.structural += file_coverage.structural;
+            }
+            None => {
+                unattributed.resolved += file_coverage.resolved;
+                unattributed.structural += file_coverage.structural;
+            }
+        }
+    }
+
+    for (language, language_coverage) in &per_language {
+        let detail = match language_coverage.percent() {
+            Some(percent) => format!(
+                "{percent:.1}% of {} edge(s)",
+                language_coverage.total()
+            ),
+            None => "no relationships".to_string(),
+        };
+        output::stat(&format!("  {language}"), &detail);
+    }
+    if unattributed.total() > 0 {
+        // Edges whose file this build carries no language for. Named rather
+        // than folded into the total, so the total stays a statement about
+        // languages that were actually analysed.
+        output::stat(
+            "  (no language)",
+            &format!("{} edge(s)", unattributed.total()),
+        );
+    }
+
+    if overall.structural > 0 {
+        output::dim_line(&format!(
+            "  {} edge(s) are structural: matched by name within one file.",
+            overall.structural
+        ));
+        output::dim_line("  A gate must not act on them. Known blind regions, all structural or");
+        output::dim_line("  absent: Tier 2 languages, C++ template instantiations, Rust macro");
+        output::dim_line("  bodies, cross-language imports, and chained access past the first");
+        output::dim_line("  receiver.");
     }
 
     // ── symbol breakdown ─────────────────────────────────────

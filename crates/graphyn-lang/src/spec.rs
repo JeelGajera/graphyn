@@ -154,6 +154,18 @@ pub fn for_language(language: &Language) -> Option<&'static dyn LanguageSpec> {
     specs().into_iter().find(|s| s.language() == *language)
 }
 
+/// The spec that claims `path`'s extension, if this build carries one.
+///
+/// Routing by extension is already how dispatch decides which language reads a
+/// file; this exposes the same answer to callers that have a path and need the
+/// language, such as reporting coverage per language.
+pub fn for_path(path: &str) -> Option<&'static dyn LanguageSpec> {
+    let extension = path.rsplit_once('.').map(|(_, ext)| ext)?;
+    specs()
+        .into_iter()
+        .find(|spec| spec.extensions().contains(&extension))
+}
+
 /// A language and how much of it Graphyn can resolve.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LanguageSupport {

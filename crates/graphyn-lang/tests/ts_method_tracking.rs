@@ -5,6 +5,7 @@
 
 use std::path::PathBuf;
 
+use graphyn_core::ir::Resolution;
 use graphyn_core::graph::GraphynGraph;
 use graphyn_core::ir::RelationshipKind;
 use graphyn_core::query::{dependencies, RelationshipKindMask};
@@ -83,6 +84,7 @@ fn test_dependencies_for_process_payment_include_injected_services() {
         None,
         Some(2),
         RelationshipKindMask::all(),
+        Resolution::Structural,
     )
     .expect("dependencies query should resolve processPayment method");
     assert!(

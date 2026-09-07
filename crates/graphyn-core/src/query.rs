@@ -272,6 +272,7 @@ pub fn blast_radius(
     file: Option<&str>,
     depth: Option<usize>,
     kinds: RelationshipKindMask,
+    min_resolution: Resolution,
 ) -> Result<Vec<QueryEdge>, GraphynError> {
     let effective_depth = depth.unwrap_or(DEFAULT_DEPTH);
     if effective_depth > MAX_DEPTH {
@@ -282,7 +283,7 @@ pub fn blast_radius(
     }
 
     let root = find_symbol_id(graph, symbol, file)?;
-    traverse(graph, &root, effective_depth, Direction::Incoming, kinds)
+    traverse(graph, &root, effective_depth, Direction::Incoming, kinds, min_resolution)
 }
 
 pub fn dependencies(
@@ -291,6 +292,7 @@ pub fn dependencies(
     file: Option<&str>,
     depth: Option<usize>,
     kinds: RelationshipKindMask,
+    min_resolution: Resolution,
 ) -> Result<Vec<QueryEdge>, GraphynError> {
     let effective_depth = depth.unwrap_or(DEFAULT_DEPTH);
     if effective_depth > MAX_DEPTH {
@@ -301,7 +303,7 @@ pub fn dependencies(
     }
 
     let root = find_symbol_id(graph, symbol, file)?;
-    traverse(graph, &root, effective_depth, Direction::Outgoing, kinds)
+    traverse(graph, &root, effective_depth, Direction::Outgoing, kinds, min_resolution)
 }
 
 pub fn symbol_usages(
@@ -310,9 +312,10 @@ pub fn symbol_usages(
     file: Option<&str>,
     include_aliases: bool,
     kinds: RelationshipKindMask,
+    min_resolution: Resolution,
 ) -> Result<Vec<QueryEdge>, GraphynError> {
     let root = find_symbol_id(graph, symbol, file)?;
-    let mut results = traverse(graph, &root, 1, Direction::Incoming, kinds)?;
+    let mut results = traverse(graph, &root, 1, Direction::Incoming, kinds, min_resolution)?;
 
     if include_aliases {
         if let Some(aliases) = graph.alias_chains.get(&root) {
@@ -353,6 +356,7 @@ fn traverse(
     max_depth: usize,
     direction: Direction,
     kinds: RelationshipKindMask,
+    min_resolution: Resolution,
 ) -> Result<Vec<QueryEdge>, GraphynError> {
     let Some(root_node) = graph.node_index.get(root).map(|v| *v) else {
         return Err(GraphynError::SymbolNotFound(root.clone()));
@@ -372,6 +376,13 @@ fn traverse(
 
         for edge in graph.graph.edges_directed(node, direction) {
             if !kinds.contains(&edge.weight().kind) {
+                continue;
+            }
+            // Below the threshold the edge is dropped *and* not walked through.
+            // Filtering the result set afterwards would keep every hop reached
+            // by way of an edge the caller said it could not trust, which is
+            // the opposite of what asking for a threshold means.
+            if !edge.weight().resolution.meets(min_resolution) {
                 continue;
             }
             let neighbor = if direction == Direction::Incoming {

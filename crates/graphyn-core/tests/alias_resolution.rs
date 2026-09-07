@@ -74,6 +74,7 @@ fn test_aliased_import_is_tracked_with_property_accesses() {
         None,
         Some(2),
         RelationshipKindMask::all(),
+        Resolution::Structural,
     )
     .expect("blast radius succeeds");
     assert_eq!(blast.len(), 1);
@@ -93,6 +94,7 @@ fn test_aliased_import_is_tracked_with_property_accesses() {
         None,
         true,
         RelationshipKindMask::all(),
+        Resolution::Structural,
     )
     .expect("usages succeeds");
     assert_eq!(usages.len(), 1);

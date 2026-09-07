@@ -70,6 +70,22 @@ pub enum Resolution {
 }
 
 impl Resolution {
+    /// Whether this resolution is at least as strong as `floor`.
+    ///
+    /// The ladder has two rungs today. It is written as a comparison rather
+    /// than an equality test so that adding a rung between them — a name-match
+    /// heuristic, say — changes this one function and nothing that calls it.
+    pub fn meets(self, floor: Resolution) -> bool {
+        self.rank() >= floor.rank()
+    }
+
+    fn rank(self) -> u8 {
+        match self {
+            Resolution::Structural => 0,
+            Resolution::Resolved => 1,
+        }
+    }
+
     pub fn as_str(&self) -> &'static str {
         match self {
             Resolution::Structural => "structural",

@@ -1,3 +1,4 @@
+use graphyn_core::ir::Resolution;
 use std::collections::BTreeMap;
 
 use graphyn_core::graph::GraphynGraph;
@@ -81,14 +82,32 @@ fn report_filter(mask: &RelationshipKindMask) {
 
 // ── blast-radius ─────────────────────────────────────────────
 
+/// Parse `--min-confidence` into a resolution floor.
+///
+/// The flag is named for the concept the gate commands use rather than for the
+/// enum, so the vocabulary stays stable if the ladder grows a rung between the
+/// two it has today.
+fn resolution_floor(name: &str) -> Result<Resolution, Box<dyn std::error::Error>> {
+    match name {
+        "structural" => Ok(Resolution::Structural),
+        "resolved" => Ok(Resolution::Resolved),
+        other => Err(format!(
+            "unknown --min-confidence '{other}'. Expected 'structural' or 'resolved'."
+        )
+        .into()),
+    }
+}
+
 pub fn run_blast_radius(
     symbol: &str,
     file: Option<&str>,
     depth: usize,
     path: &str,
     kinds: &[String],
+    min_confidence: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mask = mask_from_args(kinds)?;
+    let floor = resolution_floor(min_confidence)?;
     let root = super::normalize_path(
         &std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?,
     );
@@ -97,7 +116,7 @@ pub fn run_blast_radius(
     output::banner("blast-radius");
 
     // look up the canonical symbol to display metadata
-    let edges = query::blast_radius(&graph, symbol, file, Some(depth), mask)
+    let edges = query::blast_radius(&graph, symbol, file, Some(depth), mask, floor)
         .map_err(|e| format_query_error(e, symbol))?;
 
     print_symbol_header(&graph, symbol, file);
@@ -198,8 +217,10 @@ pub fn run_usages(
     file: Option<&str>,
     path: &str,
     kinds: &[String],
+    min_confidence: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mask = mask_from_args(kinds)?;
+    let floor = resolution_floor(min_confidence)?;
     let root = super::normalize_path(
         &std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?,
     );
@@ -211,7 +232,7 @@ pub fn run_usages(
     output::blank();
     warn_about_absent_kinds(&mask, &graph);
 
-    let edges = query::symbol_usages(&graph, symbol, file, true, mask)
+    let edges = query::symbol_usages(&graph, symbol, file, true, mask, floor)
         .map_err(|e| format_query_error(e, symbol))?;
 
     if edges.is_empty() {
@@ -241,8 +262,10 @@ pub fn run_deps(
     depth: usize,
     path: &str,
     kinds: &[String],
+    min_confidence: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let mask = mask_from_args(kinds)?;
+    let floor = resolution_floor(min_confidence)?;
     let root = super::normalize_path(
         &std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?,
     );
@@ -255,7 +278,7 @@ pub fn run_deps(
     output::blank();
     warn_about_absent_kinds(&mask, &graph);
 
-    let edges = query::dependencies(&graph, symbol, file, Some(depth), mask)
+    let edges = query::dependencies(&graph, symbol, file, Some(depth), mask, floor)
         .map_err(|e| format_query_error(e, symbol))?;
 
     if edges.is_empty() {

@@ -5,6 +5,7 @@
 
 use std::path::PathBuf;
 
+use graphyn_core::ir::Resolution;
 use graphyn_core::graph::GraphynGraph;
 use graphyn_core::query::{blast_radius, RelationshipKindMask};
 use graphyn_core::scan::{walk_source_files_with_config, ScanConfig};
@@ -91,6 +92,7 @@ fn test_blast_radius_of_user_repository_includes_payment_service() {
         None,
         Some(2),
         RelationshipKindMask::all(),
+        Resolution::Structural,
     )
     .expect("blast radius query should resolve UserRepository");
     assert!(
