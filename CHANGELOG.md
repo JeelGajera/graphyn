@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`.graphyn/rules.toml`, parsed and validated.** The file a repository uses
+  to state its own constraints: `forbid-dependency`, `forbid-reference`,
+  `no-field-removal` and `max-fan-in`, each with a `severity` of `warn` or
+  `error`. Parsing and validation only — evaluating a rule against a graph is
+  a separate change.
+
+  Everything that can be wrong is wrong at parse time. An unknown kind, a glob
+  that does not compile, a required field left out, a `max-fan-in` threshold of
+  zero, two rules under one name: each is refused when the file is read, with
+  the rule named and the valid kinds listed. A typo would otherwise sit
+  silently in a repository until the day it was supposed to catch something,
+  and a gate that quietly enforces four of five rules reports a pass it has not
+  earned.
+
+  Severity defaults to `error`. A rule written without one is a rule someone
+  means to enforce, and defaulting to advisory would make every unannotated
+  rule silent.
+
+  Rules are partitioned by whether they need a delta — only `no-field-removal`
+  does — so a caller holding a single graph skips the rest rather than
+  reporting them as passing.
+
+
 - **`graphyn diff`.** Compares two recorded revisions and reports what changed:
   symbols added, removed, renamed or moved, signatures changed, and edges added
   or removed. `--base` defaults to `HEAD`, `--head` to `worktree`, and `--json`

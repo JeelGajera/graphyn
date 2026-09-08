@@ -514,11 +514,13 @@ name = "graphyn-core"
 version = "0.2.0"
 dependencies = [
  "dashmap",
+ "glob",
  "petgraph",
  "rayon",
  "serde",
  "serde_json",
  "thiserror 1.0.69",
+ "toml",
  "tree-sitter",
  "tree-sitter-rust",
  "walkdir",
