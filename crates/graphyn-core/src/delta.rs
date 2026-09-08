@@ -138,6 +138,38 @@ fn usable_signature(symbol: &Symbol) -> Option<&str> {
         .filter(|s| !s.is_empty())
 }
 
+/// Whether `before` becomes `after` under nothing but a rename.
+///
+/// A signature is the symbol's source text, so a rename changes it — the
+/// declaration contains the name. Comparing them raw therefore never matches a
+/// genuine rename, and comparing only position matches anything that happens
+/// to sit on the same line, which is exactly what replacing one function with
+/// another looks like.
+///
+/// Substituting the old name for the new one separates the two precisely:
+///
+/// ```text
+/// class UserPayload { id: string }  ->  class CustomerPayload { id: string }
+///   substituted: class CustomerPayload { id: string }        matches, a rename
+///
+/// function doomed() { return 2 }    ->  function freshlyAdded() { return 3 }
+///   substituted: function freshlyAdded() { return 2 }        differs, not one
+/// ```
+///
+/// A rename that also edits the body records no continuity, which is the
+/// honest answer: the evidence for "same symbol" is gone, and inventing a
+/// rename is worse than missing one.
+fn renames_to(before: &Symbol, after: &Symbol) -> bool {
+    let (Some(before_sig), Some(after_sig)) = (usable_signature(before), usable_signature(after))
+    else {
+        return false;
+    };
+    if before.name.is_empty() {
+        return false;
+    }
+    before_sig.replace(&before.name, &after.name) == after_sig
+}
+
 /// How a removed and an added symbol relate, if they are the same symbol.
 ///
 /// Kind must always match: a function becoming a class of the same name is not
@@ -149,25 +181,20 @@ fn continuation_between(before: &Symbol, after: &Symbol) -> Option<Continuation>
 
     let same_name = before.name == after.name;
     let same_file = before.file == after.file;
-    let same_signature = match (usable_signature(before), usable_signature(after)) {
-        (Some(a), Some(b)) => a == b,
-        _ => false,
-    };
-
     match (same_name, same_file) {
         // Same id would not have reached here.
         (true, true) => None,
         // Moved: the name is the evidence, and a name is a strong hint within
         // one repository even without a signature.
         (true, false) => Some(Continuation::Moved),
-        // Renamed in place: accept a matching signature, or the same starting
-        // line, which is the position heuristic. One of the two must hold —
-        // otherwise every renamed symbol in a file would match every other.
-        (false, true) => {
-            (same_signature || before.line_start == after.line_start).then_some(Continuation::Renamed)
-        }
-        // Both changed, so only a matching signature is evidence at all.
-        (false, false) => same_signature.then_some(Continuation::RenamedAndMoved),
+        // Renamed in place. The signature must match once the old name is
+        // substituted for the new: a rename changes the source text, so raw
+        // equality never holds, and position alone pairs any two symbols that
+        // happen to share a line — which is what replacing one function with
+        // another looks like.
+        (false, true) => renames_to(before, after).then_some(Continuation::Renamed),
+        // Both changed, so the substituted signature is the only evidence.
+        (false, false) => renames_to(before, after).then_some(Continuation::RenamedAndMoved),
     }
 }
 
@@ -175,6 +202,8 @@ fn continuation_between(before: &Symbol, after: &Symbol) -> Option<Continuation>
 ///
 /// Used to make the choice deterministic when a removed symbol could pair with
 /// several added ones, and to prefer the strongest available evidence.
+/// `signature_matches` means the substituted signatures agree — see
+/// [`renames_to`].
 fn pairing_rank(how: Continuation, signature_matches: bool) -> u8 {
     match (how, signature_matches) {
         (Continuation::Renamed, true) => 0,
@@ -223,12 +252,12 @@ pub fn compute(before: &GraphynGraph, after: &GraphynGraph) -> GraphDelta {
     for old in &removed {
         for new in &added {
             if let Some(how) = continuation_between(old, new) {
-                let signature_matches = matches!(
-                    (usable_signature(old), usable_signature(new)),
-                    (Some(a), Some(b)) if a == b
-                );
+                // The same predicate the pairing used, so ranking reflects the
+                // evidence that admitted the pair rather than a weaker one. For
+                // a move the substitution is a no-op, so this reduces to plain
+                // signature equality there.
                 candidates.push((
-                    pairing_rank(how, signature_matches),
+                    pairing_rank(how, renames_to(old, new)),
                     old.id.clone(),
                     new.id.clone(),
                     how,

@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`graphyn diff`.** Compares two recorded revisions and reports what changed:
+  symbols added, removed, renamed or moved, signatures changed, and edges added
+  or removed. `--base` defaults to `HEAD`, `--head` to `worktree`, and `--json`
+  emits a versioned document — schema 1 from its first release, since hooks, CI
+  and the MCP tools read it.
+
+  It never analyses. Both sides come from snapshots `analyze --snapshot`
+  already recorded, so the same pair of revisions always produces the same
+  answer and the command costs a read rather than a re-analysis. A revision
+  with no snapshot is an error naming the command that would record it; quietly
+  analysing one side would make the result depend on the working tree at the
+  moment the command happened to run.
+
+  Every diff reports how much of itself is gate-safe, not only when the news is
+  bad. A figure that appears sometimes is one nobody learns to read, and a diff
+  made entirely of structural edges says so explicitly.
+
+
 - **Graph delta.** `graphyn_core::delta::compute` compares two graphs and
   reports added, removed and continued symbols, signature changes, and added
   and removed edges. Library only; the `diff` command is a separate change.
@@ -390,6 +408,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   is exactly the statement that had to stay true as each language followed.
 
 ### Fixed
+
+- **Two unrelated symbols sharing a line were paired as a rename.** Introduced
+  and caught within this release. Pairing a removed symbol with an added one
+  accepted "same file, same starting line" as evidence of a rename, and
+  deleting one function while adding another in its place produces exactly
+  that. `doomed` and `freshlyAdded` were reported as one renamed symbol.
+
+  A signature is the symbol's source text, so a rename changes it and raw
+  equality never matches a genuine one — which is why the position heuristic
+  was there. Substituting the old name for the new one separates the two
+  precisely: `class UserPayload {..}` becomes `class CustomerPayload {..}` and
+  matches, while `function doomed() { return 2 }` becomes
+  `function freshlyAdded() { return 2 }` and does not match a body returning 3.
+
+  The cost is that a rename which also edits the body records no continuity.
+  That is the honest answer — the evidence for "same symbol" is gone — and
+  inventing a rename is the worse error, since a later audit detector reads a
+  removal as contract erosion.
+
+  Found by running `diff` against a real repository rather than by a unit test:
+  the synthetic fixture gave a renamed class the same signature literal as the
+  original, which no analyzer produces.
 
 - **`graphyn-lang` did not build with only a Tier 2 language enabled.** With
   every Tier 1 language turned off, each arm of the dispatch `match` is compiled
