@@ -29,7 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   `version: source` builds from the checked-out tree instead of downloading a
   release, which is how this repository runs the action against its own pull
-  requests. An action nobody has executed is not a tested action.
+  requests. An action nobody has executed is not a tested action — and running
+  it caught the first thing wrong with it: the comment read "No problems found"
+  on a repository with no rules file, which is the unearned pass `check`
+  already refuses to report. The report now states that no rule was enforced,
+  and the headline claims only what the diff supports.
 
 
 - **`graphyn check`** — enforce the rules in `.graphyn/rules.toml`. Reads the

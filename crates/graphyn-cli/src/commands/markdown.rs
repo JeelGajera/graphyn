@@ -55,8 +55,14 @@ pub fn report(
     out.push_str(&headline(delta, found, evaluation));
     out.push('\n');
 
-    if let Some(evaluation) = evaluation {
-        out.push_str(&rules_section(evaluation));
+    match evaluation {
+        Some(evaluation) => out.push_str(&rules_section(evaluation)),
+        // Said explicitly. A comment silent about rules reads as a comment
+        // whose rules passed.
+        None => out.push_str(
+            "\n### Rules\n\nNo `.graphyn/rules.toml` in this repository, so no rule was \
+             enforced. This is not a passing rule check — it is the absence of one.\n",
+        ),
     }
     if let (Some(delta), Some(found)) = (delta, found) {
         out.push_str(&diff_section(base, head, delta, found));
@@ -113,7 +119,11 @@ fn headline(
     if evaluation.is_some_and(|e| e.count_of(Verdict::Satisfied) > 0) {
         return "**No problems found.** Every rule was examined in full.\n".to_string();
     }
-    "No problems found.\n".to_string()
+    // No rules were evaluated, so the only claim this report can make is about
+    // references. "No problems found" would let a reader conclude that rules
+    // passed, when the repository has none — the same unearned pass `check`
+    // refuses to report when the rules file is missing.
+    "**No broken references.** No rules were evaluated.\n".to_string()
 }
 
 fn verdict_icon(verdict: Verdict) -> &'static str {
@@ -431,6 +441,57 @@ mod tests {
         let out = report("a", "b", None, None, Some(&evaluation(vec![broken])));
 
         assert!(out.contains(r"a\|b"), "{out}");
+    }
+
+    #[test]
+    fn a_repository_with_no_rules_is_not_reported_as_having_passed_them() {
+        // Caught by running the action against Graphyn's own pull request:
+        // the comment read "No problems found" on a repository that has no
+        // rules file, which is exactly the unearned pass `check` refuses to
+        // report. A reader cannot tell that from silence.
+        let delta = GraphDelta {
+            added_symbols: vec![],
+            removed_symbols: vec![],
+            continuities: vec![],
+            signature_changes: vec![],
+            added_edges: vec![],
+            removed_edges: vec![],
+        };
+        let found = empty_findings();
+        let out = report("a", "b", Some(&delta), Some(&found), None);
+
+        assert!(
+            out.contains("No `.graphyn/rules.toml`"),
+            "the comment must say no rule was enforced:\n{out}"
+        );
+        assert!(
+            out.contains("not a passing rule check"),
+            "silence about rules reads as rules that passed:\n{out}"
+        );
+    }
+
+    #[test]
+    fn the_headline_without_rules_claims_only_what_the_diff_supports() {
+        let evaluation: Option<&Evaluation> = None;
+        let mut delta = GraphDelta::default();
+        delta.added_symbols.push(graphyn_core::ir::Symbol {
+            id: "a::b::function".to_string(),
+            name: "b".to_string(),
+            kind: graphyn_core::ir::SymbolKind::Function,
+            language: graphyn_core::ir::Language::TypeScript,
+            file: "a.ts".to_string(),
+            line_start: 1,
+            line_end: 1,
+            signature: None,
+        });
+        let found = empty_findings();
+        let out = report("a", "b", Some(&delta), Some(&found), evaluation);
+
+        assert!(out.contains("No broken references"), "{out}");
+        assert!(
+            !out.contains("No problems found"),
+            "with no rules evaluated this claims more than the diff supports:\n{out}"
+        );
     }
 
     #[test]
