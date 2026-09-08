@@ -7,7 +7,10 @@ use serde::{Deserialize, Serialize};
 pub type SymbolId = String;
 
 /// A symbol — any named entity in source code.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+///
+/// Compares by value: `delta` pairs symbols across two graphs and needs to say
+/// whether two of them are the same, and every field is already a plain value.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Symbol {
     pub id: SymbolId,
     pub name: String,

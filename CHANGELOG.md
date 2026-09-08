@@ -9,6 +9,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Graph delta.** `graphyn_core::delta::compute` compares two graphs and
+  reports added, removed and continued symbols, signature changes, and added
+  and removed edges. Library only; the `diff` command is a separate change.
+
+  A symbol's id embeds its file and its name, so a rename or a move produces a
+  different id and a naive comparison reads it as a delete plus an unrelated
+  add — the loudest possible description of the smallest possible change, and
+  one that would make a later audit detector count a rename as contract
+  erosion. So a removed symbol and an added one are paired into a *continuity*
+  where the evidence supports it, and the pairing records whether the name, the
+  file, or both moved.
+
+  What counts as evidence is deliberately narrow. Kind and language must always
+  match, because a function replaced by a class of the same name is a real
+  change rather than one symbol that moved. A rename in place needs a matching
+  signature or the same starting line; a symbol that changed both name and file
+  needs a matching signature, since nothing else distinguishes it from an
+  unrelated addition. An absent or empty signature is treated as no evidence at
+  all — every symbol lacking one would otherwise match every other. Where the
+  evidence is not there, the change stays a removal and an addition, which is
+  the honest description of "these may be the same symbol and nothing here can
+  tell".
+
+  Pairing is greedy over a fully ordered candidate list rather than an optimal
+  assignment. Optimal matching would be more accurate in contrived cases and
+  less predictable in every case, and predictability is what is being bought:
+  the same two graphs must always produce the same delta. Every field of the
+  result is ordered, and a test runs the same comparison repeatedly to assert
+  it.
+
+  `has_resolved_changes` reports whether a delta touches anything a gate may
+  act on, so a change made entirely of structural edges — a Tier 2 repository —
+  is visibly not actionable rather than silently passing.
+
 - **Graph snapshots keyed by revision.** `analyze --snapshot <rev>` records the
   analysis under a revision alongside the working graph, which is what `diff`
   will compare. `--keep-snapshots N` (default 10) drops the oldest beyond N.
