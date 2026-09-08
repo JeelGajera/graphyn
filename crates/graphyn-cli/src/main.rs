@@ -45,6 +45,18 @@ enum Commands {
         /// Emit the analysis as JSON on stdout instead of a human summary
         #[arg(long)]
         json: bool,
+
+        /// Also record this analysis under a revision, for `diff` to compare.
+        ///
+        /// Takes a commit, branch or tag — resolved to its SHA, so the
+        /// snapshot still means something after the branch moves — or
+        /// `worktree` for the working tree including uncommitted edits.
+        #[arg(long, value_name = "REV")]
+        snapshot: Option<String>,
+
+        /// How many revision snapshots to keep, oldest dropped first.
+        #[arg(long, value_name = "N", default_value_t = 10)]
+        keep_snapshots: usize,
     },
 
     /// Query the symbol relationship graph
@@ -193,12 +205,16 @@ fn main() {
             exclude,
             no_gitignore,
             json,
+            snapshot,
+            keep_snapshots,
         } => commands::analyze::run(
             &path,
             include.as_deref(),
             exclude.as_deref(),
             !no_gitignore,
             json,
+            snapshot.as_deref(),
+            keep_snapshots,
         ),
 
         Commands::Query { subcommand } => match subcommand {

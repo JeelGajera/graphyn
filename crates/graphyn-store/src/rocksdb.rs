@@ -4,9 +4,32 @@ use std::path::Path;
 use graphyn_core::graph::GraphynGraph;
 use graphyn_core::ir::{Language, ReExportEntry, Relationship, RelationshipKind, Resolution, Symbol, SymbolKind};
 use graphyn_core::resolver::{AliasEntry, AliasScope};
-use rocksdb::{Options, DB};
+use rocksdb::{ColumnFamilyDescriptor, Options, DB};
 
 const KEY_GRAPH_SNAPSHOT: &[u8] = b"graph_snapshot_v1";
+
+/// Where snapshots keyed by revision live.
+///
+/// A separate column family rather than a key prefix in the default one. The
+/// working graph is read on every query and rewritten on every analyse;
+/// revisions are written once and read only by `diff`. Keeping them apart
+/// means the retention sweep cannot iterate over, or delete, the working
+/// graph — and a format change here can drop this family alone.
+const CF_REVISIONS: &str = "revisions";
+
+/// Layout version for [`CF_REVISIONS`], distinct from [`SNAPSHOT_VERSION`].
+///
+/// `SNAPSHOT_VERSION` versions the bytes of one snapshot. This versions how
+/// revisions are keyed and indexed around them. A mismatch drops the family
+/// and starts over: a stale index pointing at snapshots that no longer parse
+/// is exactly the silent corruption the handoff asks this to prevent, and a
+/// revision snapshot is a cache of something reproducible from git.
+const REVISION_LAYOUT_VERSION: u8 = 1;
+
+const KEY_REVISION_LAYOUT: &[u8] = b"revision_layout_version";
+const KEY_REVISION_SEQUENCE: &[u8] = b"revision_sequence";
+const PREFIX_REVISION_SNAPSHOT: &str = "snapshot|";
+const PREFIX_REVISION_INDEX: &str = "index|";
 /// Bumped to 3 for the per-edge resolution byte.
 ///
 /// A version 1 or 2 snapshot carries no resolution, and is read back as
@@ -34,6 +57,19 @@ impl Display for StoreError {
 
 impl std::error::Error for StoreError {}
 
+/// One stored revision, and when it was stored relative to the others.
+///
+/// The sequence is a counter rather than a timestamp. Retention has to order
+/// revisions, and a wall clock makes that ordering depend on the machine — two
+/// snapshots written inside the same clock tick would be unordered, and a
+/// clock adjustment would reorder history. A counter is monotonic by
+/// construction, which is the only property retention needs.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RevisionEntry {
+    pub revision: String,
+    pub sequence: u64,
+}
+
 #[derive(Debug, Clone)]
 pub struct GraphSnapshot {
     pub symbols: Vec<Symbol>,
@@ -51,9 +87,60 @@ impl RocksGraphStore {
         let normalized = normalize_rocksdb_path(path);
         let mut options = Options::default();
         options.create_if_missing(true);
-        let db =
-            DB::open(&options, &normalized).map_err(|err| StoreError::RocksDb(err.to_string()))?;
-        Ok(Self { db })
+        options.create_missing_column_families(true);
+
+        // Opened with the revisions family declared so a database written
+        // before it existed gains it rather than failing to open.
+        let db = DB::open_cf_descriptors(
+            &options,
+            &normalized,
+            vec![
+                ColumnFamilyDescriptor::new(rocksdb::DEFAULT_COLUMN_FAMILY_NAME, Options::default()),
+                ColumnFamilyDescriptor::new(CF_REVISIONS, Options::default()),
+            ],
+        )
+        .map_err(|err| StoreError::RocksDb(err.to_string()))?;
+
+        let store = Self { db };
+        store.reconcile_revision_layout()?;
+        Ok(store)
+    }
+
+    /// Drop the revisions family if it was written by a different layout.
+    ///
+    /// Reindexing costs one analyse; misreading a stale index costs a wrong
+    /// answer from a command whose whole purpose is to be trusted.
+    fn reconcile_revision_layout(&self) -> Result<(), StoreError> {
+        let cf = self.revisions_cf()?;
+        let stored = self
+            .db
+            .get_cf(cf, KEY_REVISION_LAYOUT)
+            .map_err(|err| StoreError::RocksDb(err.to_string()))?;
+
+        match stored.as_deref() {
+            Some([version]) if *version == REVISION_LAYOUT_VERSION => Ok(()),
+            None => self
+                .db
+                .put_cf(cf, KEY_REVISION_LAYOUT, [REVISION_LAYOUT_VERSION])
+                .map_err(|err| StoreError::RocksDb(err.to_string())),
+            _ => {
+                for revision in self.list_revisions()? {
+                    self.delete_revision(&revision.revision)?;
+                }
+                self.db
+                    .delete_cf(cf, KEY_REVISION_SEQUENCE)
+                    .map_err(|err| StoreError::RocksDb(err.to_string()))?;
+                self.db
+                    .put_cf(cf, KEY_REVISION_LAYOUT, [REVISION_LAYOUT_VERSION])
+                    .map_err(|err| StoreError::RocksDb(err.to_string()))
+            }
+        }
+    }
+
+    fn revisions_cf(&self) -> Result<&rocksdb::ColumnFamily, StoreError> {
+        self.db.cf_handle(CF_REVISIONS).ok_or_else(|| {
+            StoreError::RocksDb(format!("column family '{CF_REVISIONS}' is missing"))
+        })
     }
 
     pub fn save_graph(&self, graph: &GraphynGraph) -> Result<(), StoreError> {
@@ -81,6 +168,132 @@ impl RocksGraphStore {
             .ok_or(StoreError::SnapshotNotFound)?;
 
         GraphSnapshot::from_bytes(&bytes)
+    }
+
+    // ── revisions ────────────────────────────────────────────
+
+    /// Store a graph under a revision name, replacing any snapshot already
+    /// there.
+    ///
+    /// Re-analysing the same revision overwrites rather than accumulating: two
+    /// snapshots of one revision cannot both be right, and keeping the older
+    /// one would let `diff` answer from a graph the working tree no longer
+    /// matches. The sequence advances on overwrite too, so re-recording a
+    /// revision makes it the most recent for retention.
+    pub fn save_revision(
+        &self,
+        revision: &str,
+        snapshot: &GraphSnapshot,
+    ) -> Result<(), StoreError> {
+        let cf = self.revisions_cf()?;
+        let sequence = self.next_sequence()?;
+
+        self.db
+            .put_cf(
+                cf,
+                format!("{PREFIX_REVISION_SNAPSHOT}{revision}"),
+                snapshot.to_bytes()?,
+            )
+            .map_err(|err| StoreError::RocksDb(err.to_string()))?;
+        self.db
+            .put_cf(
+                cf,
+                format!("{PREFIX_REVISION_INDEX}{revision}"),
+                sequence.to_be_bytes(),
+            )
+            .map_err(|err| StoreError::RocksDb(err.to_string()))
+    }
+
+    pub fn load_revision(&self, revision: &str) -> Result<GraphSnapshot, StoreError> {
+        let cf = self.revisions_cf()?;
+        let bytes = self
+            .db
+            .get_cf(cf, format!("{PREFIX_REVISION_SNAPSHOT}{revision}"))
+            .map_err(|err| StoreError::RocksDb(err.to_string()))?
+            .ok_or(StoreError::SnapshotNotFound)?;
+
+        GraphSnapshot::from_bytes(&bytes)
+    }
+
+    /// Every stored revision, most recently written first.
+    ///
+    /// Ties break on the revision name so the order is total. RocksDB iterates
+    /// keys in order, but two revisions can never share a sequence, so the tie
+    /// break exists only to make the sort provably deterministic rather than
+    /// to resolve a case that occurs.
+    pub fn list_revisions(&self) -> Result<Vec<RevisionEntry>, StoreError> {
+        let cf = self.revisions_cf()?;
+        let mut out = Vec::new();
+
+        for item in self.db.prefix_iterator_cf(cf, PREFIX_REVISION_INDEX) {
+            let (key, value) = item.map_err(|err| StoreError::RocksDb(err.to_string()))?;
+            let Some(revision) = std::str::from_utf8(&key)
+                .ok()
+                .and_then(|k| k.strip_prefix(PREFIX_REVISION_INDEX))
+            else {
+                continue;
+            };
+            let sequence = u64::from_be_bytes(value.as_ref().try_into().map_err(|_| {
+                StoreError::Serialization(format!("revision '{revision}' has a corrupt index entry"))
+            })?);
+            out.push(RevisionEntry {
+                revision: revision.to_string(),
+                sequence,
+            });
+        }
+
+        out.sort_by(|a, b| {
+            b.sequence
+                .cmp(&a.sequence)
+                .then_with(|| a.revision.cmp(&b.revision))
+        });
+        Ok(out)
+    }
+
+    pub fn delete_revision(&self, revision: &str) -> Result<(), StoreError> {
+        let cf = self.revisions_cf()?;
+        self.db
+            .delete_cf(cf, format!("{PREFIX_REVISION_SNAPSHOT}{revision}"))
+            .map_err(|err| StoreError::RocksDb(err.to_string()))?;
+        self.db
+            .delete_cf(cf, format!("{PREFIX_REVISION_INDEX}{revision}"))
+            .map_err(|err| StoreError::RocksDb(err.to_string()))
+    }
+
+    /// Keep the `keep` most recently written revisions, dropping the rest.
+    ///
+    /// Returns what it removed, in the order removed, so a caller can report
+    /// it rather than deleting silently. `keep` of zero removes everything,
+    /// which is what a caller asking to keep nothing means.
+    pub fn prune_revisions(&self, keep: usize) -> Result<Vec<String>, StoreError> {
+        let stale: Vec<String> = self
+            .list_revisions()?
+            .into_iter()
+            .skip(keep)
+            .map(|entry| entry.revision)
+            .collect();
+
+        for revision in &stale {
+            self.delete_revision(revision)?;
+        }
+        Ok(stale)
+    }
+
+    fn next_sequence(&self) -> Result<u64, StoreError> {
+        let cf = self.revisions_cf()?;
+        let current = self
+            .db
+            .get_cf(cf, KEY_REVISION_SEQUENCE)
+            .map_err(|err| StoreError::RocksDb(err.to_string()))?
+            .and_then(|bytes| bytes.as_slice().try_into().ok())
+            .map(u64::from_be_bytes)
+            .unwrap_or(0);
+
+        let next = current.saturating_add(1);
+        self.db
+            .put_cf(cf, KEY_REVISION_SEQUENCE, next.to_be_bytes())
+            .map_err(|err| StoreError::RocksDb(err.to_string()))?;
+        Ok(next)
     }
 }
 
