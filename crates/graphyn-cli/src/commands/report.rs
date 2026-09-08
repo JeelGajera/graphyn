@@ -31,8 +31,8 @@ pub fn run(
         &std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?,
     );
 
-    let base_rev = super::revision::resolve(&root, base)?;
-    let head_rev = super::revision::resolve(&root, head)?;
+    let base_rev = graphyn_store::revision::resolve(&root, base)?;
+    let head_rev = graphyn_store::revision::resolve(&root, head)?;
 
     let store = RocksGraphStore::open(&super::db_path(&root))
         .map_err(|e| format!("failed to open store: {e}"))?;

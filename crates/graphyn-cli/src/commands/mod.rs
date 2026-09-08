@@ -6,7 +6,6 @@ pub mod json;
 pub mod markdown;
 pub mod query;
 pub mod report;
-pub mod revision;
 pub mod serve;
 pub mod status;
 pub mod watch;
