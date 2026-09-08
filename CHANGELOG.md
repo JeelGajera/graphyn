@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`graphyn tests <symbol> | --diff`.** Which tests exercise a symbol, or
+  everything a change touched, so a verify loop can run those instead of the
+  whole suite or nothing at all.
+
+  This is the one query whose answer licenses an *omission*: naming a subset is
+  a claim that the tests left out cannot fail, and Graphyn's graph is knowingly
+  incomplete — structural regions record no cross-file references, and test
+  detection is by file convention. So the selection and the confidence in it
+  are separate, and the confidence is carried by the exit status rather than
+  only printed: 0 when every changed symbol is reached by a resolved test edge,
+  3 when something could be missing, 2 when the question could not be answered.
+
+  Tests the change itself modified are reported apart from coverage and do not
+  mark anything covered. A diff that edits a function and its only test is
+  exactly where a reviewer most needs to be told something is missing, and
+  letting the modified test silence that would report full coverage instead.
+  This list is also what the next change reads.
+
+  Coverage reaches through intermediates — a test calling a wrapper that calls
+  the changed function covers it — bounded by `--depth`. `tests` edges are not
+  followed during that walk: they are the answer, not a path through the graph,
+  and following them would let one test's coverage make another test look like
+  a caller.
+
+
 - **A `tests` relationship kind, and per-language test detection.** Every
   language now recognises its own test files by the rule its own tooling
   already uses to find them — `_test.go`, `*.test.*`/`*.spec.*`, `test_*.py`

@@ -75,6 +75,7 @@ graphyn watch ./my-repo
 - `graphyn impact <file>`: what depends on one file
 - `graphyn diff --base <rev> --head <rev>`: what changed between two snapshots
 - `graphyn check [--diff-only]`: enforce `.graphyn/rules.toml`
+- `graphyn tests <symbol> | --diff`: which tests exercise a symbol or a change
 - `graphyn report --base <rev> --head <rev>`: one markdown report for a PR comment
 - `graphyn status`: graph stats and coverage
 - `graphyn serve --stdio`: start MCP server
@@ -154,6 +155,35 @@ version, and anything a consumer could observe breaking bumps it.
 
 Output is deterministic — the same input produces byte-identical bytes, which
 is what makes two analyses safe to diff.
+
+## Test impact
+
+```bash
+graphyn tests UserPayload
+graphyn tests --diff --base HEAD --head worktree
+```
+
+Returns the tests that exercise a symbol, or everything a change touched, so a
+verify loop can run those instead of the whole suite or nothing at all.
+
+This answer licenses an omission — naming a subset is a claim that the tests
+left out cannot fail — so the confidence is carried by the exit status rather
+than only printed:
+
+| Exit | Means |
+|---|---|
+| `0` | Every changed symbol is reached by a resolved test edge; run this subset |
+| `3` | Tests were found, but something could be missing; run the full suite |
+| `2` | The question could not be answered |
+
+A selection is incomplete when a changed symbol is reached by no recognized
+test, when a test was selected on structural evidence, or when the repository
+has structural regions at all — a test in one of those could exercise the
+change without recording an edge.
+
+Tests the change itself modified are reported separately and never counted as
+coverage. A diff that edits a function and its only test is exactly where a
+reviewer most needs to be told something is missing.
 
 ## Agent Hooks
 
