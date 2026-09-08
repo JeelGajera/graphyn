@@ -3,7 +3,6 @@ pub mod check;
 pub mod diff;
 pub mod json;
 pub mod query;
-pub mod revision;
 pub mod serve;
 pub mod status;
 pub mod watch;

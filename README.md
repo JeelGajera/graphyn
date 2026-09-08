@@ -153,6 +153,25 @@ Start server:
 graphyn serve --stdio
 ```
 
+Six tools, deliberately. A large tool surface degrades an agent's ability to
+pick the right one, so each of these answers a question the others cannot:
+
+| Tool | Answers |
+|---|---|
+| `get_blast_radius` | What breaks if I change this symbol? |
+| `get_dependencies` | What does this symbol depend on? |
+| `get_symbol_usages` | Where is this used, including under aliases? |
+| `graph_diff` | What did this change break? |
+| `check_rules` | Does this change violate the rules this repository wrote down? |
+| `refresh_graph_index` | Re-analyze after changes |
+
+The three query tools take `kinds` and `min_resolution` filters. Results carry
+their resolution: an answer marked structural was matched within one file and
+cannot see across files, so an empty result from it is not evidence that
+nothing depends on the symbol. `graph_diff` and `check_rules` read snapshots
+recorded by `graphyn analyze --snapshot` and never re-analyze, so their answers
+depend only on the revisions named.
+
 Agent and MCP setup templates are in [`agent-configs/`](agent-configs/).
 
 The folder includes ready-to-use examples for:
