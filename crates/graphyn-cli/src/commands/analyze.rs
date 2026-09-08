@@ -194,7 +194,7 @@ pub fn run(
     // so `analyze --snapshot` leaves the repository queryable exactly as a
     // plain `analyze` does.
     if let Some(revision) = snapshot {
-        let resolved = super::revision::resolve(&root, revision)?;
+        let resolved = graphyn_store::revision::resolve(&root, revision)?;
         let snapshot = GraphSnapshot::from_graph(&graph)
             .map_err(|e| format!("failed to build snapshot: {e}"))?;
         store

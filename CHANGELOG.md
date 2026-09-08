@@ -39,6 +39,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`graphyn check --diff-only`.** Shorthand for `--base HEAD --head worktree`,
   which is what a pre-commit hook wants.
+- **Two MCP tools: `graph_diff` and `check_rules`.** The enforcement half of
+  Graphyn, reachable by an agent rather than only by a command line.
+  `graph_diff` reports what a change broke; `check_rules` evaluates
+  `.graphyn/rules.toml` and says which constraints it violates.
+
+  Six tools total, which is a ceiling rather than a coincidence — a large tool
+  surface degrades an agent's ability to pick the right one, so a question an
+  existing tool already answers does not get its own. The edge-kind and
+  resolution filters the plan also called for were already present on the three
+  query tools and were left alone.
+
+  Both read snapshots and never analyze. Without one they name the command that
+  records it rather than analyzing on the fly: an answer that depended on
+  whatever was on disk at the moment of the call would not be reproducible, and
+  reproducibility is the property the whole product rests on.
+
+  `check_rules` reports the same four outcomes the command does, and takes more
+  care with them, not less. A person reading a terminal notices an empty
+  section; a model reading "no violations" acts on it. So the sentence saying
+  every rule passed is emitted only when every rule was examined in full, and a
+  repository with no rules file is told that nothing was enforced rather than
+  that nothing was wrong.
+
+### Changed
+
+- **Revision naming moved from the CLI to `graphyn-store`.** The store keys
+  snapshots by these names and two front ends now resolve them. Two copies of
+  the rule would drift, and the failure when they do is a snapshot written under
+  one name and looked for under another.
 
 
 - **`graphyn check`** — enforce the rules in `.graphyn/rules.toml`. Reads the

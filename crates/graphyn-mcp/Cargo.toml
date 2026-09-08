@@ -34,3 +34,6 @@ schemars = "1"
 graphyn-core = { path = "../graphyn-core", version = "0.2.0" }
 graphyn-lang = { path = "../graphyn-lang", version = "0.2.0", default-features = false }
 graphyn-store = { path = "../graphyn-store", version = "0.2.0" }
+
+[dev-dependencies]
+graphyn-core = { path = "../graphyn-core", version = "0.2.0" }

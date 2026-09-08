@@ -1,5 +1,11 @@
 //! Naming the revision a snapshot is recorded under.
 //!
+//! Lives beside the store because the store keys snapshots by these names, and
+//! because more than one front end resolves them: the CLI for `--snapshot`,
+//! `diff` and `check`, and the MCP server for the equivalent tools. Two copies
+//! of this rule would drift, and the failure mode when they do is a snapshot
+//! written under one name and looked for under another.
+//!
 //! `diff` compares two graphs, so each has to be stored under a name that
 //! identifies what was analysed. Three forms are accepted, and the distinction
 //! between them is not cosmetic:

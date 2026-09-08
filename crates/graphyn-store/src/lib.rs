@@ -1,4 +1,5 @@
 pub mod cache;
+pub mod revision;
 pub mod rocksdb;
 
 pub use cache::{CacheStats, HotQueryCache};

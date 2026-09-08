@@ -142,8 +142,8 @@ fn load_pair(
     base: &str,
     head: &str,
 ) -> Result<(GraphynGraph, GraphynGraph), Box<dyn std::error::Error>> {
-    let base_rev = super::revision::resolve(root, base)?;
-    let head_rev = super::revision::resolve(root, head)?;
+    let base_rev = graphyn_store::revision::resolve(root, base)?;
+    let head_rev = graphyn_store::revision::resolve(root, head)?;
     let store = RocksGraphStore::open(&super::db_path(root))
         .map_err(|e| format!("failed to open store: {e}"))?;
     Ok((
