@@ -10,6 +10,7 @@ pub mod index;
 pub mod ir;
 pub mod query;
 pub mod resolver;
+pub mod rule_eval;
 pub mod rules;
 pub mod scan;
 pub mod symbol_id;

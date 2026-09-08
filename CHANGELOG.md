@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Rules evaluated against a graph**, with three outcomes rather than two.
+  `graphyn_core::rule_eval::evaluate` runs the rules from `.graphyn/rules.toml`
+  over a graph, and a delta where one is supplied.
+
+  A rule is reported satisfied only when every edge in its scope was resolved.
+  Where weaker edges could hide a violation the verdict is *inconclusive*,
+  carrying the count of edges that prevented an answer. A forbidding rule is a
+  claim about absence, and "no violation found" is not "no violation exists" —
+  reporting a pass on structural evidence would report a conclusion the
+  analysis never reached. Inconclusive does not fail a gate, which is how a
+  Tier 2 language fails open rather than passing quietly.
+
+  Violations are only ever raised on resolved evidence, so a reported violation
+  is a fact rather than a suspicion; a violation found on strong evidence is not
+  softened by weak evidence elsewhere in the same scope.
+
+  `forbid-dependency` covers imports and re-exports, `forbid-reference` every
+  edge kind, so "you may call into this, but not import it" is expressible.
+  `max-fan-in` counts resolved inbound edges, and raises uncertainty only when
+  the unresolved ones could actually carry a symbol past the threshold.
+  `no-field-removal` matches fields by declaration range rather than by name
+  convention, and stays quiet when the owning symbol was deleted outright —
+  that removal is already reported, and repeating it per field would bury it.
+  A rule needing a delta without one is skipped, never satisfied.
+
+
 - **Findings derived from a diff.** `graphyn diff` reports broken references,
   orphaned symbols, removed API surface and changed signatures, alongside the
   raw counts, with the same set in `--json`. Each finding carries its own
