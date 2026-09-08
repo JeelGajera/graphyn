@@ -59,11 +59,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   `version: source` builds from the checked-out tree instead of downloading a
   release, which is how this repository runs the action against its own pull
-  requests. An action nobody has executed is not a tested action — and running
-  it caught the first thing wrong with it: the comment read "No problems found"
-  on a repository with no rules file, which is the unearned pass `check`
-  already refuses to report. The report now states that no rule was enforced,
-  and the headline claims only what the diff supports.
+  requests. An action nobody has executed is not a tested action, and running
+  it caught the first two things wrong with it.
+
+  The comment read "No problems found" on a repository with no rules file,
+  which is the unearned pass `check` already refuses to report. The report now
+  states that no rule was enforced, and the headline claims only what the diff
+  supports.
+
+  And the comparison ran against the tip of the base branch rather than the
+  merge base, so everything merged into the base since the branch diverged read
+  as removed by the change. On Graphyn's own pull request that produced a
+  comment claiming a file the branch never touched had lost most of its
+  symbols. The range is now the branch's own work and nothing else.
 
 
 - **`graphyn check`** — enforce the rules in `.graphyn/rules.toml`. Reads the

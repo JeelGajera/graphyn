@@ -30,9 +30,26 @@ if ! git rev-parse --verify --quiet "${base_ref}^{commit}" >/dev/null; then
   git fetch --no-tags --depth=50 origin "+refs/heads/*:refs/remotes/origin/*" >/dev/null 2>&1 || true
 fi
 
-if ! base_sha="$(git rev-parse --verify --quiet "${base_ref}^{commit}")"; then
+if ! base_tip="$(git rev-parse --verify --quiet "${base_ref}^{commit}")"; then
   echo "::error::Could not resolve base revision '$base_ref'. Pass base-ref explicitly, or set fetch-depth: 0 on actions/checkout." >&2
   exit 1
+fi
+
+# Compare against the merge base, not the tip of the base branch.
+#
+# The tip is wrong and wrong in the worst direction: everything merged into the
+# base branch since this one diverged then reads as removed by this change. On
+# Graphyn's own pull request that produced a comment claiming a file the branch
+# never touched had lost most of its symbols. A confidently wrong answer is the
+# one thing this tool must not produce, so the range is the branch's own work
+# and nothing else.
+if base_sha="$(git merge-base "$base_tip" "$head_sha" 2>/dev/null)" && [ -n "$base_sha" ]; then
+  [ "$base_sha" = "$base_tip" ] || echo "Using merge base $base_sha rather than the tip of $base_ref."
+else
+  # No common ancestor found — an unrelated history, or a clone too shallow to
+  # reach one. Saying so beats silently comparing across the whole divergence.
+  echo "::warning::No merge base between $base_ref and HEAD; comparing against the branch tip. Set fetch-depth: 0 on actions/checkout for an accurate range." >&2
+  base_sha="$base_tip"
 fi
 
 if [ "$base_sha" = "$head_sha" ]; then
