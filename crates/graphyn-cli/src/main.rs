@@ -80,6 +80,36 @@ enum Commands {
         json: bool,
     },
 
+    /// What depends on one file — the question a pre-edit hook asks
+    ///
+    /// A hook fires knowing only a path, with no symbol to ask about yet.
+    /// A path outside the graph is reported as having no dependents rather
+    /// than erroring, so a hook does not break on the first untracked file.
+    Impact {
+        /// File to inspect, absolute or relative to the repository root
+        file: String,
+
+        /// Path to the repository root
+        #[arg(long, default_value = ".")]
+        path: String,
+
+        /// Traversal depth (default: 3, max: 10)
+        #[arg(long, short, default_value = "3")]
+        depth: usize,
+
+        /// Only follow these relationship kinds (repeatable).
+        #[arg(long = "kind", value_name = "KIND")]
+        kind: Vec<String>,
+
+        /// Lowest resolution an edge may have to be followed.
+        #[arg(long, value_name = "LEVEL", default_value = "structural")]
+        min_confidence: String,
+
+        /// Emit the result as JSON on stdout instead of a human summary
+        #[arg(long)]
+        json: bool,
+    },
+
     /// Enforce the rules in .graphyn/rules.toml
     ///
     /// Exit status is part of the contract: 0 when nothing was violated,
@@ -105,6 +135,13 @@ enum Commands {
         /// including uncommitted edits.
         #[arg(long, value_name = "REV")]
         head: Option<String>,
+
+        /// Shorthand for `--base HEAD --head worktree`.
+        ///
+        /// What a pre-commit hook wants: judge the uncommitted change against
+        /// the last commit. Conflicts with --base/--head.
+        #[arg(long, conflicts_with_all = ["base", "head"])]
+        diff_only: bool,
 
         /// Emit the result as JSON on stdout instead of a human summary
         #[arg(long)]
@@ -292,13 +329,18 @@ fn main() {
             rules,
             base,
             head,
+            diff_only,
             json,
             require_rules,
         } => match commands::check::run(
             &path,
             rules.as_deref(),
-            base.as_deref(),
-            head.as_deref(),
+            if diff_only { Some("HEAD") } else { base.as_deref() },
+            if diff_only {
+                Some("worktree")
+            } else {
+                head.as_deref()
+            },
             json,
             require_rules,
         ) {
@@ -308,6 +350,15 @@ fn main() {
                 std::process::exit(commands::check::EXIT_UNABLE);
             }
         },
+
+        Commands::Impact {
+            file,
+            path,
+            depth,
+            kind,
+            min_confidence,
+            json,
+        } => commands::impact::run(&file, &path, depth, &kind, &min_confidence, json),
 
         Commands::Query { subcommand } => match subcommand {
             QueryCommands::BlastRadius {
