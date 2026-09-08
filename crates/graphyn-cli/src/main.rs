@@ -80,6 +80,45 @@ enum Commands {
         json: bool,
     },
 
+    /// Enforce the rules in .graphyn/rules.toml
+    ///
+    /// Exit status is part of the contract: 0 when nothing was violated,
+    /// 1 when a rule was broken on resolved evidence, 2 when the check
+    /// could not run at all. A rule whose scope is too weakly resolved to
+    /// judge is reported as undecided and does not fail the build.
+    Check {
+        /// Path to the repository root
+        #[arg(default_value = ".")]
+        path: String,
+
+        /// Rules file to read. Defaults to <path>/.graphyn/rules.toml
+        #[arg(long, value_name = "FILE")]
+        rules: Option<String>,
+
+        /// Evaluate change-sensitive rules against this revision as "before".
+        /// Must be given with --head, and both must already be recorded
+        /// with `analyze --snapshot`.
+        #[arg(long, value_name = "REV")]
+        base: Option<String>,
+
+        /// The revision to compare to. `worktree` is the working tree
+        /// including uncommitted edits.
+        #[arg(long, value_name = "REV")]
+        head: Option<String>,
+
+        /// Emit the result as JSON on stdout instead of a human summary
+        #[arg(long)]
+        json: bool,
+
+        /// Treat a missing rules file as a failure.
+        ///
+        /// Off by default so the command is harmless in a repository that
+        /// has written no rules; on in CI, where a rules file that has gone
+        /// missing would otherwise pass silently.
+        #[arg(long)]
+        require_rules: bool,
+    },
+
     /// Query the symbol relationship graph
     Query {
         #[command(subcommand)]
@@ -244,6 +283,31 @@ fn main() {
             head,
             json,
         } => commands::diff::run(&path, &base, &head, json),
+
+        // `check` owns its exit status — a gate reads it — so it returns a
+        // code rather than a unit, and a violation must not be reported
+        // through the same path as a tool error.
+        Commands::Check {
+            path,
+            rules,
+            base,
+            head,
+            json,
+            require_rules,
+        } => match commands::check::run(
+            &path,
+            rules.as_deref(),
+            base.as_deref(),
+            head.as_deref(),
+            json,
+            require_rules,
+        ) {
+            Ok(code) => std::process::exit(code),
+            Err(e) => {
+                output::error(&e.to_string());
+                std::process::exit(commands::check::EXIT_UNABLE);
+            }
+        },
 
         Commands::Query { subcommand } => match subcommand {
             QueryCommands::BlastRadius {

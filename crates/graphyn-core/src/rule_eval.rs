@@ -33,7 +33,7 @@ use crate::delta::GraphDelta;
 use crate::graph::GraphynGraph;
 use crate::ir::{RelationshipKind, Symbol, SymbolKind};
 use crate::rules::{Rule, RuleKind, Rules, Severity};
-use crate::symbol_id::parse_external_package_id;
+use crate::symbol_id::{is_external_package, parse_external_package_id};
 
 /// What a rule concluded.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -303,11 +303,20 @@ fn forbid_edges(
 /// A symbol whose resolved fan-in is within the threshold but whose weaker
 /// edges could carry it over is uncertainty rather than a pass: the count that
 /// matters is one nobody can see.
+///
+/// External package nodes are not counted. Fan-in on a third-party package
+/// measures how much a repository uses a library, not how coupled its own code
+/// has become — every real codebase points at `serde` or `express` hundreds of
+/// times, and a rule that flags that is one whose threshold gets raised until
+/// it means nothing.
 fn max_fan_in(graph: &GraphynGraph, all_edges: &[Edge], threshold: usize) -> (Vec<Violation>, Uncertainty) {
     let mut resolved: BTreeMap<&str, usize> = BTreeMap::new();
     let mut weak: BTreeMap<&str, usize> = BTreeMap::new();
 
     for edge in all_edges {
+        if is_external_package(&edge.to) {
+            continue;
+        }
         let counter = if edge.gate_safe {
             &mut resolved
         } else {
@@ -326,11 +335,13 @@ fn max_fan_in(graph: &GraphynGraph, all_edges: &[Edge], threshold: usize) -> (Ve
         let uncertain = weak.get(id).copied().unwrap_or(0);
 
         if strong > threshold {
+            // Falling back to the id rather than an empty path: a violation
+            // that renders as ":0" tells the reader nothing about what broke.
             let (file, line) = graph
                 .symbols
                 .get(id)
                 .map(|s| (s.file.clone(), s.line_start))
-                .unwrap_or_else(|| (String::new(), 0));
+                .unwrap_or_else(|| (id.to_string(), 0));
             violations.push(Violation {
                 file,
                 line,
@@ -365,57 +376,101 @@ fn is_field(kind: &SymbolKind) -> bool {
     matches!(kind, SymbolKind::Property | SymbolKind::EnumVariant)
 }
 
-/// Whether `field` is declared inside `owner`.
+/// The symbol a removed field belonged to, if any.
 ///
-/// Containment is by file and line range in the graph the field was removed
-/// from. Symbol ids do not encode a parent, and name conventions for members
-/// differ per language; a line range is the one signal every adapter produces
-/// the same way.
-fn declared_inside(owner: &Symbol, field: &Symbol) -> bool {
-    owner.file == field.file
-        && field.line_start >= owner.line_start
-        && field.line_end <= owner.line_end
-        && owner.id != field.id
+/// Symbol ids encode no parent and member naming differs per language, so
+/// ownership has to be recovered from position. Two adapters disagree about
+/// what a container's line range means, and both have to work:
+///
+/// * Some record a real span, `class Foo {` through its closing brace. There
+///   containment is exact, and the innermost enclosing container wins, so a
+///   field of a nested class is not attributed to the outer one.
+/// * Others record only the declaration line, leaving `line_end` equal to
+///   `line_start` — TypeScript does this today, which is how a rule naming a
+///   class with four fields could report nothing at all. There the owner is
+///   the nearest container declared above the field.
+///
+/// The fallback is a heuristic and can misattribute a field declared after a
+/// container's body has closed but before the next one opens. It is the
+/// honest trade: the alternative is a rule that silently never fires.
+fn owner_of<'a>(containers: &'a [Symbol], field: &Symbol) -> Option<&'a Symbol> {
+    // An exact range beats a guess, and the innermost of those beats an outer.
+    let enclosing = containers
+        .iter()
+        .filter(|c| {
+            c.line_end > c.line_start
+                && c.line_start <= field.line_start
+                && field.line_end <= c.line_end
+        })
+        .max_by_key(|c| (c.line_start, c.id.as_str()));
+    if enclosing.is_some() {
+        return enclosing;
+    }
+
+    containers
+        .iter()
+        .filter(|c| c.line_start <= field.line_start)
+        .max_by_key(|c| (c.line_start, c.id.as_str()))
+}
+
+/// Whether a symbol can own a field.
+///
+/// The synthetic per-file module symbol is excluded deliberately: it sits at
+/// line 1 of every file, so leaving it in would make it the fallback owner of
+/// every field in the repository.
+fn can_own_fields(symbol: &Symbol) -> bool {
+    !is_field(&symbol.kind) && !matches!(symbol.kind, SymbolKind::Module)
 }
 
 /// `no-field-removal`: a named symbol may not lose fields.
 fn no_field_removal(before: &GraphynGraph, delta: &GraphDelta, symbol_glob: &str) -> Vec<Violation> {
     let pattern = compile(symbol_glob);
 
-    // Owners are taken from the graph the fields were removed from: a symbol
-    // deleted outright has no fields left to lose, and reporting each of its
-    // fields would bury the one finding that matters — that the symbol went.
+    // A symbol deleted outright has no fields left to lose, and reporting each
+    // of its fields would bury the one finding that matters — that the symbol
+    // went. `findings` already reports the removal itself.
     let removed_ids: BTreeSet<&str> = delta
         .removed_symbols
         .iter()
         .map(|s| s.id.as_str())
         .collect();
 
-    let mut owners: Vec<Symbol> = before
-        .symbols
-        .iter()
-        .filter(|entry| {
-            let symbol = entry.value();
-            !removed_ids.contains(symbol.id.as_str())
-                && !is_field(&symbol.kind)
-                && matches(&pattern, &symbol.name)
-        })
-        .map(|entry| entry.value().clone())
-        .collect();
-    owners.sort_by(|a, b| a.id.cmp(&b.id));
+    // Candidate owners are grouped per file, sorted, and taken from the graph
+    // the fields were removed from.
+    let mut by_file: BTreeMap<String, Vec<Symbol>> = BTreeMap::new();
+    for entry in before.symbols.iter() {
+        let symbol = entry.value();
+        if can_own_fields(symbol) && !removed_ids.contains(symbol.id.as_str()) {
+            by_file
+                .entry(symbol.file.clone())
+                .or_default()
+                .push(symbol.clone());
+        }
+    }
+    for containers in by_file.values_mut() {
+        containers.sort_by(|a, b| (a.line_start, &a.id).cmp(&(b.line_start, &b.id)));
+    }
 
     let mut violations = Vec::new();
-    for owner in &owners {
-        for removed in &delta.removed_symbols {
-            if is_field(&removed.kind) && declared_inside(owner, removed) {
-                violations.push(Violation {
-                    file: removed.file.clone(),
-                    line: removed.line_start,
-                    symbol: owner.id.clone(),
-                    detail: format!("field '{}' removed from '{}'", removed.name, owner.name),
-                });
-            }
+    for removed in &delta.removed_symbols {
+        if !is_field(&removed.kind) {
+            continue;
         }
+        let Some(containers) = by_file.get(&removed.file) else {
+            continue;
+        };
+        let Some(owner) = owner_of(containers, removed) else {
+            continue;
+        };
+        if !matches(&pattern, &owner.name) {
+            continue;
+        }
+        violations.push(Violation {
+            file: removed.file.clone(),
+            line: removed.line_start,
+            symbol: owner.id.clone(),
+            detail: format!("field '{}' removed from '{}'", removed.name, owner.name),
+        });
     }
 
     violations.sort();

@@ -399,6 +399,53 @@ fn deleting_the_owner_outright_does_not_report_each_of_its_fields() {
 }
 
 #[test]
+fn a_field_is_attributed_when_the_owner_records_only_its_declaration_line() {
+    // The shape TypeScript actually produces: the class records line_end ==
+    // line_start, so exact containment finds nothing and the field has to be
+    // attributed to the nearest container declared above it. Locked as a test
+    // because the first version of this rule reported nothing at all against a
+    // real repository while passing every synthetic case.
+    let owner = symbol("core/config.ts", "Config", SymbolKind::Class, (1, 1));
+    let keep = symbol("core/config.ts", "host", SymbolKind::Property, (2, 2));
+    let gone = symbol("core/config.ts", "port", SymbolKind::Property, (3, 3));
+
+    let before = graph_of(vec![(
+        "core/config.ts",
+        vec![owner.clone(), keep.clone(), gone],
+        vec![],
+    )]);
+    let after = graph_of(vec![("core/config.ts", vec![owner, keep], vec![])]);
+    let d = delta::compute(&before, &after);
+
+    let outcome = &evaluate(&parse(NO_FIELD_REMOVAL), &before, Some(&d)).outcomes[0];
+    assert_eq!(outcome.verdict, Verdict::Violated);
+    assert!(outcome.violations[0].detail.contains("port"));
+}
+
+#[test]
+fn a_field_of_a_nested_class_is_not_attributed_to_the_enclosing_one() {
+    // Where ranges are real, the innermost enclosing container wins.
+    let outer = symbol("core/config.ts", "Config", SymbolKind::Class, (1, 20));
+    let inner = symbol("core/config.ts", "Inner", SymbolKind::Class, (5, 10));
+    let gone = symbol("core/config.ts", "secret", SymbolKind::Property, (6, 6));
+
+    let before = graph_of(vec![(
+        "core/config.ts",
+        vec![outer.clone(), inner.clone(), gone],
+        vec![],
+    )]);
+    let after = graph_of(vec![("core/config.ts", vec![outer, inner], vec![])]);
+    let d = delta::compute(&before, &after);
+
+    let outcome = &evaluate(&parse(NO_FIELD_REMOVAL), &before, Some(&d)).outcomes[0];
+    assert_eq!(
+        outcome.verdict,
+        Verdict::Satisfied,
+        "the field belongs to Inner, and the rule names Config"
+    );
+}
+
+#[test]
 fn a_delta_rule_without_a_delta_is_skipped_not_satisfied() {
     let graph = config_graph(&["host"]);
     let evaluation = evaluate(&parse(NO_FIELD_REMOVAL), &graph, None);
