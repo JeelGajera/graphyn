@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Findings derived from a diff.** `graphyn diff` reports broken references,
+  orphaned symbols, removed API surface and changed signatures, alongside the
+  raw counts, with the same set in `--json`. Each finding carries its own
+  resolution — the weakest among the evidence that produced it, since a finding
+  is only as trustworthy as the shakiest step in the reasoning behind it — and
+  `graphyn_core::findings` exposes the gate-safe subset directly, which is what
+  the enforcement commands will read.
+
+  Coverage is measured over the changed files rather than the repository. A
+  change confined to one badly resolved file is not made trustworthy by the
+  rest of the repository resolving well.
+
+  Two things this deliberately does not do. A symbol removed together with its
+  only caller is not breakage — reporting a clean deletion would bury the
+  reports that matter. And visibility is not modelled anywhere in the IR, so
+  "public method removed" cannot be distinguished from "private method
+  removed": the finding names every API-shaped symbol removed, and says so.
+
 - **`graphyn diff`.** Compares two recorded revisions and reports what changed:
   symbols added, removed, renamed or moved, signatures changed, and edges added
   or removed. `--base` defaults to `HEAD`, `--head` to `worktree`, and `--json`
@@ -379,6 +397,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   languages.
 
 ### Known limits
+
+- **A stale reference inside an edited file is not reported as broken.** A
+  reference that no longer resolves produces no edge at all in the new graph
+  rather than a dangling one, so two graphs cannot distinguish "the author
+  updated this caller" from "the author left a stale reference here". Broken
+  references are therefore reported only where the referring file was left
+  alone entirely; rename a type in a file and delete a function that same file
+  still calls, and nothing is reported.
+
+  The analyzer's own "unable to resolve" diagnostics say it directly, but they
+  are neither carried on the graph nor persisted in a snapshot, so closing this
+  is a format change rather than a better heuristic. Failing silent is the
+  right direction meanwhile: an advisory finding on every removal whose caller
+  was correctly updated is the kind of noise that gets a gate switched off. A
+  test pins the gap so it stays visible.
+
+- **Visibility is not modelled.** Nothing in the IR records whether a symbol is
+  public, so a removed private helper and a removed public method are
+  indistinguishable, and "visibility narrowed" cannot be detected at all.
 
 
 - **Tier 2 languages resolve nothing across files.** A structural language
