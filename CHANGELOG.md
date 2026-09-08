@@ -43,6 +43,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   act on, so a change made entirely of structural edges — a Tier 2 repository —
   is visibly not actionable rather than silently passing.
 
+- **Graph snapshots keyed by revision.** `analyze --snapshot <rev>` records the
+  analysis under a revision alongside the working graph, which is what `diff`
+  will compare. `--keep-snapshots N` (default 10) drops the oldest beyond N.
+
+  A commit, branch or tag is resolved through git to its SHA and stored under
+  that, because `HEAD` means something different tomorrow and a snapshot named
+  for a moving label stops describing what it holds. `worktree` is the one name
+  kept literally: it is the working tree including uncommitted edits, so it has
+  no commit to resolve to. A revision git cannot resolve is an error rather
+  than a snapshot under that name — a typo becoming its own snapshot would make
+  `diff` compare against an empty graph and report that everything was added,
+  which is a confidently wrong answer where an error is the honest one.
+
+  Snapshots live in their own RocksDB column family rather than under a key
+  prefix. The working graph is read by every query and rewritten by every
+  analyse; revisions are written once and read only by `diff`. Keeping them
+  apart means retention cannot iterate over or delete the working graph, and a
+  layout change can drop the revisions alone. That layout carries its own
+  version, separate from the snapshot payload's: a mismatch discards the family
+  and reindexes, because a stale index pointing at snapshots that no longer
+  parse is the silent corruption this is meant to prevent, and a revision
+  snapshot is only ever a cache of something git can reproduce.
+
+  Retention orders revisions by a counter rather than a wall clock. Two
+  snapshots written inside one clock tick would be unordered and a clock
+  adjustment would reorder history; a counter is monotonic by construction,
+  which is all retention needs.
+
 - **Ruby and C# as Tier 2 languages** (`--features ruby`, `--features csharp`,
   neither in `default`). Each is a module, a feature flag and a spec — no
   parser, extractor, resolver or query file, because the analyzer runs on the
