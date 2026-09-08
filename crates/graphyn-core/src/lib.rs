@@ -14,6 +14,7 @@ pub mod rule_eval;
 pub mod rules;
 pub mod scan;
 pub mod symbol_id;
+pub mod test_impact;
 
 pub use error::GraphynError;
 pub use graph::{GraphynGraph, RelationshipMeta};

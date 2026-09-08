@@ -8,6 +8,7 @@ pub mod query;
 pub mod report;
 pub mod serve;
 pub mod status;
+pub mod tests;
 pub mod watch;
 
 use std::path::{Path, PathBuf};

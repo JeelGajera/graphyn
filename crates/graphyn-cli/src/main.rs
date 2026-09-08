@@ -180,6 +180,48 @@ enum Commands {
         rules: Option<String>,
     },
 
+    /// Which tests exercise a symbol, or a change
+    ///
+    /// The verify loop: run the tests that cover what you changed instead of
+    /// the whole suite, or nothing. Exit status carries the confidence — 0
+    /// when the selection is complete enough to run in place of the suite,
+    /// 3 when something could be missing, 2 when the question could not be
+    /// answered. Naming a subset is a claim that the tests left out cannot
+    /// fail, so the caveat is machine-readable rather than only printed.
+    Tests {
+        /// Symbol to find tests for. Omit and pass --diff to use a change.
+        symbol: Option<String>,
+
+        /// Path to the repository root
+        #[arg(long, default_value = ".")]
+        path: String,
+
+        /// Select tests for a recorded change rather than for one symbol.
+        #[arg(long)]
+        diff: bool,
+
+        /// With --diff, the revision to compare from.
+        #[arg(long, value_name = "REV")]
+        base: Option<String>,
+
+        /// With --diff, the revision to compare to.
+        #[arg(long, value_name = "REV")]
+        head: Option<String>,
+
+        /// How far a change propagates before a test stops counting as
+        /// covering it. 0 is direct references only.
+        #[arg(long, short, default_value = "3")]
+        depth: usize,
+
+        /// Lowest resolution an edge may have to be followed.
+        #[arg(long, value_name = "LEVEL", default_value = "resolved")]
+        min_confidence: String,
+
+        /// Emit the selection as JSON on stdout
+        #[arg(long)]
+        json: bool,
+    },
+
     /// Query the symbol relationship graph
     Query {
         #[command(subcommand)]
@@ -393,6 +435,32 @@ fn main() {
             Err(e) => {
                 output::error(&e.to_string());
                 std::process::exit(commands::check::EXIT_UNABLE);
+            }
+        },
+
+        Commands::Tests {
+            symbol,
+            path,
+            diff,
+            base,
+            head,
+            depth,
+            min_confidence,
+            json,
+        } => match commands::tests::run(
+            symbol.as_deref(),
+            &path,
+            base.as_deref(),
+            head.as_deref(),
+            diff,
+            depth,
+            &min_confidence,
+            json,
+        ) {
+            Ok(code) => std::process::exit(code),
+            Err(e) => {
+                output::error(&e.to_string());
+                std::process::exit(commands::tests::EXIT_UNABLE);
             }
         },
 
