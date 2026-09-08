@@ -3,6 +3,7 @@ pub mod ast;
 pub mod coverage;
 pub mod delta;
 pub mod error;
+pub mod findings;
 pub mod graph;
 pub mod incremental;
 pub mod index;
