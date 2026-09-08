@@ -9,6 +9,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **An audit framework**: findings, severity, confidence, stable ids and
+  suppression via `.graphyn/audit-ignore`. The detectors themselves are a
+  separate change; this is the part that decides what a detector is allowed to
+  say.
+
+  An audit finding is unlike every other finding here. The others describe
+  code; this one describes conduct — it says a change looks like it was made to
+  pass a check rather than to work. That is an accusation, and it will
+  sometimes be levelled at someone who did nothing wrong. Three properties
+  follow.
+
+  **Detectors cannot run on evidence they cannot stand behind.** Only files a
+  Tier 1 adapter resolved are in scope, and the framework drops an
+  out-of-scope finding even if a detector forgot to check — accusing someone on
+  the strength of a name matched inside one file must not be one mistake away.
+
+  **A finding keeps its identity across runs.** Ids are derived from the
+  detector and the symbols the finding is about, never from a line or a file
+  offset, so an unrelated edit upstream does not read as a new accusation and a
+  suppression written today still matches after a refactor. The hash is FNV-1a
+  written out rather than `DefaultHasher`, which is explicitly unstable across
+  Rust releases and would silently invalidate every suppression in a repository
+  on a toolchain bump.
+
+  **A suppressed finding is reported as suppressed, never omitted**, and a
+  suppression matching nothing is reported as stale. A gate that silently drops
+  what it was told to ignore is precisely the thing this feature exists to
+  catch, and dead configuration gives false comfort to whoever reads the file
+  next.
+
+  Suppressions are ids, not globs. A pattern would let one line silence a whole
+  detector, and a suppression that broad is indistinguishable from turning the
+  check off — a decision that belongs on the command line, not buried in a file
+  nobody re-reads.
+
+
 - **`graphyn tests <symbol> | --diff`.** Which tests exercise a symbol, or
   everything a change touched, so a verify loop can run those instead of the
   whole suite or nothing at all.
