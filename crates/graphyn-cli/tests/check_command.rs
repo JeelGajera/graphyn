@@ -198,6 +198,16 @@ fn require_rules_turns_a_missing_file_into_a_failure() {
 }
 
 #[test]
+fn diff_only_conflicts_with_an_explicit_revision() {
+    // Two ways of saying which revisions to compare, one of which silently
+    // wins, is a footgun in a file a person edits once and forgets.
+    let root = scratch_copy("diffonlyconflict");
+    let run = check(&root, Some(FORBIDDEN), &["--diff-only", "--base", "HEAD"]);
+
+    assert_ne!(run.code, 0, "clap must reject the combination");
+}
+
+#[test]
 fn base_without_head_is_refused_rather_than_half_evaluated() {
     let root = scratch_copy("halfrev");
     let run = check(&root, Some(FORBIDDEN), &["--base", "HEAD"]);

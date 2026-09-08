@@ -72,6 +72,9 @@ graphyn watch ./my-repo
 - `graphyn query blast-radius <symbol> [--file <path>] [--depth <n>] [--kind <kind>]`
 - `graphyn query usages <symbol> [--file <path>] [--kind <kind>]`
 - `graphyn query deps <symbol> [--file <path>] [--depth <n>] [--kind <kind>]`
+- `graphyn impact <file>`: what depends on one file
+- `graphyn diff --base <rev> --head <rev>`: what changed between two snapshots
+- `graphyn check [--diff-only]`: enforce `.graphyn/rules.toml`
 - `graphyn report --base <rev> --head <rev>`: one markdown report for a PR comment
 - `graphyn status`: graph stats and coverage
 - `graphyn serve --stdio`: start MCP server
@@ -147,6 +150,51 @@ version, and anything a consumer could observe breaking bumps it.
 Output is deterministic — the same input produces byte-identical bytes, which
 is what makes two analyses safe to diff.
 
+## Agent Hooks
+
+MCP is pull-only: the agent has to decide to ask. Hooks are push — the graph
+reaches the agent at the moment of the edit.
+
+```bash
+mkdir -p .claude/hooks
+cp agent-configs/hooks/claude/*.sh .claude/hooks/
+cp agent-configs/hooks/lib/graphyn-hook-lib.sh .claude/hooks/
+chmod +x .claude/hooks/*.sh
+# then merge agent-configs/hooks/claude/settings.json into .claude/settings.json
+
+cp agent-configs/hooks/git/pre-commit  .git/hooks/pre-commit
+cp agent-configs/hooks/git/post-commit .git/hooks/post-commit
+cp agent-configs/hooks/lib/graphyn-hook-lib.sh .git/hooks/
+chmod +x .git/hooks/pre-commit .git/hooks/post-commit
+
+graphyn analyze . --snapshot HEAD
+```
+
+Before an agent edits a file, its blast radius is put into context:
+
+```
+Graphyn blast radius for src/models/user_payload.ts: 1 file(s) and 3
+reference(s) depend on symbols defined here.
+```
+
+And a change that breaks a rule does not reach a commit:
+
+```
+$ git commit -m "drop unused email field"
+    payload-is-stable no-field-removal [error]
+        src/models/user_payload.ts:5
+          field 'email' removed from 'UserPayload'
+
+graphyn: commit blocked by a rule in .graphyn/rules.toml
+         Override once with: git commit --no-verify
+```
+
+Only a rule violated on resolved evidence blocks. A missing binary, a missing
+graph, a stale snapshot or a timeout all let the commit through and say on
+stderr that nothing was checked — a gate that silently stops working is worse
+than one that is plainly off. Full details, including the `post-commit` hook
+that keeps the baseline fresh, are in
+[`agent-configs/hooks/README.md`](agent-configs/hooks/README.md).
 ## GitHub Action
 
 ```yaml
