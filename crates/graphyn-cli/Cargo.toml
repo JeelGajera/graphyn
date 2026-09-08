@@ -20,13 +20,15 @@ path = "src/main.rs"
 # python` builds a Python-only `graphyn`; `full` is the published everything
 # binary, and is the same set until Tier 2 languages land.
 default = ["typescript", "python", "rust", "go", "c"]
-full = ["default", "java"]
+full = ["default", "java", "ruby", "csharp"]
 typescript = ["graphyn-lang/typescript", "graphyn-mcp/typescript"]
 python = ["graphyn-lang/python", "graphyn-mcp/python"]
 rust = ["graphyn-lang/rust", "graphyn-mcp/rust"]
 go = ["graphyn-lang/go", "graphyn-mcp/go"]
 c = ["graphyn-lang/c", "graphyn-mcp/c"]
 java = ["graphyn-lang/java", "graphyn-mcp/java"]
+ruby = ["graphyn-lang/ruby", "graphyn-mcp/ruby"]
+csharp = ["graphyn-lang/csharp", "graphyn-mcp/csharp"]
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }

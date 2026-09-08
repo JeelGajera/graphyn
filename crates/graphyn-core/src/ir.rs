@@ -47,6 +47,12 @@ pub enum Language {
     Java,
     C,
     Cpp,
+    Ruby,
+    Php,
+    CSharp,
+    Kotlin,
+    Swift,
+    Sql,
 }
 
 /// How an edge's target was determined, and therefore what it is worth.
