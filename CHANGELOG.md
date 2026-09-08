@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`graphyn audit`**, wired into the hooks and the Action. Detects changes that
+  look like they were made to pass a check rather than to work.
+
+  The output is built to be checked rather than believed, because a finding is
+  an accusation. Each one carries its evidence and the id you would write down
+  to suppress it — printing that id is the difference between suppression being
+  a documented act and something people do by deleting the check. Suppressed
+  findings are shown; a suppression matching nothing is reported as stale.
+
+  Detectors that did not run are named with their reasons, every run. An absent
+  check reads as a passing one otherwise, which is the same unearned pass the
+  rest of this release exists to refuse — and a clean audit says in as many
+  words that it is not a clean bill of health, since only the detectors listed
+  ran and only on files a Tier 1 adapter resolved.
+
+  A `Stop` hook and the git pre-commit hook now run it, and the Action folds an
+  audit finding into the same pull request comment under its own heading rather
+  than leaving it in a job log. Only an error-severity finding blocks, so the
+  two high-confidence detectors gate and `dead-on-arrival` stays advisory;
+  `GRAPHYN_AUDIT_SEVERITY=warn` or `audit-severity: warn` holds on everything.
+  An audit that could not run never blocks — trapping an agent over a missing
+  snapshot would leave it in a loop it has no way out of.
+
+
 - **Three audit detectors**, and three held back with their reasons recorded.
 
   `test-tampering` reports a test that **stopped covering** a symbol which

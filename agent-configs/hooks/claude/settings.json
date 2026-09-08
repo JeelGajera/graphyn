@@ -34,6 +34,12 @@
             "command": ".claude/hooks/graphyn-stop-check.sh",
             "timeout": 60,
             "statusMessage": "Enforcing Graphyn rules"
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/graphyn-audit-check.sh",
+            "timeout": 60,
+            "statusMessage": "Auditing the change"
           }
         ]
       }

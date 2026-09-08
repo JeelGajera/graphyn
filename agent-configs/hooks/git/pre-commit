@@ -63,6 +63,20 @@ graphyn_with_timeout "$TIMEOUT" "$bin" analyze "$root" --snapshot worktree >/dev
 output=$(graphyn_with_timeout "$TIMEOUT" "$bin" check "$root" --diff-only 2>&1)
 status=$?
 
+# The audit runs whether or not rules exist: it reports changes that look like
+# they were made to pass a check, which is the failure a rules file cannot
+# describe in advance. Only an error-severity finding blocks.
+audit_output=$(graphyn_with_timeout "$TIMEOUT" "$bin" audit "$root" --base HEAD --head worktree --severity "${GRAPHYN_AUDIT_SEVERITY:-error}" 2>&1)
+audit_status=$?
+if [ $audit_status -eq 1 ]; then
+  echo "$audit_output" >&2
+  echo >&2
+  echo "graphyn: commit blocked by an audit finding" >&2
+  echo "         Record a deliberate exception in .graphyn/audit-ignore, with a reason." >&2
+  echo "         Override once with: git commit --no-verify" >&2
+  exit 1
+fi
+
 case $status in
   0) exit 0 ;;
   1)

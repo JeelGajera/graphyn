@@ -110,6 +110,40 @@ enum Commands {
         json: bool,
     },
 
+    /// Detect reward-hacking in a change
+    ///
+    /// Deterministic, with no model involved. Reports changes that look like
+    /// they were made to pass a check rather than to work: a test that
+    /// stopped covering code it used to, a symbol deleted instead of its
+    /// caller fixed, code only a test refers to.
+    ///
+    /// Exit 0 when nothing was found at the requested severity, 1 when
+    /// something was, 2 when the audit could not run. Detectors that were not
+    /// run are named in the output — an absent check must not read as a
+    /// clean one.
+    Audit {
+        /// Path to the repository root
+        #[arg(default_value = ".")]
+        path: String,
+
+        /// The revision to compare from. Must already be recorded with
+        /// `analyze --snapshot`.
+        #[arg(long, default_value = "HEAD")]
+        base: String,
+
+        /// The revision to compare to.
+        #[arg(long, default_value = "worktree")]
+        head: String,
+
+        /// Lowest severity to report and to exit non-zero on.
+        #[arg(long, value_name = "LEVEL", default_value = "warn")]
+        severity: String,
+
+        /// Emit the result as JSON on stdout
+        #[arg(long)]
+        json: bool,
+    },
+
     /// Enforce the rules in .graphyn/rules.toml
     ///
     /// Exit status is part of the contract: 0 when nothing was violated,
@@ -461,6 +495,20 @@ fn main() {
             Err(e) => {
                 output::error(&e.to_string());
                 std::process::exit(commands::tests::EXIT_UNABLE);
+            }
+        },
+
+        Commands::Audit {
+            path,
+            base,
+            head,
+            severity,
+            json,
+        } => match commands::audit::run(&path, &base, &head, &severity, json) {
+            Ok(code) => std::process::exit(code),
+            Err(e) => {
+                output::error(&e.to_string());
+                std::process::exit(commands::audit::EXIT_UNABLE);
             }
         },
 

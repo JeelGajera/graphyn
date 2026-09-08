@@ -184,10 +184,14 @@ impl Detector for TestTampering {
                 detector: self.name(),
                 severity: self.severity(),
                 confidence: self.confidence(),
+                // Named by file rather than by symbol. An adapter attributes
+                // a reference to the nearest enclosing symbol, which for a
+                // test body is often a local variable — dogfooding produced
+                // "'p' stopped covering 'encode'", where `p` was a local. A
+                // test is also the thing a reader runs, and you run a file.
                 summary: format!(
-                    "'{}' stopped covering '{}', which changed in the same diff",
-                    name_of(ctx.before, test),
-                    name_of(ctx.before, covered)
+                    "{} stopped covering '{}', which changed in the same diff",
+                    file, name_of(ctx.before, covered)
                 ),
                 file: file.clone(),
                 line: line_of(ctx.before, test),
@@ -196,12 +200,9 @@ impl Detector for TestTampering {
                         file,
                         line: line_of(ctx.before, test),
                         detail: if test_removed {
-                            format!("the test '{}' was removed", name_of(ctx.before, test))
+                            format!("'{}' was removed", name_of(ctx.before, test))
                         } else {
-                            format!(
-                                "the test '{}' no longer references it",
-                                name_of(ctx.before, test)
-                            )
+                            format!("'{}' no longer references it", name_of(ctx.before, test))
                         },
                     },
                     Evidence {

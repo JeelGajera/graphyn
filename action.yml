@@ -33,10 +33,18 @@ inputs:
     default: 'true'
   fail-on-violation:
     description: >
-      Fail the job when a rule is violated on resolved evidence. Rules that
-      could not be decided never fail the job, whatever this is set to.
+      Fail the job when a rule is violated on resolved evidence, or when the
+      audit finds something at or above `audit-severity`. Rules that could not
+      be decided never fail the job, whatever this is set to.
     required: false
     default: 'true'
+  audit-severity:
+    description: >
+      Lowest audit severity to report and fail on: `error` or `warn`. Only the
+      two high-confidence detectors report at error, so the default blocks on
+      those and leaves the rest advisory.
+    required: false
+    default: 'error'
   github-token:
     description: 'Token used to post the comment.'
     required: false
@@ -44,7 +52,7 @@ inputs:
 
 outputs:
   verdict:
-    description: 'One of: clean, violated, undecided.'
+    description: 'One of: clean, violated, audit, undecided.'
     value: ${{ steps.report.outputs.verdict }}
   report:
     description: 'Path to the markdown report on disk.'
@@ -67,6 +75,7 @@ runs:
         GRAPHYN_PATH: ${{ inputs.path }}
         GRAPHYN_BASE_REF: ${{ inputs.base-ref }}
         GRAPHYN_RULES: ${{ inputs.rules }}
+        GRAPHYN_AUDIT_SEVERITY: ${{ inputs.audit-severity }}
       run: ${{ github.action_path }}/action/report.sh
 
     - name: Comment on the pull request
@@ -82,4 +91,11 @@ runs:
       shell: bash
       run: |
         echo "::error::Graphyn: a rule in .graphyn/rules.toml was violated by this change."
+        exit 1
+
+    - name: Fail on audit finding
+      if: inputs.fail-on-violation == 'true' && steps.report.outputs.verdict == 'audit'
+      shell: bash
+      run: |
+        echo "::error::Graphyn: the audit found a change that looks like it was made to pass a check rather than to work."
         exit 1
