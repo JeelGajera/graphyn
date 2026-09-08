@@ -37,6 +37,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   adjustment would reorder history; a counter is monotonic by construction,
   which is all retention needs.
 
+- **Ruby and C# as Tier 2 languages** (`--features ruby`, `--features csharp`,
+  neither in `default`). Each is a module, a feature flag and a spec — no
+  parser, extractor, resolver or query file, because the analyzer runs on the
+  `tags.scm` the grammar already ships. That is the tier working as designed.
+
+  Fewer languages than the batch this was scoped for, and the reason is worth
+  recording: the constraint is not Graphyn's architecture but the grammar
+  crates. A candidate needs one that both works against the `tree-sitter`
+  version pinned here and ships a tags query. Scala and Lua pin an incompatible
+  `tree-sitter`; PHP and Swift pull a second copy of it into the build; Kotlin,
+  SQL and Bash ship no tags query at all — their `TAGS_QUERY` is commented out
+  upstream. Each was tried and rejected on evidence rather than assumed, and a
+  `tree-sitter` upgrade would unblock most of them.
+
+  A Tier 2 language is reported as such by `graphyn status`, resolves nothing
+  across files, and every edge it produces is `structural`, so the new
+  `--min-confidence resolved` threshold excludes it and later gates fail open
+  on it. Five tests per language assert exactly that, half of them about what
+  Tier 2 cannot do.
 
 - **`graphyn status` reports resolution coverage, per language.** Every edge
   already recorded whether it was bound through imports, aliases and declared
@@ -237,6 +256,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   graphyn-cli --test golden_ir` and review the diff.
 
 ### Changed
+
+- **Adding a language no longer means editing a list in three places.** The
+  spec registry carried a `NUM_SPECS` constant repeating every feature so a
+  fixed-size array had a length, and `adapter_group` carried one match arm per
+  language to route files to it. Both drifted the first time two languages were
+  added at once: the constant stopped compiling, and — worse, because it was
+  silent — a language with a spec and a feature flag was never routed, so its
+  files were skipped and it simply produced nothing. The registry now pushes,
+  and Tier 2 routing is derived from the registry rather than restated, so a
+  new structural language touches its own module and nothing else.
 
 - **A tier model, so "supports N languages" means something.** `LanguageSpec`
   describes a language and how much of it Graphyn can resolve. Tier 1

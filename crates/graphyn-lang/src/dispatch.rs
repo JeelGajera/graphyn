@@ -64,6 +64,12 @@ fn language_rank(language: &Language) -> u8 {
         Language::C => 5,
         Language::Cpp => 6,
         Language::Java => 7,
+        Language::Ruby => 8,
+        Language::Php => 9,
+        Language::CSharp => 10,
+        Language::Kotlin => 11,
+        Language::Swift => 12,
+        Language::Sql => 13,
     }
 }
 
@@ -83,11 +89,18 @@ fn adapter_group(language: &Language) -> Option<Language> {
         Language::Go => Some(Language::Go),
         #[cfg(feature = "c")]
         Language::C | Language::Cpp => Some(Language::C),
-        #[cfg(feature = "java")]
-        Language::Java => Some(Language::Java),
         // A language whose feature is off is skipped, so a slim build ignores
         // files it cannot analyse rather than failing on them.
-        _ => None,
+        //
+        // Tier 2 has no arm: a structural language is its own group, and the
+        // registry already knows which languages this build carries. Listing
+        // them here as well is the "remember to edit it in two places" failure
+        // that adding a language is supposed to have stopped costing — and it
+        // failed exactly that way the first time two were added at once, with
+        // the spec present and the file silently never routed.
+        other => crate::spec::for_language(other)
+            .filter(|spec| spec.tier() == crate::spec::Tier::Structural)
+            .map(|spec| spec.language()),
     }
 }
 

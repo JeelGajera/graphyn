@@ -30,3 +30,13 @@ pub mod python;
 pub mod rust;
 #[cfg(feature = "typescript")]
 pub mod typescript;
+
+#[cfg(feature = "ruby")]
+pub mod ruby;
+
+
+#[cfg(feature = "csharp")]
+pub mod csharp;
+
+
+

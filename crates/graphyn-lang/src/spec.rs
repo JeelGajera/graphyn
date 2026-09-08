@@ -123,31 +123,39 @@ pub trait LanguageSpec: Send + Sync {
 /// Ordered rather than hash-ordered because it reaches the user through
 /// `status` and `--help`, and Graphyn's first guarantee is that identical
 /// input produces identical output.
+#[allow(clippy::vec_init_then_push)]
 pub fn specs() -> Vec<&'static dyn LanguageSpec> {
-    let out: [&'static dyn LanguageSpec; NUM_SPECS] = [
-        #[cfg(feature = "typescript")]
-        &crate::lang::typescript::Spec,
-        #[cfg(feature = "python")]
-        &crate::lang::python::Spec,
-        #[cfg(feature = "rust")]
-        &crate::lang::rust::Spec,
-        #[cfg(feature = "go")]
-        &crate::lang::go::Spec,
-        #[cfg(feature = "c")]
-        &crate::lang::c::Spec,
-        #[cfg(feature = "java")]
-        &crate::lang::java::Spec,
-    ];
-    out.to_vec()
+    // Pushed rather than collected into a fixed-size array. The array needed a
+    // length constant listing every feature a second time, and the two drifted
+    // the first time a language was added after it was written — the same
+    // "remember to edit it in two places" failure the publish-job check and the
+    // per-language CI step exist to remove.
+    //
+    // `vec_init_then_push` is allowed rather than obeyed: its suggestion is to
+    // write a literal, and a literal cannot carry a `cfg` attribute per element
+    // the way these pushes do. Obeying it would mean going back to the
+    // fixed-size array and the length constant this replaced.
+    #[allow(unused_mut)]
+    let mut out: Vec<&'static dyn LanguageSpec> = Vec::new();
+    #[cfg(feature = "typescript")]
+    out.push(&crate::lang::typescript::Spec as &'static dyn LanguageSpec);
+    #[cfg(feature = "python")]
+    out.push(&crate::lang::python::Spec as &'static dyn LanguageSpec);
+    #[cfg(feature = "rust")]
+    out.push(&crate::lang::rust::Spec as &'static dyn LanguageSpec);
+    #[cfg(feature = "go")]
+    out.push(&crate::lang::go::Spec as &'static dyn LanguageSpec);
+    #[cfg(feature = "c")]
+    out.push(&crate::lang::c::Spec as &'static dyn LanguageSpec);
+    #[cfg(feature = "java")]
+    out.push(&crate::lang::java::Spec as &'static dyn LanguageSpec);
+    #[cfg(feature = "ruby")]
+    out.push(&crate::lang::ruby::Spec as &'static dyn LanguageSpec);
+    #[cfg(feature = "csharp")]
+    out.push(&crate::lang::csharp::Spec as &'static dyn LanguageSpec);
+    out
 }
 
-/// How many specs this build carries, so the array above has a length.
-const NUM_SPECS: usize = cfg!(feature = "typescript") as usize
-    + cfg!(feature = "python") as usize
-    + cfg!(feature = "rust") as usize
-    + cfg!(feature = "go") as usize
-    + cfg!(feature = "c") as usize
-    + cfg!(feature = "java") as usize;
 
 /// The spec that owns `language`, if this build carries it.
 pub fn for_language(language: &Language) -> Option<&'static dyn LanguageSpec> {
