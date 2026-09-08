@@ -27,7 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "public method removed" cannot be distinguished from "private method
   removed": the finding names every API-shaped symbol removed, and says so.
 
-
 - **`graphyn diff`.** Compares two recorded revisions and reports what changed:
   symbols added, removed, renamed or moved, signatures changed, and edges added
   or removed. `--base` defaults to `HEAD`, `--head` to `worktree`, and `--json`
