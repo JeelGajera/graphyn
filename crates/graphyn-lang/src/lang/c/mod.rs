@@ -65,6 +65,22 @@ pub fn analyze_files(root: &Path, files: &[PathBuf]) -> Result<RepoIR, AdapterCE
 pub struct Spec;
 
 impl crate::spec::LanguageSpec for Spec {
+    /// Convention only, and weaker than the others: C and C++ have no test
+    /// layout the toolchain enforces, so this recognises the common ones and
+    /// will miss a project that chose differently.
+    fn is_test_file(&self, path: &str) -> bool {
+        let name = path.rsplit('/').next().unwrap_or(path);
+        let stem = name.rsplit_once('.').map(|(s, _)| s).unwrap_or(name);
+        stem.starts_with("test_")
+            || stem.ends_with("_test")
+            || stem.ends_with("_tests")
+            || stem.ends_with("_unittest")
+            || path.starts_with("test/")
+            || path.starts_with("tests/")
+            || path.contains("/test/")
+            || path.contains("/tests/")
+    }
+
     fn language(&self) -> Language {
         Language::C
     }

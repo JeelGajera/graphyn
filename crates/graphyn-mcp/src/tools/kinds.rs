@@ -10,7 +10,7 @@ use graphyn_core::query::{self, RelationshipKindMask};
 /// repeated into three tool schemas and would otherwise diverge.
 pub const KINDS_DOC: &str = "Optional: only follow these relationship kinds. \
 One or more of: imports, calls, extends, implements, uses-type, \
-accesses-property, re-exports, instantiates. Omit to follow every kind. \
+accesses-property, re-exports, instantiates, tests. Omit to follow every kind. \
 Which kinds a given repository contains depends on its languages; a filter \
 matching no edge in the analyzed graph is reported as such rather than \
 returning a bare empty result.";

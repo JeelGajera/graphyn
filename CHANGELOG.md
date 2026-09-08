@@ -9,6 +9,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A `tests` relationship kind, and per-language test detection.** Every
+  language now recognises its own test files by the rule its own tooling
+  already uses to find them — `_test.go`, `*.test.*`/`*.spec.*`, `test_*.py`
+  and `conftest.py`, a Rust crate's `tests/`, `src/test/` for Java, `_spec.rb`,
+  `*Tests.cs` — and a test's references into non-test code are restated as
+  `tests` edges. `--kind tests` then answers "what covers this" as a filter
+  over the graph rather than a second traversal with its own rules.
+
+  Derived, not parsed. A test already records what it calls, instantiates and
+  takes as a type; the edges that leave the test file are the code it
+  exercises. Three things this deliberately does not do: it adds rather than
+  replaces, so a query for callers still finds tests; it ignores references
+  between two test files, since a helper exercising a helper is not coverage
+  and counting it would make every test appear to cover the whole suite; and it
+  carries the underlying edge's resolution rather than asserting its own, so a
+  Tier 2 language does not become gate-safe by passing through it. External
+  packages are excluded — a test importing `std` does not test `std`.
+
+  The blind spot, stated rather than guessed at: detection is by file
+  convention, so a Rust `#[cfg(test)] mod tests` inside an ordinary source file
+  is not recognised. The symbols inside such a module are not indexed at all
+  today, so recognising it would name a test whose contents Graphyn cannot see.
+  Integration tests under `tests/` are covered; on this repository that is 416
+  test edges across 83 files.
+
+### Fixed
+
+- **The README claimed no adapter emits `calls` or `instantiates`.** Both have
+  been emitted for some time — `adapter-go` alone produces two and five of them
+  — so the note understated what the tool does. Corrected while documenting the
+  new kind rather than left to contradict the list beside it.
+
+
 - **Agent hooks.** `agent-configs/hooks/` ships Claude Code hooks and
   agent-agnostic git hooks. MCP is pull-only — the agent has to decide to ask —
   so the graph now reaches it at the moment of the edit instead.

@@ -80,6 +80,19 @@ pub fn analyze_files(root: &Path, files: &[std::path::PathBuf]) -> Result<RepoIR
 pub struct Spec;
 
 impl crate::spec::LanguageSpec for Spec {
+    /// `*.test.*` and `*.spec.*`, plus the directories bundlers and Jest
+    /// already treat as test roots.
+    fn is_test_file(&self, path: &str) -> bool {
+        let name = path.rsplit('/').next().unwrap_or(path);
+        let stem = name.rsplit_once('.').map(|(s, _)| s).unwrap_or(name);
+        stem.ends_with(".test")
+            || stem.ends_with(".spec")
+            || stem.ends_with("_test")
+            || stem.ends_with("_spec")
+            || path.starts_with("__tests__/")
+            || path.contains("/__tests__/")
+    }
+
     fn language(&self) -> Language {
         Language::TypeScript
     }

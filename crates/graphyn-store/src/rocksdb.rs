@@ -794,6 +794,10 @@ fn relationship_kind_to_u8(kind: &RelationshipKind) -> u8 {
         RelationshipKind::AccessesProperty => 6,
         RelationshipKind::ReExports => 7,
         RelationshipKind::Instantiates => 8,
+        // Appended rather than inserted. These numbers are on disk: renumbering
+        // an existing kind would silently reinterpret every snapshot written
+        // before this build.
+        RelationshipKind::Tests => 9,
     }
 }
 
@@ -807,6 +811,7 @@ fn u8_to_relationship_kind(input: u8) -> Result<RelationshipKind, StoreError> {
         6 => Ok(RelationshipKind::AccessesProperty),
         7 => Ok(RelationshipKind::ReExports),
         8 => Ok(RelationshipKind::Instantiates),
+        9 => Ok(RelationshipKind::Tests),
         other => Err(StoreError::Serialization(format!(
             "unknown relationship kind code: {other}"
         ))),

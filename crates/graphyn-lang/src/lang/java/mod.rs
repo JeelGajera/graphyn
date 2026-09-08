@@ -21,6 +21,17 @@ use crate::spec::{LanguageSpec, Tier};
 pub struct Spec;
 
 impl LanguageSpec for Spec {
+    /// Maven and Gradle both put tests under `src/test/`, and JUnit classes
+    /// conventionally end in `Test` or `Tests`.
+    fn is_test_file(&self, path: &str) -> bool {
+        let name = path.rsplit('/').next().unwrap_or(path);
+        let stem = name.rsplit_once('.').map(|(s, _)| s).unwrap_or(name);
+        stem.ends_with("Test")
+            || stem.ends_with("Tests")
+            || stem.starts_with("Test")
+            || path.contains("src/test/")
+    }
+
     fn language(&self) -> Language {
         Language::Java
     }

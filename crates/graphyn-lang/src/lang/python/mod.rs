@@ -76,6 +76,18 @@ pub fn analyze_files(root: &Path, files: &[PathBuf]) -> Result<RepoIR, AdapterPy
 pub struct Spec;
 
 impl crate::spec::LanguageSpec for Spec {
+    /// `test_*.py` and `*_test.py`, plus `conftest.py`, which pytest collects
+    /// as part of the test tree rather than as a module under test.
+    fn is_test_file(&self, path: &str) -> bool {
+        let name = path.rsplit('/').next().unwrap_or(path);
+        let stem = name.strip_suffix(".py").unwrap_or(name);
+        stem.starts_with("test_")
+            || stem.ends_with("_test")
+            || name == "conftest.py"
+            || path.starts_with("tests/")
+            || path.contains("/tests/")
+    }
+
     fn language(&self) -> Language {
         Language::Python
     }

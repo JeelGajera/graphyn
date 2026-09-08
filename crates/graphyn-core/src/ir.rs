@@ -151,6 +151,14 @@ pub enum RelationshipKind {
     AccessesProperty,
     ReExports,
     Instantiates,
+    /// A test exercises this symbol.
+    ///
+    /// Derived rather than parsed: a test's own call and type references say
+    /// what it touches, and this restates the ones that leave the test file.
+    /// Keeping it a distinct kind rather than a flag on `Calls` is what lets
+    /// "which tests cover this change" be a filter over the graph instead of a
+    /// second traversal with different rules.
+    Tests,
 }
 
 // diagnostics

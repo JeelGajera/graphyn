@@ -68,6 +68,12 @@ pub fn analyze_files(root: &Path, files: &[PathBuf]) -> Result<RepoIR, AdapterGo
 pub struct Spec;
 
 impl crate::spec::LanguageSpec for Spec {
+    /// `_test.go`, which is the compiler's own rule rather than a convention
+    /// layered on top of it.
+    fn is_test_file(&self, path: &str) -> bool {
+        path.ends_with("_test.go")
+    }
+
     fn language(&self) -> Language {
         Language::Go
     }
