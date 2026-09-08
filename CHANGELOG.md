@@ -68,6 +68,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   snapshots by these names and two front ends now resolve them. Two copies of
   the rule would drift, and the failure when they do is a snapshot written under
   one name and looked for under another.
+- **A GitHub Action**, and `graphyn report` behind it. The action analyzes the
+  base and head commits, compares them, evaluates `.graphyn/rules.toml`, and
+  posts one pull request comment — updating it on each push rather than adding
+  another, because a pull request with nine identical bot comments is one where
+  nobody reads the tenth.
+
+  The comment is a product surface, not a serialisation of internal state. The
+  verdict is its first line, so a reader who stops there still has the answer.
+  Findings come before counts: a broken reference is what the reader came for
+  and "14 symbols added" is not. Uncertainty is never dropped for tidiness — a
+  rule that could not be decided is named in the comment, not only in the exit
+  status, and never fails the job.
+
+  `graphyn report` produces that markdown as one command rather than two.
+  Concatenating `diff` and `check` would give the reader two headings, two
+  verdicts, and no statement of which one decides the merge. Its exit status
+  matches `check`: 0 clean, 1 violated, 2 could not run.
+
+  `version: source` builds from the checked-out tree instead of downloading a
+  release, which is how this repository runs the action against its own pull
+  requests. An action nobody has executed is not a tested action, and running
+  it caught the first two things wrong with it.
+
+  The comment read "No problems found" on a repository with no rules file,
+  which is the unearned pass `check` already refuses to report. The report now
+  states that no rule was enforced, and the headline claims only what the diff
+  supports.
+
+  And the comparison ran against the tip of the base branch rather than the
+  merge base, so everything merged into the base since the branch diverged read
+  as removed by the change. On Graphyn's own pull request that produced a
+  comment claiming a file the branch never touched had lost most of its
+  symbols. The range is now the branch's own work and nothing else.
 
 
 - **`graphyn check`** — enforce the rules in `.graphyn/rules.toml`. Reads the

@@ -156,6 +156,30 @@ enum Commands {
         require_rules: bool,
     },
 
+    /// One markdown report for a pull request comment
+    ///
+    /// Combines the diff and the rule check into a single comment, with the
+    /// verdict on the first line. Exit status matches `check`: 0 clean,
+    /// 1 a rule was violated, 2 the report could not be produced.
+    Report {
+        /// Path to the repository root
+        #[arg(default_value = ".")]
+        path: String,
+
+        /// The revision to compare from. Must already be recorded with
+        /// `analyze --snapshot`.
+        #[arg(long, default_value = "HEAD")]
+        base: String,
+
+        /// The revision to compare to.
+        #[arg(long, default_value = "worktree")]
+        head: String,
+
+        /// Rules file to read. Defaults to <path>/.graphyn/rules.toml
+        #[arg(long, value_name = "FILE")]
+        rules: Option<String>,
+    },
+
     /// Query the symbol relationship graph
     Query {
         #[command(subcommand)]
@@ -359,6 +383,18 @@ fn main() {
             min_confidence,
             json,
         } => commands::impact::run(&file, &path, depth, &kind, &min_confidence, json),
+        Commands::Report {
+            path,
+            base,
+            head,
+            rules,
+        } => match commands::report::run(&path, &base, &head, rules.as_deref()) {
+            Ok(code) => std::process::exit(code),
+            Err(e) => {
+                output::error(&e.to_string());
+                std::process::exit(commands::check::EXIT_UNABLE);
+            }
+        },
 
         Commands::Query { subcommand } => match subcommand {
             QueryCommands::BlastRadius {
