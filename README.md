@@ -270,6 +270,11 @@ through imports, aliases and declared types. The threshold is applied while
 traversing, not to the results, so nothing is reached by way of an edge below
 it. On a Tier 2 repository that correctly returns nothing.
 
+Queries take `--min-confidence resolved` to restrict an answer to edges bound
+through imports, aliases and declared types. The threshold is applied while
+traversing, not to the results, so nothing is reached by way of an edge below
+it. On a Tier 2 repository that correctly returns nothing.
+
 Tier 2 today: Java, Ruby, C# — each behind its own feature, none in `default`.
 
 Still planned as Tier 2: Kotlin, PHP, Swift, Scala, SQL, Lua, Bash. These are
