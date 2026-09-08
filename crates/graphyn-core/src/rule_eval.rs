@@ -208,7 +208,7 @@ fn edges(graph: &GraphynGraph) -> Vec<Edge> {
                 to,
                 file: meta.file.clone(),
                 line: meta.line,
-                kind_name: kind_name(&meta.kind),
+                kind_name: crate::query::kind_name(&meta.kind),
                 is_dependency: is_dependency(&meta.kind),
                 gate_safe: meta.resolution.is_gate_safe(),
             })
@@ -216,19 +216,6 @@ fn edges(graph: &GraphynGraph) -> Vec<Edge> {
         .collect();
     out.sort();
     out
-}
-
-fn kind_name(kind: &RelationshipKind) -> &'static str {
-    match kind {
-        RelationshipKind::Imports => "imports",
-        RelationshipKind::Calls => "calls",
-        RelationshipKind::Extends => "extends",
-        RelationshipKind::Implements => "implements",
-        RelationshipKind::UsesType => "uses-type",
-        RelationshipKind::AccessesProperty => "accesses-property",
-        RelationshipKind::ReExports => "re-exports",
-        RelationshipKind::Instantiates => "instantiates",
-    }
 }
 
 // ── the evaluators ───────────────────────────────────────────

@@ -16,7 +16,7 @@ const MAX_DEPTH: usize = 10;
 /// The order is the enum's own declaration order and is what `--kind help` and
 /// any listing render, so it must not depend on how a `match` happens to be
 /// written.
-pub const ALL_KINDS: [RelationshipKind; 8] = [
+pub const ALL_KINDS: [RelationshipKind; 9] = [
     RelationshipKind::Imports,
     RelationshipKind::Calls,
     RelationshipKind::Extends,
@@ -25,6 +25,7 @@ pub const ALL_KINDS: [RelationshipKind; 8] = [
     RelationshipKind::AccessesProperty,
     RelationshipKind::ReExports,
     RelationshipKind::Instantiates,
+    RelationshipKind::Tests,
 ];
 
 /// Files whose edges were resolved structurally, i.e. within one file only.
@@ -91,6 +92,7 @@ pub fn kind_name(kind: &RelationshipKind) -> &'static str {
         RelationshipKind::AccessesProperty => "accesses-property",
         RelationshipKind::ReExports => "re-exports",
         RelationshipKind::Instantiates => "instantiates",
+        RelationshipKind::Tests => "tests",
     }
 }
 
@@ -171,6 +173,7 @@ impl RelationshipKindMask {
             RelationshipKind::AccessesProperty => 5,
             RelationshipKind::ReExports => 6,
             RelationshipKind::Instantiates => 7,
+            RelationshipKind::Tests => 8,
         }
     }
 }

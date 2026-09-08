@@ -16,6 +16,18 @@ use crate::spec::{LanguageSpec, Tier};
 pub struct Spec;
 
 impl LanguageSpec for Spec {
+    /// RSpec's `_spec.rb` and minitest's `_test.rb`, plus their directories.
+    fn is_test_file(&self, path: &str) -> bool {
+        let name = path.rsplit('/').next().unwrap_or(path);
+        let stem = name.strip_suffix(".rb").unwrap_or(name);
+        stem.ends_with("_spec")
+            || stem.ends_with("_test")
+            || path.starts_with("spec/")
+            || path.starts_with("test/")
+            || path.contains("/spec/")
+            || path.contains("/test/")
+    }
+
     fn language(&self) -> Language {
         Language::Ruby
     }

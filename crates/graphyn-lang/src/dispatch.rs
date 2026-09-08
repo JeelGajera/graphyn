@@ -7,10 +7,10 @@
 //! the graph is deterministic. `HashMap` iteration order varies per process,
 //! which made two runs over identical input produce differently-ordered output.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
 
-use graphyn_core::ir::{FileIR, Language, Resolution, RepoIR};
+use graphyn_core::ir::{FileIR, Language, Relationship, RepoIR, Resolution};
 use graphyn_core::scan::detect_language_from_extension;
 use rayon::prelude::*;
 
@@ -151,6 +151,10 @@ pub fn analyze_files(root: &Path, files: &[PathBuf]) -> Result<RepoIR, DispatchE
         }
     }
 
+    // After every adapter has run, because a test file's references are only
+    // known to point outside the test tree once the whole tree is known.
+    add_test_edges(&mut all_files);
+
     Ok(RepoIR {
         root: root.to_string_lossy().to_string(),
         files: all_files,
@@ -250,4 +254,98 @@ pub fn supported_languages() -> Vec<crate::spec::LanguageSupport> {
 /// Just the names, for callers that only need a list.
 pub fn supported_language_names() -> Vec<&'static str> {
     crate::spec::specs().into_iter().map(|s| s.name()).collect()
+}
+
+// ── test edges ───────────────────────────────────────────────
+
+/// Add a `tests` edge for every reference a test makes into non-test code.
+///
+/// Derived rather than parsed. A test function already records what it calls,
+/// instantiates and takes as a type; those edges have been resolved by the
+/// language's own pipeline, and the ones that leave the test file are exactly
+/// the code the test exercises. Restating them under a distinct kind is what
+/// lets "which tests cover this change" be a filter over the graph rather than
+/// a second traversal with its own rules.
+///
+/// Three things this deliberately does not do.
+///
+/// It adds rather than replaces: the underlying `calls` edge stays, because a
+/// test calling a function is still a call and a query for callers that
+/// silently dropped tests would under-report the blast radius.
+///
+/// It ignores references between two test files. A test helper calling another
+/// helper is not coverage of the code under test, and counting it would make
+/// every test appear to cover the whole suite.
+///
+/// It carries the underlying edge's resolution rather than asserting its own.
+/// A test edge derived from a structural reference is exactly as trustworthy
+/// as that reference — which is to say, advisory — and a Tier 2 language must
+/// not become gate-safe by passing through this function.
+fn add_test_edges(files: &mut [FileIR]) {
+    use graphyn_core::ir::RelationshipKind;
+    use graphyn_core::symbol_id::{is_external_package, is_placeholder, parse_symbol_id};
+
+    // Which files are tests, decided once. `for_path` walks the spec registry,
+    // and a repository has far more edges than files.
+    let test_files: BTreeSet<String> = files
+        .iter()
+        .filter(|f| {
+            crate::spec::for_path(&f.file).is_some_and(|spec| spec.is_test_file(&f.file))
+        })
+        .map(|f| f.file.clone())
+        .collect();
+
+    if test_files.is_empty() {
+        return;
+    }
+
+    for file_ir in files.iter_mut() {
+        if !test_files.contains(&file_ir.file) {
+            continue;
+        }
+
+        let mut derived: Vec<Relationship> = Vec::new();
+        // Deduplicated: a test calling the same function four times exercises
+        // it once, and four identical edges would inflate every count a reader
+        // uses to judge how well covered a symbol is.
+        let mut seen: BTreeSet<(String, String)> = BTreeSet::new();
+
+        for relationship in &file_ir.relationships {
+            if relationship.kind == RelationshipKind::Tests {
+                continue;
+            }
+            // A test importing `std` does not test `std`, and an unresolved
+            // placeholder names nothing at all. Both parse as an id, so both
+            // have to be refused explicitly.
+            if is_external_package(&relationship.to) || is_placeholder(&relationship.to) {
+                continue;
+            }
+            let Some((target_file, _, _)) = parse_symbol_id(&relationship.to) else {
+                continue;
+            };
+            if target_file == file_ir.file || test_files.contains(target_file) {
+                continue;
+            }
+            if !seen.insert((relationship.from.clone(), relationship.to.clone())) {
+                continue;
+            }
+            derived.push(Relationship {
+                from: relationship.from.clone(),
+                to: relationship.to.clone(),
+                kind: RelationshipKind::Tests,
+                alias: relationship.alias.clone(),
+                properties_accessed: relationship.properties_accessed.clone(),
+                context: "test".to_string(),
+                file: relationship.file.clone(),
+                line: relationship.line,
+                resolution: relationship.resolution,
+            });
+        }
+
+        // Sorted before appending: the source order of relationships is the
+        // adapter's, and a derived set that varied with it would make two runs
+        // over one repository disagree.
+        derived.sort_by(|a, b| (&a.from, &a.to, a.line).cmp(&(&b.from, &b.to, b.line)));
+        file_ir.relationships.extend(derived);
+    }
 }

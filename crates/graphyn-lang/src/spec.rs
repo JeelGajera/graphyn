@@ -107,6 +107,27 @@ pub trait LanguageSpec: Send + Sync {
         None
     }
 
+    /// Whether `path` names a test file in this language.
+    ///
+    /// Convention only, and deliberately so. Every language in scope has a
+    /// filename or directory convention its tooling already relies on to
+    /// *find* tests — `_test.go`, `*.test.ts`, `test_*.py`, `tests/` — so the
+    /// convention is not a heuristic layered on top, it is the same rule the
+    /// test runner uses.
+    ///
+    /// What this cannot see is a test that lives outside the convention: a
+    /// Rust `#[cfg(test)] mod tests` inside an ordinary source file is the
+    /// common case in this very repository. Recognising those needs the
+    /// attribute, not the path, and the symbols inside such a module are not
+    /// indexed at all today. The blind spot is documented rather than guessed
+    /// at: a `tests` edge Graphyn cannot see is a test it will fail to
+    /// suggest, which is a smaller harm than one it invents.
+    ///
+    /// `path` is repository-relative with forward slashes.
+    fn is_test_file(&self, _path: &str) -> bool {
+        false
+    }
+
     /// A Tier 1 language's own pipeline.
     ///
     /// Returning `None` opts into the structural default. The five Tier 1

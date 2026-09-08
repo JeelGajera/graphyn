@@ -1,0 +1,557 @@
+{
+  "files": [
+    {
+      "diagnostics": [],
+      "file": "src/helper.test.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "import { testEncode } from './payload.test';",
+          "file": "src/helper.test.ts",
+          "from": "src/helper.test.ts::testViaHelper::function",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "src/payload.test.ts::testEncode::function"
+        },
+        {
+          "alias": "testEncode",
+          "context": "call",
+          "file": "src/helper.test.ts",
+          "from": "src/helper.test.ts::testViaHelper::function",
+          "kind": "Calls",
+          "line": 7,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "src/payload.test.ts::testEncode::function"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "src/helper.test.ts",
+          "id": "src/helper.test.ts::testViaHelper::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 6,
+          "line_start": 6,
+          "name": "testViaHelper",
+          "signature": "function testViaHelper() { return testEncode(); }"
+        },
+        {
+          "file": "src/helper.test.ts",
+          "id": "src/helper.test.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "src/payload.test.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "import { Payload, encode } from './payload';",
+          "file": "src/payload.test.ts",
+          "from": "src/payload.test.ts::p::variable",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "src/payload.ts::Payload::class"
+        },
+        {
+          "alias": null,
+          "context": "import { Payload, encode } from './payload';",
+          "file": "src/payload.test.ts",
+          "from": "src/payload.test.ts::p::variable",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "src/payload.ts::encode::function"
+        },
+        {
+          "alias": "Payload",
+          "context": "instantiation",
+          "file": "src/payload.test.ts",
+          "from": "src/payload.test.ts::p::variable",
+          "kind": "Instantiates",
+          "line": 6,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "src/payload.ts::Payload::class"
+        },
+        {
+          "alias": "encode",
+          "context": "call",
+          "file": "src/payload.test.ts",
+          "from": "src/payload.test.ts::p::variable",
+          "kind": "Calls",
+          "line": 7,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "src/payload.ts::encode::function"
+        },
+        {
+          "alias": null,
+          "context": "test",
+          "file": "src/payload.test.ts",
+          "from": "src/payload.test.ts::p::variable",
+          "kind": "Tests",
+          "line": 1,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "src/payload.ts::Payload::class"
+        },
+        {
+          "alias": null,
+          "context": "test",
+          "file": "src/payload.test.ts",
+          "from": "src/payload.test.ts::p::variable",
+          "kind": "Tests",
+          "line": 1,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "src/payload.ts::encode::function"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "src/payload.test.ts",
+          "id": "src/payload.test.ts::p::variable",
+          "kind": "Variable",
+          "language": "TypeScript",
+          "line_end": 6,
+          "line_start": 6,
+          "name": "p",
+          "signature": "p = new Payload()"
+        },
+        {
+          "file": "src/payload.test.ts",
+          "id": "src/payload.test.ts::testEncode::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 5,
+          "line_start": 5,
+          "name": "testEncode",
+          "signature": "function testEncode() { const p = new Payload(); return encode(p); }"
+        },
+        {
+          "file": "src/payload.test.ts",
+          "id": "src/payload.test.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "src/payload.ts",
+      "language": "TypeScript",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": "Payload",
+          "context": "property access",
+          "file": "src/payload.ts",
+          "from": "src/payload.ts::Payload::class",
+          "kind": "AccessesProperty",
+          "line": 7,
+          "properties_accessed": [
+            "userId"
+          ],
+          "resolution": "resolved",
+          "to": "src/payload.ts::Payload::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "src/payload.ts",
+          "id": "src/payload.ts::Payload::class",
+          "kind": "Class",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "Payload",
+          "signature": "class Payload { userId: string; email: string; }"
+        },
+        {
+          "file": "src/payload.ts",
+          "id": "src/payload.ts::email::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 3,
+          "line_start": 3,
+          "name": "email",
+          "signature": "email: string"
+        },
+        {
+          "file": "src/payload.ts",
+          "id": "src/payload.ts::encode::function",
+          "kind": "Function",
+          "language": "TypeScript",
+          "line_end": 6,
+          "line_start": 6,
+          "name": "encode",
+          "signature": "function encode(payload: Payload): string { return payload.userId; }"
+        },
+        {
+          "file": "src/payload.ts",
+          "id": "src/payload.ts::userId::property",
+          "kind": "Property",
+          "language": "TypeScript",
+          "line_end": 2,
+          "line_start": 2,
+          "name": "userId",
+          "signature": "userId: string"
+        },
+        {
+          "file": "src/payload.ts",
+          "id": "src/payload.ts::module::module",
+          "kind": "Module",
+          "language": "TypeScript",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": "module"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "service.py",
+      "language": "Python",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": "Service",
+          "context": "instantiation",
+          "file": "service.py",
+          "from": "service.py::module::module",
+          "kind": "Instantiates",
+          "line": 7,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "service.py::Service::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "service.py",
+          "id": "service.py::module::module",
+          "kind": "Module",
+          "language": "Python",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "service.py",
+          "id": "service.py::Service::class",
+          "kind": "Class",
+          "language": "Python",
+          "line_end": 3,
+          "line_start": 1,
+          "name": "Service",
+          "signature": "class Service:"
+        },
+        {
+          "file": "service.py",
+          "id": "service.py::Service::compute::method",
+          "kind": "Method",
+          "language": "Python",
+          "line_end": 3,
+          "line_start": 2,
+          "name": "compute",
+          "signature": "def compute(self):"
+        },
+        {
+          "file": "service.py",
+          "id": "service.py::build::function",
+          "kind": "Function",
+          "language": "Python",
+          "line_end": 7,
+          "line_start": 6,
+          "name": "build",
+          "signature": "def build():"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "test_service.py",
+      "language": "Python",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "from service import build",
+          "file": "test_service.py",
+          "from": "test_service.py::module::module",
+          "kind": "Imports",
+          "line": 1,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "service.py::build::function"
+        },
+        {
+          "alias": "build",
+          "context": "call",
+          "file": "test_service.py",
+          "from": "test_service.py::module::module",
+          "kind": "Calls",
+          "line": 7,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "service.py::build::function"
+        },
+        {
+          "alias": null,
+          "context": "test",
+          "file": "test_service.py",
+          "from": "test_service.py::module::module",
+          "kind": "Tests",
+          "line": 1,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "service.py::build::function"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "test_service.py",
+          "id": "test_service.py::module::module",
+          "kind": "Module",
+          "language": "Python",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "test_service.py",
+          "id": "test_service.py::test_build::function",
+          "kind": "Function",
+          "language": "Python",
+          "line_end": 7,
+          "line_start": 6,
+          "name": "test_build",
+          "signature": "def test_build():"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "rustlib/src/lib.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "rustlib/src/lib.rs",
+          "id": "rustlib/src/lib.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "rustlib/src/lib.rs",
+          "id": "rustlib/src/lib.rs::Calculator::class",
+          "kind": "Class",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "Calculator",
+          "signature": "pub struct Calculator;"
+        },
+        {
+          "file": "rustlib/src/lib.rs",
+          "id": "rustlib/src/lib.rs::Calculator::add::method",
+          "kind": "Method",
+          "language": "Rust",
+          "line_end": 6,
+          "line_start": 4,
+          "name": "add",
+          "signature": "impl Calculator :: pub fn add(&self, a: i32, b: i32) -> i32 {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "rustlib/tests/calc_test.rs",
+      "language": "Rust",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": null,
+          "context": "use rustlib::Calculator;",
+          "file": "rustlib/tests/calc_test.rs",
+          "from": "rustlib/tests/calc_test.rs::module::module",
+          "kind": "Imports",
+          "line": 5,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "rustlib/src/lib.rs::Calculator::class"
+        },
+        {
+          "alias": null,
+          "context": "test",
+          "file": "rustlib/tests/calc_test.rs",
+          "from": "rustlib/tests/calc_test.rs::module::module",
+          "kind": "Tests",
+          "line": 5,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "rustlib/src/lib.rs::Calculator::class"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "rustlib/tests/calc_test.rs",
+          "id": "rustlib/tests/calc_test.rs::module::module",
+          "kind": "Module",
+          "language": "Rust",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "rustlib/tests/calc_test.rs",
+          "id": "rustlib/tests/calc_test.rs::adds::function",
+          "kind": "Function",
+          "language": "Rust",
+          "line_end": 11,
+          "line_start": 8,
+          "name": "adds",
+          "signature": "fn adds() {"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "api/handler.go",
+      "language": "Go",
+      "re_exports": [],
+      "relationships": [],
+      "symbols": [
+        {
+          "file": "api/handler.go",
+          "id": "api/handler.go::module::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "api/handler.go",
+          "id": "api/handler.go::Serve::function",
+          "kind": "Function",
+          "language": "Go",
+          "line_end": 5,
+          "line_start": 3,
+          "name": "Serve",
+          "signature": "func Serve() int {"
+        },
+        {
+          "file": "api",
+          "id": "api::api::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "api",
+          "signature": "package testedges/api"
+        }
+      ]
+    },
+    {
+      "diagnostics": [],
+      "file": "api/handler_test.go",
+      "language": "Go",
+      "re_exports": [],
+      "relationships": [
+        {
+          "alias": "Serve",
+          "context": "call",
+          "file": "api/handler_test.go",
+          "from": "api/handler_test.go::module::module",
+          "kind": "Calls",
+          "line": 5,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "api/handler.go::Serve::function"
+        },
+        {
+          "alias": "Serve",
+          "context": "test",
+          "file": "api/handler_test.go",
+          "from": "api/handler_test.go::module::module",
+          "kind": "Tests",
+          "line": 5,
+          "properties_accessed": [],
+          "resolution": "resolved",
+          "to": "api/handler.go::Serve::function"
+        }
+      ],
+      "symbols": [
+        {
+          "file": "api/handler_test.go",
+          "id": "api/handler_test.go::module::module",
+          "kind": "Module",
+          "language": "Go",
+          "line_end": 1,
+          "line_start": 1,
+          "name": "module",
+          "signature": null
+        },
+        {
+          "file": "api/handler_test.go",
+          "id": "api/handler_test.go::TestServe::function",
+          "kind": "Function",
+          "language": "Go",
+          "line_end": 6,
+          "line_start": 4,
+          "name": "TestServe",
+          "signature": "func TestServe(t interface{}) int {"
+        }
+      ]
+    }
+  ],
+  "language_stats": {
+    "Go": 2,
+    "Python": 2,
+    "Rust": 2,
+    "TypeScript": 3
+  },
+  "root": "<root>",
+  "schema_version": 1,
+  "stats": {
+    "alias_chains": 0,
+    "aliases": 0,
+    "diagnostics": 0,
+    "files_indexed": 9,
+    "relationships": 17,
+    "symbols": 26
+  }
+}

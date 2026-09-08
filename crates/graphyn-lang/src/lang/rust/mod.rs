@@ -71,6 +71,24 @@ pub fn analyze_files(root: &Path, files: &[PathBuf]) -> Result<RepoIR, AdapterRu
 pub struct Spec;
 
 impl crate::spec::LanguageSpec for Spec {
+    /// A crate's `tests/` directory, plus `*_test.rs` and `*_tests.rs`.
+    ///
+    /// Not `#[cfg(test)] mod tests` inside an ordinary source file, which is
+    /// the more common Rust convention and the one this repository uses most.
+    /// Those symbols are not indexed at all today — see
+    /// [`crate::spec::LanguageSpec::is_test_file`] — so recognising the module
+    /// here would name a test whose contents Graphyn cannot see.
+    fn is_test_file(&self, path: &str) -> bool {
+        let name = path.rsplit('/').next().unwrap_or(path);
+        let stem = name.strip_suffix(".rs").unwrap_or(name);
+        stem.ends_with("_test")
+            || stem.ends_with("_tests")
+            || path.starts_with("tests/")
+            || path.contains("/tests/")
+            || path.starts_with("benches/")
+            || path.contains("/benches/")
+    }
+
     fn language(&self) -> Language {
         Language::Rust
     }

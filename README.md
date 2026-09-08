@@ -123,17 +123,22 @@ graphyn query blast-radius UserPayload --kind imports
 graphyn query usages UserPayload --kind imports --kind re-exports
 ```
 
-Kinds: `imports`, `extends`, `implements`, `uses-type`, `accesses-property`,
-`re-exports`.
+Kinds: `imports`, `calls`, `extends`, `implements`, `uses-type`,
+`accesses-property`, `re-exports`, `instantiates`, `tests`.
 
 Filtering applies to the traversal, not to the result, so an excluded kind
 also stops the walk continuing through it. A filtered query reports the filter
 it used, and an empty filtered result is never described as safe — only part
 of the graph was searched.
 
-`calls` and `instantiates` are accepted names but no adapter emits them yet, so
-they match nothing; the tool says so rather than returning a silent empty
-result.
+`tests` is derived rather than parsed: a test file's references into non-test
+code are restated under it, so `--kind tests` answers "what covers this" as a
+filter over the graph rather than a separate traversal. The underlying `calls`
+or `imports` edge is kept as well, so a query for callers still finds tests.
+
+Which kinds a given repository contains depends on its languages. A filter
+matching no edge in the analyzed graph is reported as such rather than
+returning a silent empty result.
 
 ## Machine-readable output
 

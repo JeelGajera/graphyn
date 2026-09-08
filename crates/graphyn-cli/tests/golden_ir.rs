@@ -36,6 +36,7 @@ const CORPUS: &[&str] = &[
     "polyglot",
     "regression",
     "scan",
+    "test-edges",
 ];
 
 /// Fixtures for Tier 2 languages, which are deliberately not in the corpus.
@@ -221,6 +222,7 @@ golden_test!(golden_alias_import_bug, "alias-import-bug");
 golden_test!(golden_polyglot, "polyglot");
 golden_test!(golden_regression, "regression");
 golden_test!(golden_scan, "scan");
+golden_test!(golden_test_edges, "test-edges");
 
 #[test]
 fn every_fixture_project_is_covered() {

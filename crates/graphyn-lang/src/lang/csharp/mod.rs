@@ -16,6 +16,17 @@ use crate::spec::{LanguageSpec, Tier};
 pub struct Spec;
 
 impl LanguageSpec for Spec {
+    /// The convention shared by xUnit, NUnit and MSTest projects.
+    fn is_test_file(&self, path: &str) -> bool {
+        let name = path.rsplit('/').next().unwrap_or(path);
+        let stem = name.rsplit_once('.').map(|(s, _)| s).unwrap_or(name);
+        stem.ends_with("Test")
+            || stem.ends_with("Tests")
+            || stem.ends_with("Spec")
+            || path.contains(".Tests/")
+            || path.contains("/Tests/")
+    }
+
     fn language(&self) -> Language {
         Language::CSharp
     }

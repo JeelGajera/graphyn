@@ -250,7 +250,7 @@ enum QueryCommands {
         min_confidence: String,
         /// Only follow these relationship kinds (repeatable).
         /// One of: imports, calls, extends, implements, uses-type,
-        /// accesses-property, re-exports, instantiates.
+        /// accesses-property, re-exports, instantiates, tests.
         #[arg(long = "kind", value_name = "KIND")]
         kind: Vec<String>,
     },
@@ -278,7 +278,7 @@ enum QueryCommands {
         min_confidence: String,
         /// Only follow these relationship kinds (repeatable).
         /// One of: imports, calls, extends, implements, uses-type,
-        /// accesses-property, re-exports, instantiates.
+        /// accesses-property, re-exports, instantiates, tests.
         #[arg(long = "kind", value_name = "KIND")]
         kind: Vec<String>,
     },
@@ -310,7 +310,7 @@ enum QueryCommands {
         min_confidence: String,
         /// Only follow these relationship kinds (repeatable).
         /// One of: imports, calls, extends, implements, uses-type,
-        /// accesses-property, re-exports, instantiates.
+        /// accesses-property, re-exports, instantiates, tests.
         #[arg(long = "kind", value_name = "KIND")]
         kind: Vec<String>,
     },

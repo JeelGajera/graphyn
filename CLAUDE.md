@@ -120,3 +120,7 @@ These are honest and stay honest. Do not quietly widen them:
 - Go structural interface matching is per-package.
 - Rust macro bodies are token trees; macro-generated code is not expanded.
 - Fully-qualified paths used inline without a `use` record no edge.
+- Test detection is by file convention only. A Rust `#[cfg(test)] mod tests`
+  inside an ordinary source file is not a test file, and the symbols inside
+  such a module are not indexed at all — so those tests produce no `tests`
+  edges. Integration tests under `tests/` are covered.
