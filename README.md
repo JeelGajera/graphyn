@@ -72,6 +72,7 @@ graphyn watch ./my-repo
 - `graphyn query blast-radius <symbol> [--file <path>] [--depth <n>] [--kind <kind>]`
 - `graphyn query usages <symbol> [--file <path>] [--kind <kind>]`
 - `graphyn query deps <symbol> [--file <path>] [--depth <n>] [--kind <kind>]`
+- `graphyn report --base <rev> --head <rev>`: one markdown report for a PR comment
 - `graphyn status`: graph stats and coverage
 - `graphyn serve --stdio`: start MCP server
 
@@ -145,6 +146,58 @@ version, and anything a consumer could observe breaking bumps it.
 
 Output is deterministic — the same input produces byte-identical bytes, which
 is what makes two analyses safe to diff.
+
+## GitHub Action
+
+```yaml
+# .github/workflows/graphyn.yml
+name: Graphyn
+on: pull_request
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  graphyn:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # both sides of the comparison must exist locally
+      - uses: JeelGajera/graphyn@v0
+```
+
+It analyzes the base and head commits, compares them, evaluates
+`.graphyn/rules.toml`, and posts one comment — updating it on each push rather
+than adding another.
+
+```markdown
+## Graphyn
+
+**1 rule(s) violated.** This change is blocked.
+
+### Rules
+
+| Rule | Kind | Verdict |
+|---|---|---|
+| core-must-not-depend-on-cli | forbid-dependency | **FAIL** |
+| payload-is-stable | no-field-removal | pass |
+
+**core-must-not-depend-on-cli** (forbid-dependency, error):
+
+- `crates/graphyn-core/src/ir.rs:12` — core/ir.rs -> cli/main.rs (imports)
+```
+
+The verdict is the first line, so a reader who stops there still has the
+answer. Rules that could not be decided are named in the comment rather than
+only in the exit status, and never fail the job.
+
+| Input | Default | Notes |
+|---|---|---|
+| `version` | `latest` | A release tag, or `source` to build from the checkout |
+| `base-ref` | PR base | What to compare against |
+| `rules` | `.graphyn/rules.toml` | |
+| `comment` | `true` | |
+| `fail-on-violation` | `true` | Undecided rules never fail the job |
 
 ## MCP Integration
 

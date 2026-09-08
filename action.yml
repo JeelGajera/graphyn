@@ -1,0 +1,85 @@
+name: 'Graphyn'
+description: 'Deterministic blast radius and rule enforcement for pull requests. No model participates in the analysis.'
+author: 'Graphyn Contributors'
+branding:
+  icon: 'git-merge'
+  color: 'purple'
+
+inputs:
+  path:
+    description: 'Repository root to analyze.'
+    required: false
+    default: '.'
+  version:
+    description: >
+      Which binary to use. A release tag such as "v0.2.0", "latest" for the
+      newest release, or "source" to build from the checked-out tree. Building
+      from source takes minutes; a release download takes seconds.
+    required: false
+    default: 'latest'
+  base-ref:
+    description: >
+      The revision to compare against. Defaults to the pull request base, or
+      the push event''s "before" commit.
+    required: false
+    default: ''
+  rules:
+    description: 'Rules file. Defaults to <path>/.graphyn/rules.toml.'
+    required: false
+    default: ''
+  comment:
+    description: 'Post the report as a pull request comment, updating the previous one.'
+    required: false
+    default: 'true'
+  fail-on-violation:
+    description: >
+      Fail the job when a rule is violated on resolved evidence. Rules that
+      could not be decided never fail the job, whatever this is set to.
+    required: false
+    default: 'true'
+  github-token:
+    description: 'Token used to post the comment.'
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  verdict:
+    description: 'One of: clean, violated, undecided.'
+    value: ${{ steps.report.outputs.verdict }}
+  report:
+    description: 'Path to the markdown report on disk.'
+    value: ${{ steps.report.outputs.report-path }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install graphyn
+      shell: bash
+      env:
+        GRAPHYN_VERSION: ${{ inputs.version }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: ${{ github.action_path }}/action/install.sh
+
+    - name: Record snapshots and build the report
+      id: report
+      shell: bash
+      env:
+        GRAPHYN_PATH: ${{ inputs.path }}
+        GRAPHYN_BASE_REF: ${{ inputs.base-ref }}
+        GRAPHYN_RULES: ${{ inputs.rules }}
+      run: ${{ github.action_path }}/action/report.sh
+
+    - name: Comment on the pull request
+      if: inputs.comment == 'true' && github.event_name == 'pull_request'
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        GRAPHYN_REPORT: ${{ steps.report.outputs.report-path }}
+      run: ${{ github.action_path }}/action/comment.sh
+
+    - name: Fail on violation
+      if: inputs.fail-on-violation == 'true' && steps.report.outputs.verdict == 'violated'
+      shell: bash
+      run: |
+        echo "::error::Graphyn: a rule in .graphyn/rules.toml was violated by this change."
+        exit 1

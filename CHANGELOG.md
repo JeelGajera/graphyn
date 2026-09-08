@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A GitHub Action**, and `graphyn report` behind it. The action analyzes the
+  base and head commits, compares them, evaluates `.graphyn/rules.toml`, and
+  posts one pull request comment — updating it on each push rather than adding
+  another, because a pull request with nine identical bot comments is one where
+  nobody reads the tenth.
+
+  The comment is a product surface, not a serialisation of internal state. The
+  verdict is its first line, so a reader who stops there still has the answer.
+  Findings come before counts: a broken reference is what the reader came for
+  and "14 symbols added" is not. Uncertainty is never dropped for tidiness — a
+  rule that could not be decided is named in the comment, not only in the exit
+  status, and never fails the job.
+
+  `graphyn report` produces that markdown as one command rather than two.
+  Concatenating `diff` and `check` would give the reader two headings, two
+  verdicts, and no statement of which one decides the merge. Its exit status
+  matches `check`: 0 clean, 1 violated, 2 could not run.
+
+  `version: source` builds from the checked-out tree instead of downloading a
+  release, which is how this repository runs the action against its own pull
+  requests. An action nobody has executed is not a tested action.
+
+
 - **`graphyn check`** — enforce the rules in `.graphyn/rules.toml`. Reads the
   rules, evaluates them against the stored graph, and reports every rule with
   its verdict. `--base` and `--head` supply a change so that change-sensitive
