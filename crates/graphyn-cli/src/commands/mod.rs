@@ -1,6 +1,7 @@
 pub mod analyze;
 pub mod json;
 pub mod query;
+pub mod revision;
 pub mod serve;
 pub mod status;
 pub mod watch;

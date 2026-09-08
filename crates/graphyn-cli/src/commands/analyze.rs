@@ -8,6 +8,7 @@ use graphyn_core::scan::{
     is_any_supported_source_file, parse_csv_patterns, walk_source_files_reporting, ScanConfig,
 };
 use graphyn_lang::analyze_files;
+use graphyn_store::rocksdb::GraphSnapshot;
 use graphyn_store::RocksGraphStore;
 
 use crate::commands::json::AnalysisReport;
@@ -82,6 +83,8 @@ pub fn run(
     exclude_csv: Option<&str>,
     respect_gitignore: bool,
     json: bool,
+    snapshot: Option<&str>,
+    keep_snapshots: usize,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let root = super::normalize_path(
         &std::fs::canonicalize(path).map_err(|e| format!("cannot access '{}': {}", path, e))?,
@@ -186,6 +189,30 @@ pub fn run(
         "Persisted to",
         &root.join(".graphyn/").display().to_string(),
     );
+
+    // The working graph is always written; a revision snapshot is additional,
+    // so `analyze --snapshot` leaves the repository queryable exactly as a
+    // plain `analyze` does.
+    if let Some(revision) = snapshot {
+        let resolved = super::revision::resolve(&root, revision)?;
+        let snapshot = GraphSnapshot::from_graph(&graph)
+            .map_err(|e| format!("failed to build snapshot: {e}"))?;
+        store
+            .save_revision(&resolved, &snapshot)
+            .map_err(|e| format!("failed to record revision '{resolved}': {e}"))?;
+
+        progress.step("Recorded revision", &resolved);
+
+        let dropped = store
+            .prune_revisions(keep_snapshots)
+            .map_err(|e| format!("failed to apply snapshot retention: {e}"))?;
+        if !dropped.is_empty() {
+            progress.step(
+                "Dropped older revisions",
+                &format!("{} (keeping {keep_snapshots})", dropped.len()),
+            );
+        }
+    }
 
     // ── 4. Summary ───────────────────────────────────────────
     let elapsed = start.elapsed();
