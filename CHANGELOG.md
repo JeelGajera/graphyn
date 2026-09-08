@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Rules evaluated against a graph**, with three outcomes rather than two.
+  `graphyn_core::rule_eval::evaluate` runs the rules from `.graphyn/rules.toml`
+  over a graph, and a delta where one is supplied.
+
+  A rule is reported satisfied only when every edge in its scope was resolved.
+  Where weaker edges could hide a violation the verdict is *inconclusive*,
+  carrying the count of edges that prevented an answer. A forbidding rule is a
+  claim about absence, and "no violation found" is not "no violation exists" —
+  reporting a pass on structural evidence would report a conclusion the
+  analysis never reached. Inconclusive does not fail a gate, which is how a
+  Tier 2 language fails open rather than passing quietly.
+
+  Violations are only ever raised on resolved evidence, so a reported violation
+  is a fact rather than a suspicion; a violation found on strong evidence is not
+  softened by weak evidence elsewhere in the same scope.
+
+  `forbid-dependency` covers imports and re-exports, `forbid-reference` every
+  edge kind, so "you may call into this, but not import it" is expressible.
+  `max-fan-in` counts resolved inbound edges, and raises uncertainty only when
+  the unresolved ones could actually carry a symbol past the threshold.
+  `no-field-removal` matches fields by declaration range rather than by name
+  convention, and stays quiet when the owning symbol was deleted outright —
+  that removal is already reported, and repeating it per field would bury it.
+  A rule needing a delta without one is skipped, never satisfied.
+
+
 - **Findings derived from a diff.** `graphyn diff` reports broken references,
   orphaned symbols, removed API surface and changed signatures, alongside the
   raw counts, with the same set in `--json`. Each finding carries its own
@@ -26,6 +52,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reports that matter. And visibility is not modelled anywhere in the IR, so
   "public method removed" cannot be distinguished from "private method
   removed": the finding names every API-shaped symbol removed, and says so.
+- **`.graphyn/rules.toml`, parsed and validated.** The file a repository uses
+  to state its own constraints: `forbid-dependency`, `forbid-reference`,
+  `no-field-removal` and `max-fan-in`, each with a `severity` of `warn` or
+  `error`. Parsing and validation only — evaluating a rule against a graph is
+  a separate change.
+
+  Everything that can be wrong is wrong at parse time. An unknown kind, a glob
+  that does not compile, a required field left out, a `max-fan-in` threshold of
+  zero, two rules under one name: each is refused when the file is read, with
+  the rule named and the valid kinds listed. A typo would otherwise sit
+  silently in a repository until the day it was supposed to catch something,
+  and a gate that quietly enforces four of five rules reports a pass it has not
+  earned.
+
+  Severity defaults to `error`. A rule written without one is a rule someone
+  means to enforce, and defaulting to advisory would make every unannotated
+  rule silent.
+
+  Rules are partitioned by whether they need a delta — only `no-field-removal`
+  does — so a caller holding a single graph skips the rest rather than
+  reporting them as passing.
+
 
 - **`graphyn diff`.** Compares two recorded revisions and reports what changed:
   symbols added, removed, renamed or moved, signatures changed, and edges added
