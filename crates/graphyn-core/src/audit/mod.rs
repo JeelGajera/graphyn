@@ -26,6 +26,8 @@
 //! gate that silently drops what someone told it to ignore is exactly the
 //! thing it exists to catch.
 
+pub mod detectors;
+
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::{Display, Formatter};
 

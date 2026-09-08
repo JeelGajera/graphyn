@@ -9,6 +9,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Three audit detectors**, and three held back with their reasons recorded.
+
+  `test-tampering` reports a test that **stopped covering** a symbol which
+  changed in the same diff — either the test went, or its references to the
+  symbol did. This is narrower than the obvious rule, and deliberately: "a test
+  file changed alongside the code it covers" is what a developer does on almost
+  every honest pull request, and a detector firing there is switched off in a
+  week. Coverage vanishing exactly where behaviour changed is hard to do by
+  accident.
+
+  `contract-erosion` reports a symbol removed while a surviving caller still
+  referred to it — the callee deleted instead of the caller fixed. Resolved
+  evidence only, and a referrer that was removed in the same change does not
+  count: that deletion is coherent. Visibility is not modelled in the IR, so
+  every surviving resolved reference is treated as a contract, which is the
+  conservative reading.
+
+  `dead-on-arrival` reports a new symbol that only tests refer to. Requiring a
+  test edge is what keeps it precise: a genuinely new entry point has no
+  inbound edges at all and is not reported.
+
+  Held back rather than weakened, because a gate that cries wolf is disabled in
+  week two. **`assertion-removal`** has no signal — assertion calls are not in
+  the graph at all, since Rust's assert macros are token trees that are never
+  expanded and framework calls resolve to nothing, so a net assertion count
+  cannot be computed without parsing source text as a second source of truth.
+  **`scope-creep`** has no denominator: Graphyn is given a repository and a
+  revision range, never an intended scope. **`special-casing`** needs
+  branch-level analysis, and the graph models references between symbols rather
+  than control flow inside one. Each reason is carried in the code so that an
+  absent detector is not mistaken for one that found nothing.
+
+
 - **An audit framework**: findings, severity, confidence, stable ids and
   suppression via `.graphyn/audit-ignore`. The detectors themselves are a
   separate change; this is the part that decides what a detector is allowed to
