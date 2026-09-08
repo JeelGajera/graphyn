@@ -9,6 +9,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`graphyn context`** — a minimal working set for orienting on a symbol or a
+  change: the subject, what it depends on, what depends on it, and a signature
+  for each rather than a file body. `--budget` caps the estimated cost, drops
+  the outermost hops first, and reports how many symbols it omitted rather than
+  truncating silently.
+
+  **The measured comparison, which the plan made this feature's entire
+  justification, is weaker than the headline ratio suggests, and that is worth
+  saying plainly.** Orienting on `RepoIR` in this repository costs ~420
+  estimated tokens against ~57,900 for reading those thirty files whole — 138x.
+  But an agent does not read thirty files whole; it runs a text search. Against
+  `rg -l`, which answers the same "which files touch this" question, the saving
+  is **1.6x**. Against `rg -n`, about 10x.
+
+  And the part a text search genuinely cannot produce — the signature
+  skeleton — is delivered for only 1 of those 31 entries. Inbound edges to a
+  widely-used type are dominated by imports, which every adapter attributes to
+  the file's synthetic module symbol rather than to the function that uses it,
+  so "depended on by" is largely a list of files. Measured across six symbols:
+  1 to 3 signatures per 5 to 50 entries, and greater depth does not help.
+
+  The feature is therefore useful for a narrow neighbourhood where signatures
+  land, and thin for a widely-imported type. Shipped with the number stated
+  rather than dressed up, because the plan asked for a measurement and a weak
+  measurement reported honestly is worth more than a strong one that does not
+  survive being checked. Improving it means attributing import edges to the
+  symbol that uses the import rather than to the module — a resolution change,
+  not a presentation one.
+
+  Token figures are byte-based estimates and say so wherever they appear.
+  Graphyn vendors no tokenizer: one is model-specific, and a figure that moved
+  with somebody's model would not be reproducible.
+
+
 - **`graphyn audit`**, wired into the hooks and the Action. Detects changes that
   look like they were made to pass a check rather than to work.
 

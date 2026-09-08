@@ -1,6 +1,7 @@
 pub mod analyze;
 pub mod audit;
 pub mod check;
+pub mod context;
 pub mod diff;
 pub mod impact;
 pub mod json;
