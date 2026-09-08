@@ -98,6 +98,31 @@ if [ "$verdict" = "clean" ] && grep -q "could not be decided" "$report_path" 2>/
   verdict=undecided
 fi
 
+# The audit is a separate question from the rules, and its answer belongs in
+# the same comment: a reviewer should not have to open a job log to find out
+# that a change looks like it was made to pass a check.
+audit_path="${RUNNER_TEMP:-/tmp}/graphyn-audit.txt"
+set +e
+graphyn audit . --base "$base_sha" --head "$head_sha" --severity "${GRAPHYN_AUDIT_SEVERITY:-error}" > "$audit_path" 2>&1
+audit_status=$?
+set -e
+
+if [ $audit_status -eq 1 ]; then
+  {
+    echo
+    echo "### Audit"
+    echo
+    echo "This change contains something that looks like it was made to pass a check rather than to work."
+    echo
+    echo '```'
+    sed 's/\x1b\[[0-9;]*m//g' "$audit_path"
+    echo '```'
+  } >> "$report_path"
+  verdict=audit
+elif [ $audit_status -ne 0 ]; then
+  echo "::warning::Graphyn could not run the audit (exit $audit_status); no audit was performed." >&2
+fi
+
 echo "Verdict: $verdict"
 {
   echo "verdict=$verdict"

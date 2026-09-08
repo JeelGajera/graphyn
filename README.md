@@ -76,6 +76,7 @@ graphyn watch ./my-repo
 - `graphyn diff --base <rev> --head <rev>`: what changed between two snapshots
 - `graphyn check [--diff-only]`: enforce `.graphyn/rules.toml`
 - `graphyn tests <symbol> | --diff`: which tests exercise a symbol or a change
+- `graphyn audit [--base <rev>] [--head <rev>]`: detect reward-hacking in a change
 - `graphyn report --base <rev> --head <rev>`: one markdown report for a PR comment
 - `graphyn status`: graph stats and coverage
 - `graphyn serve --stdio`: start MCP server
@@ -155,6 +156,38 @@ version, and anything a consumer could observe breaking bumps it.
 
 Output is deterministic — the same input produces byte-identical bytes, which
 is what makes two analyses safe to diff.
+
+## Audit
+
+```bash
+graphyn audit --base HEAD --head worktree
+```
+
+Detects changes that look like they were made to pass a check rather than to
+work. Deterministic — no model is involved, here or anywhere else.
+
+| Detector | Signal | Severity |
+|---|---|---|
+| `test-tampering` | A test stopped covering a symbol that changed in the same diff | error |
+| `contract-erosion` | A symbol was removed while a surviving caller still referred to it | error |
+| `dead-on-arrival` | A new symbol only tests refer to | warn |
+
+An audit finding is an accusation, so the output is built to be checked rather
+than believed. Every finding carries its evidence and the id you would write
+down to suppress it. Detectors that did **not** run are named with the reason,
+because an absent check otherwise reads as a passing one — and only files a
+Tier 1 adapter resolved are in scope, since a name matched inside one file
+cannot support an accusation.
+
+Record a deliberate exception in `.graphyn/audit-ignore`:
+
+```
+test-tampering-1a2b3c4d  # the test was rewritten when the API changed
+```
+
+Suppressed findings are still shown, and a suppression that matches nothing is
+reported as stale. Exit 0 when nothing was found at the requested severity, 1
+when something was, 2 when the audit could not run.
 
 ## Test impact
 
