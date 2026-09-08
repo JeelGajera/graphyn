@@ -22,6 +22,8 @@ rust = ["graphyn-lang/rust"]
 go = ["graphyn-lang/go"]
 c = ["graphyn-lang/c"]
 java = ["graphyn-lang/java"]
+ruby = ["graphyn-lang/ruby"]
+csharp = ["graphyn-lang/csharp"]
 
 [dependencies]
 rmcp = { version = "1", features = ["server", "transport-io"] }

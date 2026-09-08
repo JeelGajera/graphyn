@@ -436,6 +436,12 @@ pub fn detect_language_from_extension(ext: &str) -> Option<Language> {
         "ts" | "tsx" | "mts" | "cts" | "vue" | "svelte" | "astro" => Some(Language::TypeScript),
         "js" | "jsx" | "mjs" | "cjs" => Some(Language::JavaScript),
         "java" => Some(Language::Java),
+        "rb" => Some(Language::Ruby),
+        "php" => Some(Language::Php),
+        "cs" => Some(Language::CSharp),
+        "kt" | "kts" => Some(Language::Kotlin),
+        "swift" => Some(Language::Swift),
+        "sql" => Some(Language::Sql),
         _ => None,
     }
 }
