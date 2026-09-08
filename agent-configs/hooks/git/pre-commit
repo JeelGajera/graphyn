@@ -1,0 +1,86 @@
+#!/bin/sh
+# Graphyn pre-commit hook — agent-agnostic enforcement at the commit boundary.
+#
+# The one integration that works for every editor, every agent, and every
+# person who has not installed either. It runs `graphyn check --diff-only`,
+# which judges the staged tree against the last commit.
+#
+# Install:
+#   cp agent-configs/hooks/git/pre-commit .git/hooks/pre-commit
+#   chmod +x .git/hooks/pre-commit
+#
+# Skip once:  git commit --no-verify
+# Disable:    GRAPHYN_SKIP=1 git commit
+
+# Locate the shared library.
+#
+# Guarded with a readability test rather than `. lib || fallback`: in POSIX sh,
+# sourcing a file that does not exist is a special-builtin failure that
+# terminates the shell on the spot, so the fallback never runs and the hook
+# exits non-zero with no output. For a pre-commit hook that silently rejects
+# every commit; for a Stop hook it traps the agent. Both were real.
+_graphyn_lib=""
+for _candidate in \
+  "$(dirname "$0")/graphyn-hook-lib.sh" \
+  "$(dirname "$0")/../lib/graphyn-hook-lib.sh" \
+  "$(git rev-parse --show-toplevel 2>/dev/null)/agent-configs/hooks/lib/graphyn-hook-lib.sh"
+do
+  if [ -r "$_candidate" ]; then
+    _graphyn_lib="$_candidate"
+    break
+  fi
+done
+# No library means no hook. Exiting 0 leaves the agent, and the commit, alone.
+[ -n "$_graphyn_lib" ] || exit 0
+# shellcheck source=/dev/null
+. "$_graphyn_lib"
+
+[ -z "$GRAPHYN_SKIP" ] || exit 0
+
+TIMEOUT="${GRAPHYN_HOOK_TIMEOUT:-30}"
+
+bin=$(graphyn_bin)
+if [ -z "$bin" ]; then
+  # Not everyone who commits to this repository has Graphyn installed, and
+  # their commits are not ours to reject.
+  exit 0
+fi
+
+root=$(graphyn_root)
+[ -f "$root/.graphyn/rules.toml" ] || exit 0
+
+if ! graphyn_has_graph; then
+  echo "graphyn: no graph at .graphyn/db — rules were not checked." >&2
+  echo "         Run: graphyn analyze . --snapshot HEAD" >&2
+  exit 0
+fi
+
+# Record the tree being committed so `check` compares snapshots rather than
+# re-analysing, which keeps the answer a function of the commit and not of
+# whatever else happened to be on disk.
+graphyn_with_timeout "$TIMEOUT" "$bin" analyze "$root" --snapshot worktree >/dev/null 2>&1
+
+output=$(graphyn_with_timeout "$TIMEOUT" "$bin" check "$root" --diff-only 2>&1)
+status=$?
+
+case $status in
+  0) exit 0 ;;
+  1)
+    echo "$output" >&2
+    echo >&2
+    echo "graphyn: commit blocked by a rule in .graphyn/rules.toml" >&2
+    echo "         Override once with: git commit --no-verify" >&2
+    exit 1
+    ;;
+  124)
+    echo "graphyn: rule check timed out after ${TIMEOUT}s — rules were not checked." >&2
+    exit 0
+    ;;
+  *)
+    # The check could not run. Saying so is the point: a silent skip here
+    # looks exactly like a clean pass.
+    echo "graphyn: could not run the rule check — rules were not enforced." >&2
+    echo "$output" >&2
+    exit 0
+    ;;
+esac

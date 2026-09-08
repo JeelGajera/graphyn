@@ -9,6 +9,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Agent hooks.** `agent-configs/hooks/` ships Claude Code hooks and
+  agent-agnostic git hooks. MCP is pull-only — the agent has to decide to ask —
+  so the graph now reaches it at the moment of the edit instead.
+
+  `PreToolUse` puts the target file's blast radius into context before a write.
+  `PostToolUse` reports references the edit broke. `Stop` and `pre-commit` run
+  `graphyn check --diff-only` and feed the specific failing rule back. A
+  `post-commit` hook records the new `HEAD` snapshot, without which the
+  pre-commit baseline goes stale on the next commit and the gate stops firing.
+
+  Only one condition blocks: a rule violated on resolved evidence. A missing
+  binary, a missing graph, a stale snapshot, a timeout or an unreadable rules
+  file all let the change through and say on stderr that nothing was checked.
+  Trapping an agent, or rejecting a colleague's commit, because a tool was
+  misconfigured is worse than not running — but a gate that silently stops
+  working is worse than both.
+
+  Every call is wrapped in a timeout, falling back to a background process and
+  a poll where `timeout(1)` does not exist. The full pre-edit hook runs in
+  ~66 ms against this repository's most-referenced file.
+
+- **`graphyn impact <file>`.** What depends on one file. A hook fires knowing
+  only a path, with no symbol to ask about yet, so `query blast-radius` cannot
+  answer it and guessing a symbol from the filename would answer a different
+  question confidently. A path the graph does not track is reported as having
+  no dependents rather than erroring, and an empty answer is qualified by
+  whether the graph could have seen a dependent at all.
+
+- **`graphyn check --diff-only`.** Shorthand for `--base HEAD --head worktree`,
+  which is what a pre-commit hook wants.
+
+
 - **`graphyn check`** — enforce the rules in `.graphyn/rules.toml`. Reads the
   rules, evaluates them against the stored graph, and reports every rule with
   its verdict. `--base` and `--head` supply a change so that change-sensitive

@@ -1,4 +1,4 @@
-use std::collections::{BTreeSet, HashSet, VecDeque};
+use std::collections::{BTreeMap, BTreeSet, HashSet, VecDeque};
 
 use petgraph::visit::EdgeRef;
 use petgraph::Direction;
@@ -468,4 +468,124 @@ fn dedupe_edges(mut edges: Vec<QueryEdge>) -> Result<Vec<QueryEdge>, GraphynErro
     });
 
     Ok(edges)
+}
+
+// ── file-level impact ────────────────────────────────────────
+
+/// What depends on the symbols defined in one file.
+///
+/// The unit an editing agent actually works in. `blast_radius` answers a
+/// question about a symbol, but a hook firing before a write knows only which
+/// file is about to change — it has no symbol to ask about yet, and asking
+/// about the wrong one is worse than not asking.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct FileImpact {
+    /// The file as the graph records it, repository-relative.
+    pub file: String,
+    /// Symbols this file defines, by id, in a stable order.
+    pub defined: Vec<SymbolId>,
+    /// Every edge reaching into the file from outside it.
+    pub edges: Vec<QueryEdge>,
+    /// Files that reach in, and how many edges each contributes.
+    pub dependents: BTreeMap<String, usize>,
+    /// Whether every edge here was resolved.
+    ///
+    /// A hook reporting "nothing depends on this file" on structural evidence
+    /// would be making the claim Graphyn exists to refuse.
+    pub gate_safe: bool,
+    /// Files analyzed within-file only, whose references could not reach this
+    /// answer even if they exist.
+    pub blind_spots: usize,
+}
+
+impl FileImpact {
+    /// Whether anything outside the file depends on it.
+    pub fn is_empty(&self) -> bool {
+        self.edges.is_empty()
+    }
+}
+
+/// Compute [`FileImpact`] for `file`, which must be as the graph records it.
+///
+/// Edges originating inside the same file are dropped: a hook is warning about
+/// what a change reaches beyond the file being edited, and a file's references
+/// to itself are already in front of the person editing it.
+///
+/// An unknown file is not an error. A new file, or one no adapter handles, has
+/// no symbols and therefore no dependents — and a hook that fails on the first
+/// untracked path is a hook that gets switched off.
+pub fn file_impact(
+    graph: &GraphynGraph,
+    file: &str,
+    depth: Option<usize>,
+    kinds: RelationshipKindMask,
+    min_resolution: Resolution,
+) -> Result<FileImpact, GraphynError> {
+    let effective_depth = depth.unwrap_or(DEFAULT_DEPTH);
+    if effective_depth > MAX_DEPTH {
+        return Err(GraphynError::InvalidDepth {
+            depth: effective_depth,
+            max: MAX_DEPTH,
+        });
+    }
+
+    let mut defined: Vec<SymbolId> = graph
+        .file_index
+        .get(file)
+        .map(|ids| ids.clone())
+        .unwrap_or_default();
+    defined.sort();
+
+    // Deduplicated across roots: two symbols in this file can share a
+    // dependent, and reporting it twice would inflate every count a reader
+    // uses to judge how risky the edit is.
+    let mut seen: HashSet<(SymbolId, SymbolId, usize)> = HashSet::new();
+    let mut edges: Vec<QueryEdge> = Vec::new();
+
+    for root in &defined {
+        let found = match traverse(
+            graph,
+            root,
+            effective_depth,
+            Direction::Incoming,
+            kinds,
+            min_resolution,
+        ) {
+            Ok(found) => found,
+            // A symbol in the file index with no node is a graph the store
+            // wrote inconsistently, not a reason to fail the whole answer.
+            Err(GraphynError::SymbolNotFound(_)) => continue,
+            Err(err) => return Err(err),
+        };
+        for edge in found {
+            if edge.file == file {
+                continue;
+            }
+            if seen.insert((edge.from.clone(), edge.to.clone(), edge.line as usize)) {
+                edges.push(edge);
+            }
+        }
+    }
+
+    // Sorted explicitly: `file_index` and the traversal both walk structures
+    // whose order is not guaranteed between runs.
+    edges.sort_by(|a, b| {
+        (&a.file, a.line, &a.from, &a.to).cmp(&(&b.file, b.line, &b.from, &b.to))
+    });
+
+    let mut dependents: BTreeMap<String, usize> = BTreeMap::new();
+    for edge in &edges {
+        *dependents.entry(edge.file.clone()).or_default() += 1;
+    }
+
+    let gate_safe = edges.iter().all(|e| e.resolution.is_gate_safe());
+
+    Ok(FileImpact {
+        file: file.to_string(),
+        defined,
+        edges,
+        dependents,
+        gate_safe,
+        blind_spots: structural_files(graph).len(),
+    })
 }

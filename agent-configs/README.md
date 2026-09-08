@@ -16,6 +16,7 @@ and how to query the graph before changing code.
 | Antigravity-style rules | `antigravity/rules/graphyn.md` | `.agents/rules/graphyn.md` |
 | Antigravity-style workflows | `antigravity/workflows/graphyn-impact-check.md` | `.agents/workflows/graphyn-impact-check.md` |
 | MCP clients | `mcp/README.md` | Client-specific config |
+| Hooks (Claude Code + git) | `hooks/` | `.claude/hooks/`, `.git/hooks/` |
 
 ## Recommended Setup
 
@@ -24,6 +25,8 @@ and how to query the graph before changing code.
 3. Add the MCP config from `mcp/README.md` if your agent supports MCP.
 4. Tell agents to use Graphyn before risky edits: renames, deleting symbols,
    changing public types, DTOs, services, mappers, or shared utilities.
+5. Install the hooks from `hooks/` if you want this to happen without the agent
+   deciding to ask. Instruction files are advice; hooks are not.
 
 ## Notes
 
