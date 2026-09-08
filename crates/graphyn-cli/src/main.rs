@@ -59,6 +59,27 @@ enum Commands {
         keep_snapshots: usize,
     },
 
+    /// Show what changed between two recorded revisions
+    Diff {
+        /// Path to the repository root
+        #[arg(default_value = ".")]
+        path: String,
+
+        /// The revision to compare from. Must already be recorded with
+        /// `analyze --snapshot`.
+        #[arg(long, default_value = "HEAD")]
+        base: String,
+
+        /// The revision to compare to. `worktree` is the working tree
+        /// including uncommitted edits.
+        #[arg(long, default_value = "worktree")]
+        head: String,
+
+        /// Emit the delta as JSON on stdout instead of a human summary
+        #[arg(long)]
+        json: bool,
+    },
+
     /// Query the symbol relationship graph
     Query {
         #[command(subcommand)]
@@ -216,6 +237,13 @@ fn main() {
             snapshot.as_deref(),
             keep_snapshots,
         ),
+
+        Commands::Diff {
+            path,
+            base,
+            head,
+            json,
+        } => commands::diff::run(&path, &base, &head, json),
 
         Commands::Query { subcommand } => match subcommand {
             QueryCommands::BlastRadius {

@@ -106,12 +106,24 @@ fn a_rename_is_one_continuity_not_a_delete_and_an_add() {
     // The case the whole module exists for.
     let before = graph_of(vec![(
         "a.ts",
-        vec![symbol("a.ts", "Alpha", SymbolKind::Class, 4, Some("class Alpha"))],
+        vec![symbol(
+            "a.ts",
+            "Alpha",
+            SymbolKind::Class,
+            4,
+            Some("class Alpha { id: string }"),
+        )],
         vec![],
     )]);
     let after = graph_of(vec![(
         "a.ts",
-        vec![symbol("a.ts", "Beta", SymbolKind::Class, 4, Some("class Alpha"))],
+        vec![symbol(
+            "a.ts",
+            "Beta",
+            SymbolKind::Class,
+            4,
+            Some("class Beta { id: string }"),
+        )],
         vec![],
     )]);
 
@@ -315,4 +327,78 @@ fn the_delta_is_deterministic_across_repeated_runs() {
             "two runs over identical graphs produced different deltas"
         );
     }
+}
+
+#[test]
+fn a_replaced_function_on_the_same_line_is_not_a_rename() {
+    // Found end to end rather than in a unit test: deleting `doomed` and
+    // adding `freshlyAdded` in its place put both on the same line, and a
+    // position-only heuristic paired them as a rename. Replacing one function
+    // with another is exactly what that looks like, so position alone cannot
+    // be evidence — the substituted signature is what separates them.
+    let before = graph_of(vec![(
+        "m.ts",
+        vec![symbol(
+            "m.ts",
+            "doomed",
+            SymbolKind::Function,
+            5,
+            Some("function doomed(): number { return 2; }"),
+        )],
+        vec![],
+    )]);
+    let after = graph_of(vec![(
+        "m.ts",
+        vec![symbol(
+            "m.ts",
+            "freshlyAdded",
+            SymbolKind::Function,
+            5,
+            Some("function freshlyAdded(): number { return 3; }"),
+        )],
+        vec![],
+    )]);
+
+    let d = delta::compute(&before, &after);
+    assert!(
+        d.continuities.is_empty(),
+        "two unrelated functions sharing a line were paired as a rename: {d:?}"
+    );
+    assert_eq!(d.removed_symbols.len(), 1, "{d:?}");
+    assert_eq!(d.added_symbols.len(), 1, "{d:?}");
+}
+
+#[test]
+fn a_rename_whose_body_also_changed_records_no_continuity() {
+    // The cost of the rule above, stated rather than discovered: once the body
+    // moves too, nothing distinguishes a rename from an unrelated addition.
+    // Reporting a removal and an addition is the honest answer, and inventing
+    // a rename is the worse error.
+    let before = graph_of(vec![(
+        "m.ts",
+        vec![symbol(
+            "m.ts",
+            "alpha",
+            SymbolKind::Function,
+            1,
+            Some("function alpha(): number { return 1; }"),
+        )],
+        vec![],
+    )]);
+    let after = graph_of(vec![(
+        "m.ts",
+        vec![symbol(
+            "m.ts",
+            "beta",
+            SymbolKind::Function,
+            1,
+            Some("function beta(): number { return 99; }"),
+        )],
+        vec![],
+    )]);
+
+    let d = delta::compute(&before, &after);
+    assert!(d.continuities.is_empty(), "{d:?}");
+    assert_eq!(d.removed_symbols.len(), 1);
+    assert_eq!(d.added_symbols.len(), 1);
 }
