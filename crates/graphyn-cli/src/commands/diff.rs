@@ -11,6 +11,7 @@
 use std::collections::BTreeSet;
 
 use graphyn_core::delta::{self, Continuation, GraphDelta};
+use graphyn_core::findings::{self, DiffFindings, FindingKind};
 use graphyn_core::ir::Resolution;
 use graphyn_store::RocksGraphStore;
 
@@ -41,13 +42,14 @@ pub fn run(
     let before = load(&store, &base_rev, base)?;
     let after = load(&store, &head_rev, head)?;
     let delta = delta::compute(&before, &after);
+    let found = findings::derive(&before, &after, &delta);
 
     if json {
-        println!("{}", to_json(&base_rev, &head_rev, &delta));
+        println!("{}", to_json(&base_rev, &head_rev, &delta, &found));
         return Ok(());
     }
 
-    report(&base_rev, &head_rev, &delta);
+    report(&base_rev, &head_rev, &delta, &found);
     Ok(())
 }
 
@@ -93,7 +95,7 @@ fn how(continuation: Continuation) -> &'static str {
     }
 }
 
-fn report(base: &str, head: &str, delta: &GraphDelta) {
+fn report(base: &str, head: &str, delta: &GraphDelta, found: &DiffFindings) {
     output::banner("diff");
     output::info(&format!("{} → {}", short(base), short(head)));
     output::blank();
@@ -160,6 +162,51 @@ fn report(base: &str, head: &str, delta: &GraphDelta) {
         }
     }
 
+    // ── findings ─────────────────────────────────────────────
+    //
+    // Ahead of the raw counts, because a broken reference is what the reader
+    // came for and a list of added symbols is not.
+    let broken: Vec<_> = found.of_kind(FindingKind::BrokenEdge).collect();
+    if !broken.is_empty() {
+        output::section("Broken References");
+        for finding in &broken {
+            output::stat(
+                &format!("  {}", finding.name),
+                &format!(
+                    "removed, still referenced from {} place(s){}",
+                    finding.referrers.len(),
+                    if finding.resolution == Resolution::Resolved {
+                        ""
+                    } else {
+                        " — structural, advisory only"
+                    }
+                ),
+            );
+            for referrer in &finding.referrers {
+                output::dim_line(&format!("      {}:{}", referrer.file, referrer.line));
+            }
+        }
+    }
+
+    let orphans: Vec<_> = found.of_kind(FindingKind::Orphaned).collect();
+    if !orphans.is_empty() {
+        output::section("Orphaned");
+        for finding in &orphans {
+            output::stat(&format!("  {}", finding.name), "nothing refers to it any more");
+        }
+    }
+
+    let api: Vec<_> = found.of_kind(FindingKind::ApiSurfaceRemoved).collect();
+    if !api.is_empty() {
+        output::section("API Surface Removed");
+        for finding in &api {
+            output::stat(
+                &format!("  {}", finding.name),
+                &format!("{}:{}", finding.file, finding.line),
+            );
+        }
+    }
+
     // ── what a gate may act on ───────────────────────────────
     //
     // Reported on every diff, not only when it is bad news. A reader deciding
@@ -185,6 +232,18 @@ fn report(base: &str, head: &str, delta: &GraphDelta) {
         output::dim_line("  Nothing here is gate-safe: every change is structural, so a gate");
         output::dim_line("  must fail open rather than draw a conclusion from this diff.");
     }
+
+    match found.changed_file_coverage.percent() {
+        Some(percent) => output::stat(
+            "Changed-file coverage",
+            &format!("{percent:.1}% of {} edge(s)", found.changed_file_coverage.total()),
+        ),
+        None => output::stat("Changed-file coverage", "no edges in the changed files"),
+    }
+    output::stat(
+        "Findings a gate may act on",
+        &format!("{} of {}", found.gate_safe().count(), found.findings.len()),
+    );
 
     let kinds: BTreeSet<String> = delta::edge_kinds(delta)
         .into_iter()
@@ -233,7 +292,36 @@ fn array(items: Vec<String>) -> String {
     format!("[{}]", items.join(","))
 }
 
-fn to_json(base: &str, head: &str, delta: &GraphDelta) -> String {
+fn finding_json(finding: &graphyn_core::findings::Finding) -> String {
+    let referrers = array(
+        finding
+            .referrers
+            .iter()
+            .map(|r| {
+                format!(
+                    r#"{{"symbol":"{}","file":"{}","line":{},"kind":"{:?}","resolution":"{}"}}"#,
+                    escape(&r.symbol),
+                    escape(&r.file),
+                    r.line,
+                    r.kind,
+                    r.resolution.as_str()
+                )
+            })
+            .collect(),
+    );
+    format!(
+        r#"{{"kind":"{}","symbol":"{}","name":"{}","file":"{}","line":{},"resolution":"{}","referrers":{}}}"#,
+        finding.kind.as_str(),
+        escape(&finding.symbol),
+        escape(&finding.name),
+        escape(&finding.file),
+        finding.line,
+        finding.resolution.as_str(),
+        referrers
+    )
+}
+
+fn to_json(base: &str, head: &str, delta: &GraphDelta, found: &DiffFindings) -> String {
     let continuities = array(
         delta
             .continuities
@@ -267,8 +355,10 @@ fn to_json(base: &str, head: &str, delta: &GraphDelta) -> String {
             r#"{{"schema":{},"base":"{}","head":"{}","#,
             r#""symbols":{{"added":{},"removed":{},"continuities":{},"signature_changes":{}}},"#,
             r#""edges":{{"added":{},"removed":{}}},"#,
+            r#""findings":{},"#,
             r#""summary":{{"symbols_added":{},"symbols_removed":{},"symbols_continued":{},"#,
-            r#""signatures_changed":{},"edges_added":{},"edges_removed":{},"has_resolved_changes":{}}}}}"#
+            r#""signatures_changed":{},"edges_added":{},"edges_removed":{},"has_resolved_changes":{},"#,
+            r#""findings_total":{},"findings_gate_safe":{},"changed_file_coverage_percent":{}}}}}"#
         ),
         SCHEMA_VERSION,
         escape(base),
@@ -279,6 +369,7 @@ fn to_json(base: &str, head: &str, delta: &GraphDelta) -> String {
         signature_changes,
         array(delta.added_edges.iter().map(edge_json).collect()),
         array(delta.removed_edges.iter().map(edge_json).collect()),
+        array(found.findings.iter().map(finding_json).collect()),
         delta.added_symbols.len(),
         delta.removed_symbols.len(),
         delta.continuities.len(),
@@ -286,5 +377,11 @@ fn to_json(base: &str, head: &str, delta: &GraphDelta) -> String {
         delta.added_edges.len(),
         delta.removed_edges.len(),
         delta::has_resolved_changes(delta),
+        found.findings.len(),
+        found.gate_safe().count(),
+        match found.changed_file_coverage.percent() {
+            Some(percent) => format!("{percent:.1}"),
+            None => "null".to_string(),
+        },
     )
 }
