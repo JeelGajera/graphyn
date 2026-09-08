@@ -9,6 +9,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`graphyn check`** — enforce the rules in `.graphyn/rules.toml`. Reads the
+  rules, evaluates them against the stored graph, and reports every rule with
+  its verdict. `--base` and `--head` supply a change so that change-sensitive
+  rules can run; `--rules` points at a different file; `--json` emits the whole
+  result under a versioned schema.
+
+  Exit status is the contract, and it distinguishes three things a gate must
+  not confuse: `0` when nothing was violated, `1` when a rule was broken on
+  resolved evidence, `2` when the check could not run at all — an unreadable
+  rules file, no graph, a missing snapshot. A pipeline can tell "your change is
+  bad" from "this tool is misconfigured" instead of reading both as a veto.
+
+  Nothing that did not pass is reported as a pass. A rule too weakly resolved
+  to judge is listed as undecided, a rule needing a change that was not given
+  is listed as skipped, and neither fails the build — but the closing summary
+  names them, and "All rules satisfied" is printed only when every rule was
+  examined in full and none broke. A warn-severity breach exits 0 and still
+  says a rule was violated.
+
+  A missing rules file exits 0 and says plainly that nothing was enforced;
+  `--require-rules` makes it a failure, for CI, where a rules file that has
+  gone missing would otherwise pass silently.
+
+### Fixed
+
+- **`no-field-removal` attributed no fields at all against a real repository.**
+  Ownership was recovered from the container's line range, but adapters
+  disagree about what that range means — TypeScript records only the
+  declaration line, leaving `line_end` equal to `line_start`, so nothing was
+  ever contained. Exact containment is still preferred where the range is real,
+  and the innermost enclosing container wins so a nested class keeps its own
+  fields; otherwise the owner is the nearest container declared above. Found by
+  running the rule against a fixture rather than by a synthetic test, all of
+  which had passed.
+
+- **`max-fan-in` counted third-party packages.** Every repository points at its
+  serialization library hundreds of times, so the rule flagged external
+  packages ahead of anything in the codebase and its threshold would have been
+  raised until it meant nothing. External package nodes are no longer counted;
+  a violation with no known location now names the symbol id rather than
+  rendering as `:0`.
+
+
 - **Rules evaluated against a graph**, with three outcomes rather than two.
   `graphyn_core::rule_eval::evaluate` runs the rules from `.graphyn/rules.toml`
   over a graph, and a delta where one is supplied.

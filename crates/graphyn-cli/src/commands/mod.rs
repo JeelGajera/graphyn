@@ -1,4 +1,5 @@
 pub mod analyze;
+pub mod check;
 pub mod diff;
 pub mod json;
 pub mod query;
