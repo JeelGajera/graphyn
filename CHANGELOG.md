@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **The README is repositioned around enforcement rather than exploration.**
+  The tagline is now "Deterministic guardrails for agentic code changes", and
+  the three questions are framed around the agent that is about to write:
+  what breaks, which tests cover it, and does this violate a rule the
+  repository wrote down.
+
+  Determinism leads "Why Graphyn" with the reason it matters rather than as one
+  bullet among five: you cannot gate CI on an opinion. A check that returns a
+  different answer on a re-run is one nobody can act on, which is why every
+  probabilistic tool can advise but not block.
+
+  Resolution coverage is published prominently, with the measured figure for
+  this repository — 99.7%, 4,844 of 4,860 edges, and the sixteen structural
+  ones named per language rather than absorbed into a headline. The default
+  binary reports 100.0% for the same repository, and the README says why that
+  is the less informative number: it does not resolve more, it does not look at
+  the Tier 2 files at all.
+
+  The rules file format is documented for the first time — it had only ever
+  appeared inside example output. Every kind, its fields, when it fires, and
+  why severity defaults to `error`.
+
+  Tier 2 now states plainly what it does and does not give you, and that gates
+  do not fire on structural regions — not "are discouraged from", but do not.
+
+### Fixed
+
+- **The README claimed a default binary carries every supported language.** It
+  carries Tier 1 only; `full` is the everything binary. The size figures beside
+  the claim were stale as well: measured now at 21.2 MB for a TypeScript-only
+  build, 28.8 MB for `default`, and 36.6 MB for `full`.
+
+- **A paragraph in the Tiers section appeared twice**, verbatim.
+
 ### Added
 
 - **`graphyn context`** — a minimal working set for orienting on a symbol or a
