@@ -1,19 +1,66 @@
 # Graphyn
 
-Understand the blast radius before you change code.
+Deterministic guardrails for agentic code changes.
 
-Graphyn builds a deterministic symbol relationship graph for your repository so you and your coding agents can answer:
-- What breaks if I change this symbol?
-- Where is this symbol used (including aliases)?
-- What does this symbol depend on?
+Your agent will change seventeen symbols it did not know it was touching.
+Graphyn tells it, or stops it.
+
+It builds a deterministic symbol relationship graph for your repository, and
+answers the questions an agent has to get right before it writes:
+
+- **What breaks if I change this?** — every caller, including aliased ones.
+- **Which tests cover it?** — so the verify loop is cheap enough to actually run.
+- **Does this change break a rule this repository wrote down?** — and fail CI if so.
+
+No model participates in any of it.
 
 ## Why Graphyn
 
-- Alias-aware: resolves `import { A as B }`
-- Property-aware: tracks accessed members (for safer refactors)
-- Deterministic: no LLM in graph construction
-- Fast queries: in-memory graph traversal
-- Agent-ready: MCP server for Cursor, Claude Code, Codex, and others
+- **Deterministic: no LLM participates in graph construction, or in any gating
+  decision.** Identical input produces identical output, byte for byte. This is
+  first because everything else depends on it — *you cannot gate CI on an
+  opinion*. A tool that answers "what breaks if I change this" probabilistically
+  can advise, but it cannot block a merge, because a check that returns a
+  different answer on a re-run is a check nobody can act on. Every competing
+  tool is probabilistic somewhere in that path.
+- **Honest about what it does not know.** Coverage is published, per language,
+  on every run; gates fail open on regions Graphyn cannot resolve rather than
+  reporting a pass they have not earned. See [Resolution
+  coverage](#resolution-coverage).
+- Alias-aware: resolves `import { A as B }`, so a rename finds the callers a
+  text search misses.
+- Property-aware: attributes `payload.user_id` to the type the value was
+  declared as.
+- Fast queries: in-memory graph traversal.
+- Agent-ready: hooks, an MCP server, and a GitHub Action — push as well as pull.
+
+### Resolution coverage
+
+An enforcement tool that tells you what it could **not** resolve is worth more
+than one implying completeness, so `graphyn status` publishes the figure on
+every run — overall and per language.
+
+Measured on this repository, with the `full` binary:
+
+```
+Resolved           99.7% (4844 of 4860 edge(s))
+  C#               0.0% of 2 edge(s)
+  C/C++            100.0% of 32 edge(s)
+  Go               100.0% of 40 edge(s)
+  Java             0.0% of 2 edge(s)
+  Python           100.0% of 33 edge(s)
+  Ruby             0.0% of 12 edge(s)
+  Rust             100.0% of 4663 edge(s)
+  TypeScript       100.0% of 76 edge(s)
+  16 edge(s) are structural: matched by name within one file.
+  A gate must not act on them.
+```
+
+The 0.0% rows are Tier 2 languages, and they are the point: those sixteen edges
+are named rather than absorbed into a headline. The default binary reports
+100.0% of 4,844 edges for the same repository — not because it resolves more,
+but because it does not carry those languages and never looks at their files.
+Both figures are true; only one of them would be misleading on its own.
 
 ## Install
 
@@ -196,6 +243,60 @@ somebody's model would not be reproducible.
 
 A `--budget` drops the outermost hops first and reports how many symbols it
 omitted, rather than truncating silently.
+
+## Rules
+
+A repository states its own constraints in `.graphyn/rules.toml`, and
+`graphyn check` enforces them.
+
+```toml
+[[rule]]
+name = "core-must-not-depend-on-cli"
+kind = "forbid-dependency"
+from = "crates/graphyn-core/**"
+to   = "crates/graphyn-cli/**"
+severity = "error"          # error (default) or warn
+
+[[rule]]
+name = "payload-is-stable"
+kind = "no-field-removal"
+symbol = "UserPayload"
+
+[[rule]]
+name = "god-node"
+kind = "max-fan-in"
+threshold = 60
+severity = "warn"
+```
+
+| Kind | Fields | Fires when |
+|---|---|---|
+| `forbid-dependency` | `from`, `to` | An import or re-export runs from one path glob to another |
+| `forbid-reference` | `from`, `to` | *Any* reference does — the superset, so "you may call into this but not import it" is expressible |
+| `no-field-removal` | `symbol` | A named symbol loses a field. Needs a change, so pass `--base`/`--head` |
+| `max-fan-in` | `threshold` | A symbol exceeds that many inbound references. Third-party packages are not counted |
+
+`severity` defaults to `error`: a rule written without one is a rule someone
+means to enforce, and defaulting to advisory would make every unannotated rule
+silent.
+
+Everything that can be wrong is wrong at parse time — an unknown kind, a glob
+that does not compile, a missing field, a threshold of zero, two rules under one
+name. A typo would otherwise sit in a repository until the day it was supposed
+to catch something, and a gate that quietly enforces four of your five rules
+reports a pass it has not earned.
+
+```bash
+graphyn check .                # rules that need only the current graph
+graphyn check . --diff-only    # also the ones that need a change
+```
+
+**A rule has three outcomes, not two.** `forbid-dependency` is a claim about
+*absence*, so reporting it satisfied claims every edge in scope was examined.
+Where weaker edges could hide a violation the verdict is **undecided** — never
+a pass, and never a failure either. That is how a Tier 2 region fails open
+instead of passing quietly. Exit `0` clean, `1` a rule broken on resolved
+evidence, `2` the check could not run at all.
 
 ## Audit
 
@@ -407,9 +508,34 @@ Supported now:
 | C | 1 | `.c` `.h` | `#include` resolution, `typedef` aliases |
 | C++ | 1 | `.cpp` `.cc` `.cxx` `.hpp` `.hxx` `.hh` | `using` aliases, base classes, namespace-qualified names |
 
-Every adapter resolves import aliases and attributes member access to the type
-a value was declared as, so `payload.user_id` is recorded against `UserPayload`
-however the variable was named.
+Tier 2, behind their own features and not in `default`:
+
+| Language | Tier | Extensions |
+| --- | --- | --- |
+| Java | 2 | `.java` |
+| Ruby | 2 | `.rb` |
+| C# | 2 | `.cs` |
+
+Every Tier 1 adapter resolves import aliases and attributes member access to
+the type a value was declared as, so `payload.user_id` is recorded against
+`UserPayload` however the variable was named.
+
+**What Tier 2 gives you, plainly.** Symbols, and references *within a single
+file*. You can locate a definition, list what a file declares, and see
+intra-file usage.
+
+**What it does not.** No import resolution, no aliases, no declared types — so
+no cross-file reference of any kind. A tags query reports that a call to `foo`
+happened; it does not say which `foo`, and guessing by name across a repository
+is the bug Graphyn exists to avoid.
+
+**Gates do not fire on Tier 2 regions.** Not "are discouraged from" — they do
+not. `check` reports an undecided verdict rather than a pass, `tests` refuses to
+call its selection complete, and every audit detector is restricted to files a
+Tier 1 adapter resolved, with the framework dropping an out-of-scope finding
+even when a detector forgets to check. A structural region cannot support a
+conclusion drawn from the *absence* of a reference, because the reference would
+never have reached the graph.
 
 ### Known limits
 
@@ -452,6 +578,44 @@ Being explicit about these is more useful than a feature list:
   a property access on that type. A local bound by inference — Go's `u := f()`,
   and the same shape elsewhere — is not tracked, so the method call reaches the
   graph as nothing at all.
+
+- **Test detection is by file convention only.** `_test.go`, `*.test.ts`,
+  `test_*.py`, a Rust crate's `tests/` — the rule each language's own tooling
+  uses. A Rust `#[cfg(test)] mod tests` inside an ordinary source file is *not*
+  recognised, and the symbols inside such a module are not indexed at all, so
+  those tests produce no `tests` edges and `graphyn tests` will not suggest
+  them. Integration tests under `tests/` are covered.
+
+- **`graphyn tests` licenses an omission, and says when it cannot.** Naming the
+  tests that cover a change is a claim that the ones left out cannot fail. Exit
+  `3` means something could be missing — an uncovered changed symbol, a
+  structural region, or a test selected on weak evidence — and the full suite
+  should run. A test the change itself modified is reported apart from coverage
+  and does not mark anything covered.
+
+- **Three audit detectors ship; three are held back, and say why.**
+  `assertion-removal` has no signal at all: assertion calls are not in the
+  graph, since Rust's assert macros are unexpanded token trees and framework
+  calls resolve to nothing. `scope-creep` has no denominator — Graphyn is never
+  given an intended scope. `special-casing` needs control-flow analysis, and the
+  graph models references between symbols rather than flow inside one. `graphyn
+  audit` names every check that did not run, because an absent check otherwise
+  reads as a passing one.
+
+- **`test-tampering` fires on coverage disappearing, not on a test changing.**
+  Changing a function and updating its test together is ordinary work; a
+  detector firing there would be switched off in a week. It reports a test that
+  *stopped* covering a symbol which changed in the same diff.
+
+- **`graphyn context` is worth less against a text search than against reading
+  files.** Orienting on `RepoIR` here costs ~420 estimated tokens against
+  ~57,900 for reading those thirty files whole — but only ~670 for `rg -l`,
+  which answers the same "which files touch this" question. The signature
+  skeleton, the part a text search cannot produce, lands for 1 of those 31
+  entries: inbound edges to a widely-used type are dominated by imports, which
+  adapters attribute to the file's module symbol rather than the function using
+  it. Useful for a narrow neighbourhood; thin for a widely-imported type. Token
+  figures are byte-based estimates, not a tokenizer's count.
 
 - **Imports resolve within one language.** A Python module importing a
   TypeScript file through a build step is not linked.
@@ -498,11 +662,6 @@ through imports, aliases and declared types. The threshold is applied while
 traversing, not to the results, so nothing is reached by way of an edge below
 it. On a Tier 2 repository that correctly returns nothing.
 
-Queries take `--min-confidence resolved` to restrict an answer to edges bound
-through imports, aliases and declared types. The threshold is applied while
-traversing, not to the results, so nothing is reached by way of an edge below
-it. On a Tier 2 repository that correctly returns nothing.
-
 Tier 2 today: Java, Ruby, C# — each behind its own feature, none in `default`.
 
 Still planned as Tier 2: Kotlin, PHP, Swift, Scala, SQL, Lua, Bash. These are
@@ -515,21 +674,30 @@ for the analyzer to run. A `tree-sitter` upgrade unblocks most of them.
 
 ## Slim builds
 
-A default `graphyn` carries every supported language. To build only what you
-need:
+**A default `graphyn` carries the Tier 1 languages only.** `full` is the
+everything binary, and is what the releases publish. This matters beyond size:
+a default build does not merely resolve less of a polyglot repository, it does
+not look at the Tier 2 files at all — which is why it can report 100% coverage
+on a repository the `full` binary reports 99.7% on.
+
+| Build | Languages | Size |
+|---|---|---|
+| `--no-default-features --features typescript` | TypeScript / JavaScript | 21.2 MB |
+| `default` | TypeScript, Python, Rust, Go, C/C++ | 28.8 MB |
+| `full` | the above plus Java, Ruby, C# | 36.6 MB |
+
+Measured on one machine with `--release`; treat them as relative, not absolute.
 
 ```bash
 cargo install graphyn-cli --no-default-features --features python
+cargo install graphyn-cli --features full
 ```
 
 Tier 1 features: `typescript` (includes JavaScript), `python`, `rust`, `go`,
 `c` (includes C++) — these are `default`. Tier 2 features: `java`, `ruby`,
-`csharp`, or `full` for everything. `graphyn status` and `--help` report what
-your build can analyse; a build skips files in languages it does not carry
+`csharp`; `full` is everything. `graphyn status` and `--help` report what your
+build can analyse, and a build skips files in languages it does not carry
 rather than failing on them.
-
-Measured on one machine, a Python-only binary is 16M against 27M for all six
-languages.
 
 ## Build & Test
 
