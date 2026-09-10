@@ -77,6 +77,7 @@ graphyn watch ./my-repo
 - `graphyn check [--diff-only]`: enforce `.graphyn/rules.toml`
 - `graphyn tests <symbol> | --diff`: which tests exercise a symbol or a change
 - `graphyn audit [--base <rev>] [--head <rev>]`: detect reward-hacking in a change
+- `graphyn context <symbol> [--budget <tokens>]`: a minimal working set for orienting
 - `graphyn report --base <rev> --head <rev>`: one markdown report for a PR comment
 - `graphyn status`: graph stats and coverage
 - `graphyn serve --stdio`: start MCP server
@@ -156,6 +157,45 @@ version, and anything a consumer could observe breaking bumps it.
 
 Output is deterministic — the same input produces byte-identical bytes, which
 is what makes two analyses safe to diff.
+
+## Context
+
+```bash
+graphyn context RepoIR
+graphyn context --diff --base HEAD --head worktree --budget 2000
+```
+
+Emits the symbol, what it depends on, what depends on it, and a signature for
+each — the shape of the neighbourhood rather than its contents — and reports
+what that cost against reading the same files whole.
+
+**Measured on this repository**, and worth reading with its caveat:
+
+| Question | Estimated tokens |
+|---|---|
+| `graphyn context RepoIR` | ~420 |
+| Reading those 30 files whole | ~57,900 (**138x** more) |
+| `rg -n RepoIR` | ~4,050 (10x more) |
+| `rg -l RepoIR` — the file list alone | ~670 (**1.6x** more) |
+
+The 138x figure is real but flatters the feature. An agent orienting itself
+does not read thirty files whole; it runs a text search. Against `rg -l`, which
+answers the same "which files touch this" question, the saving is 1.6x — and
+the part a text search cannot produce, the signature skeleton, is delivered for
+only 1 of those 31 entries, because inbound edges to a widely-used type are
+attributed to each file's module symbol rather than to the function that uses
+it.
+
+So: useful for a narrow neighbourhood where signatures land, thin for a
+widely-imported type. This is the capability that erodes as native code search
+improves, and it is deliberately last in the release for that reason.
+
+Token figures are byte-based estimates, not a tokenizer's count. Graphyn
+vendors no tokenizer: one is model-specific, and a figure that moved with
+somebody's model would not be reproducible.
+
+A `--budget` drops the outermost hops first and reports how many symbols it
+omitted, rather than truncating silently.
 
 ## Audit
 

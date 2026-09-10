@@ -256,6 +256,52 @@ enum Commands {
         json: bool,
     },
 
+    /// A minimal working set for orienting on a symbol or a change
+    ///
+    /// Emits the symbol, what it depends on, what depends on it, and a
+    /// signature for each — the shape of the neighbourhood rather than its
+    /// contents. Reports what it cost, and what reading the same files whole
+    /// would have cost. Token figures are byte-based estimates: Graphyn
+    /// vendors no tokenizer, because a figure that moved with somebody's model
+    /// would not be reproducible.
+    Context {
+        /// Symbol to orient on. Omit and pass --diff to use a change.
+        symbol: Option<String>,
+
+        /// Path to the repository root
+        #[arg(long, default_value = ".")]
+        path: String,
+
+        /// Orient on a recorded change rather than one symbol.
+        #[arg(long)]
+        diff: bool,
+
+        /// With --diff, the revision to compare from.
+        #[arg(long, value_name = "REV")]
+        base: Option<String>,
+
+        /// With --diff, the revision to compare to.
+        #[arg(long, value_name = "REV")]
+        head: Option<String>,
+
+        /// How many hops of neighbourhood to include, in each direction.
+        #[arg(long, short, default_value = "1")]
+        depth: usize,
+
+        /// Cap the estimated tokens. Outermost hops are dropped first, and
+        /// what was dropped is reported rather than silently cut.
+        #[arg(long, value_name = "TOKENS")]
+        budget: Option<usize>,
+
+        /// Lowest resolution an edge may have to be followed.
+        #[arg(long, value_name = "LEVEL", default_value = "resolved")]
+        min_confidence: String,
+
+        /// Emit the working set as JSON on stdout
+        #[arg(long)]
+        json: bool,
+    },
+
     /// Query the symbol relationship graph
     Query {
         #[command(subcommand)]
@@ -509,6 +555,34 @@ fn main() {
             Err(e) => {
                 output::error(&e.to_string());
                 std::process::exit(commands::audit::EXIT_UNABLE);
+            }
+        },
+
+        Commands::Context {
+            symbol,
+            path,
+            diff,
+            base,
+            head,
+            depth,
+            budget,
+            min_confidence,
+            json,
+        } => match commands::context::run(
+            symbol.as_deref(),
+            &path,
+            diff,
+            base.as_deref(),
+            head.as_deref(),
+            depth,
+            budget,
+            &min_confidence,
+            json,
+        ) {
+            Ok(code) => std::process::exit(code),
+            Err(e) => {
+                output::error(&e.to_string());
+                std::process::exit(commands::context::EXIT_UNABLE);
             }
         },
 
